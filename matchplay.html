@@ -25,6 +25,18 @@
     .nav-links a{text-decoration:none;color:rgba(255,255,255,0.65);font-weight:700;font-size:0.82rem;letter-spacing:0.5px;text-transform:uppercase;padding:7px 14px;border-radius:50px;transition:all 0.2s}
     .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
     .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:201;flex-shrink:0}
+    .hamburger span{display:block;width:24px;height:2px;background:#fff;border-radius:2px;transition:all 0.25s}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    @media(max-width:768px){
+      .hamburger{display:flex}
+      .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(18,18,31,0.98);backdrop-filter:blur(16px);flex-direction:column;padding:12px 24px 20px;gap:2px;border-bottom:2px solid rgba(110,220,196,0.2)}
+      .nav-links.open{display:flex}
+      .nav-links li a{display:block;padding:12px 16px;font-size:0.9rem;border-radius:10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+      .nav-links li:last-child a{border-bottom:none}
+    }
 
     /* PAGE HEADER */
     .page-header{position:relative;z-index:1;text-align:center;padding:36px 20px 24px}
@@ -191,7 +203,7 @@
     .waiting-state p{font-size:0.9rem;color:rgba(255,255,255,0.3);font-weight:700;max-width:400px;margin:0 auto;line-height:1.6}
 
     @media(max-width:900px){
-      nav{padding:10px 16px}.nav-links{display:none}
+      nav{padding:10px 16px}
       .standings-grid{grid-template-columns:1fr}
       .wrap{padding:0 12px 60px}
       .foursome-body{grid-template-columns:1fr}
@@ -236,6 +248,9 @@
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
   </ul>
+  <button class="hamburger" onclick="toggleNav(this)" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <div class="page-header">
@@ -1306,6 +1321,24 @@ async function loadAll() {
 
 setInterval(loadAll, 90000); // refresh every 90s during play
 loadAll();
+</script>
+<script>
+function toggleNav(btn){
+  btn.classList.toggle('open');
+  document.querySelector('.nav-links').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('nav')){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  }
+});
+document.querySelectorAll('.nav-links a').forEach(function(a){
+  a.addEventListener('click',function(){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  });
+});
 </script>
 </body>
 </html>
