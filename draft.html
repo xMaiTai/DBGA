@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBGA Draft Board 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+      --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+      --card-bg:rgba(255,255,255,0.06); --radius:14px;
+      --tier-elite:#FFE156; --tier-solid:#6EDCC4; --tier-boom:#F4A7C3; --tier-wildcard:#B88FE0;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Nunito',sans-serif;background:var(--darker);color:#fff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px);background-size:60px 60px,90px 90px;background-position:0 0,30px 30px;opacity:0.04;pointer-events:none;z-index:0}
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:10px 32px;background:rgba(18,18,31,0.92);backdrop-filter:blur(16px);border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo img{height:40px;width:40px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(110,220,196,0.5))}
+    .nav-logo span{font-family:'Boogaloo',cursive;font-size:1.7rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:6px;list-style:none}
+    .nav-links a{text-decoration:none;color:rgba(255,255,255,0.65);font-weight:700;font-size:0.82rem;letter-spacing:0.5px;text-transform:uppercase;padding:7px 14px;border-radius:50px;transition:all 0.2s}
+    .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+    .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+    .page-header{position:relative;z-index:1;text-align:center;padding:40px 20px 24px}
+    .page-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2.5rem,7vw,5rem);letter-spacing:4px;background:linear-gradient(135deg,var(--yellow),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .page-header p{color:rgba(255,255,255,0.5);font-size:1rem;font-weight:700;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+    .coin-flip-banner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 32px;background:rgba(255,225,86,0.08);border-top:1px solid rgba(255,225,86,0.2);border-bottom:1px solid rgba(255,225,86,0.2);font-size:0.85rem;font-weight:800;color:rgba(255,255,255,0.7);letter-spacing:1px}
+    .coin-flip-banner .coin-result{font-family:'Boogaloo',cursive;font-size:1.1rem;padding:4px 16px;border-radius:50px}
+    .coin-result.donkeys{color:var(--donkey);background:rgba(200,169,126,0.15);border:1px solid rgba(200,169,126,0.4)}
+    .coin-result.brains{color:var(--lavender);background:rgba(184,143,224,0.15);border:1px solid rgba(184,143,224,0.4)}
+    .coin-emoji{font-size:1.3rem;animation:spin-coin 0.6s ease-out}
+    @keyframes spin-coin{0%{transform:rotateY(0deg)}100%{transform:rotateY(720deg)}}
+    .timer-bar{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:20px;padding:14px 32px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:4px}
+    .timer-display{font-family:'Share Tech Mono',monospace;font-size:3rem;color:var(--mint);text-shadow:0 0 20px rgba(110,220,196,0.5);min-width:80px;text-align:center;transition:color 0.3s}
+    .timer-display.warning{color:var(--yellow);text-shadow:0 0 20px rgba(255,225,86,0.6)}
+    .timer-display.danger{color:var(--pink);text-shadow:0 0 20px rgba(244,167,195,0.8);animation:flash 0.5s infinite}
+    @keyframes flash{0%,100%{opacity:1}50%{opacity:0.4}}
+    .timer-progress{flex:1;max-width:300px;height:8px;border-radius:4px;background:rgba(255,255,255,0.1);overflow:hidden}
+    .timer-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--mint),var(--yellow));transition:width 1s linear,background 0.3s}
+    .timer-progress-fill.warning{background:linear-gradient(90deg,var(--yellow),var(--pink))}
+    .timer-progress-fill.danger{background:var(--pink)}
+    .timer-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;padding:10px 22px;border-radius:50px;border:none;cursor:pointer;transition:all 0.2s}
+    .btn-start{background:var(--mint);color:var(--darker)} .btn-pause{background:var(--yellow);color:var(--darker)}
+    .btn-reset{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.2)}
+    .timer-btn:hover{transform:scale(1.05);filter:brightness(1.1)}
+    .pick-indicator{font-family:'Boogaloo',cursive;font-size:1.1rem;letter-spacing:1px;padding:8px 18px;border-radius:50px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);white-space:nowrap}
+    .pick-indicator span{color:var(--yellow)}
+    .tier-legend{position:relative;z-index:1;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;padding:0 24px 16px}
+    .tier-legend-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;font-weight:800;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px}
+    .tier-dot{width:8px;height:8px;border-radius:50%}
+    .draft-layout{position:relative;z-index:1;display:grid;grid-template-columns:1fr 340px;gap:20px;max-width:1400px;margin:0 auto;padding:20px 24px 60px}
+    .available-section{display:flex;flex-direction:column;gap:14px}
+    .section-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px}
+    .section-header h2{font-family:'Boogaloo',cursive;font-size:1.6rem;letter-spacing:1px;color:var(--mint)}
+    .best-available-banner{display:flex;align-items:center;gap:8px;padding:7px 16px;border-radius:50px;background:rgba(255,225,86,0.12);border:1px solid rgba(255,225,86,0.4);font-size:0.78rem;font-weight:900;color:var(--yellow);letter-spacing:1px;text-transform:uppercase;animation:pulse-glow 2s ease-in-out infinite}
+    @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 rgba(255,225,86,0)}50%{box-shadow:0 0 12px rgba(255,225,86,0.3)}}
+    .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;align-items:start}
+    .player-card{position:relative;border-radius:var(--radius);cursor:pointer;transition:transform 0.15s}
+    .player-card:hover:not(.drafted){transform:translateY(-4px)}
+    .player-card.drafted{opacity:0.35;cursor:default;pointer-events:none}
+    .player-card.best-pick .card-front{border-color:rgba(255,225,86,0.6);box-shadow:0 0 20px rgba(255,225,86,0.2)}
+    .card-front{min-height:290px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.1);background:var(--card-bg);backdrop-filter:blur(10px);display:flex;flex-direction:column;padding:14px}
+    .card-back{display:none;border-radius:var(--radius);border:1px solid rgba(110,220,196,0.25);background:linear-gradient(135deg,#1e1e38,#16162a);padding:14px;flex-direction:column;gap:7px}
+    .player-card.flipped .card-front{display:none}
+    .player-card.flipped .card-back{display:flex}
+    .card-front-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .draft-rank{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.35);letter-spacing:1px}
+    .tier-badge{font-size:0.6rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:50px}
+    .tier-Elite{background:rgba(255,225,86,0.2);color:var(--tier-elite);border:1px solid rgba(255,225,86,0.5)}
+    .tier-Solid{background:rgba(110,220,196,0.2);color:var(--tier-solid);border:1px solid rgba(110,220,196,0.5)}
+    .tier-BoomBust{background:rgba(244,167,195,0.2);color:var(--tier-boom);border:1px solid rgba(244,167,195,0.5)}
+    .tier-WildCard{background:rgba(184,143,224,0.2);color:var(--tier-wildcard);border:1px solid rgba(184,143,224,0.5)}
+    .player-name{font-family:'Boogaloo',cursive;font-size:1.3rem;letter-spacing:0.5px;line-height:1.1;margin-bottom:10px}
+    .card-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+    .stat-box{background:rgba(255,255,255,0.05);border-radius:8px;padding:7px 8px;text-align:center}
+    .stat-box .stat-val{font-family:'Share Tech Mono',monospace;font-size:1rem;font-weight:bold;color:#fff}
+    .stat-box .stat-lbl{font-size:0.58rem;font-weight:800;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+    .trend-indicator{margin-top:10px;font-size:0.7rem;font-weight:800;text-align:right}
+    .trend-improving{color:var(--mint)} .trend-declining{color:var(--pink)} .trend-stable{color:rgba(255,255,255,0.3)}
+    .scout-btn{width:100%;margin-top:14px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);cursor:pointer;text-align:center;transition:all 0.2s}
+    .scout-btn:hover{background:rgba(110,220,196,0.1);border-color:rgba(110,220,196,0.35);color:var(--mint)}
+    .scouting-title{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--mint);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid rgba(110,220,196,0.2);padding-bottom:6px}
+    .scouting-name{font-family:'Boogaloo',cursive;font-size:1.15rem;color:#fff;margin-bottom:2px}
+    .scouting-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .scouting-stat{background:rgba(255,255,255,0.05);border-radius:7px;padding:6px 8px;text-align:center}
+    .scouting-stat .sv{font-family:'Share Tech Mono',monospace;font-size:0.92rem;font-weight:bold;color:#fff}
+    .scouting-stat .sl{font-size:0.56rem;font-weight:800;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+    .trend-row{display:flex;justify-content:space-between;align-items:center;font-size:0.68rem;padding:4px 0}
+    .trend-row .lbl{color:rgba(255,255,255,0.38);font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+    .trend-row .val{font-family:'Share Tech Mono',monospace;font-weight:800;font-size:0.75rem}
+    .analyst-quote{background:rgba(255,255,255,0.05);border-radius:8px;padding:8px 10px;font-size:0.67rem;line-height:1.6;color:rgba(255,255,255,0.75);border-left:2px solid var(--lavender);font-style:italic}
+    .draft-btn{width:100%;padding:8px;background:linear-gradient(135deg,var(--mint),var(--sky));border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer;transition:all 0.2s;margin-top:10px}
+    .draft-btn:hover{filter:brightness(1.1);transform:scale(1.02)}
+    .flip-back-hint{margin-top:6px;font-size:0.62rem;color:rgba(255,255,255,0.25);font-weight:700;letter-spacing:0.5px;cursor:pointer;text-align:center}
+    .sidebar{display:flex;flex-direction:column;gap:16px}
+    .team-card{background:var(--card-bg);border-radius:var(--radius);padding:18px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08)}
+    .team-card.donkeys{border-top:3px solid var(--donkey)} .team-card.brains{border-top:3px solid var(--lavender)}
+    .team-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .team-name{font-family:'Boogaloo',cursive;font-size:1.4rem;letter-spacing:1px}
+    .team-card.donkeys .team-name{color:var(--donkey)} .team-card.brains .team-name{color:var(--lavender)}
+    .draft-grade{font-family:'Share Tech Mono',monospace;font-size:1.6rem;font-weight:bold;padding:4px 12px;border-radius:8px;background:rgba(255,255,255,0.08)}
+    .team-proj{font-size:0.72rem;font-weight:800;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+    .team-picks{display:flex;flex-direction:column;gap:6px;min-height:40px}
+    .team-pick-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);animation:slide-in 0.3s ease}
+    @keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    .pick-num{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.3);width:20px}
+    .pick-name{font-weight:800;font-size:0.82rem;flex:1}
+    .pick-hcp{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.4)}
+    .empty-slot{padding:7px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,0.1);font-size:0.72rem;color:rgba(255,255,255,0.2);font-weight:700;letter-spacing:1px;text-align:center}
+    .team-extra-badge{display:inline-block;margin-left:6px;font-size:0.6rem;font-weight:900;padding:2px 8px;border-radius:50px;background:rgba(255,225,86,0.15);color:var(--yellow);border:1px solid rgba(255,225,86,0.4);vertical-align:middle;letter-spacing:1px}
+    .draft-log-card{background:var(--card-bg);border-radius:var(--radius);padding:18px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-top:3px solid var(--sky)}
+    .draft-log-card h3{font-family:'Boogaloo',cursive;font-size:1.2rem;color:var(--sky);margin-bottom:12px;letter-spacing:1px}
+    .log-entries{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto}
+    .log-entry{font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.6);padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.03)}
+    .log-entry .pick-label{color:var(--yellow);font-family:'Share Tech Mono',monospace}
+    .log-entry .team-label-donkeys{color:var(--donkey)} .log-entry .team-label-brains{color:var(--lavender)}
+    .reset-draft-btn{width:100%;margin-top:12px;padding:10px;background:rgba(244,167,195,0.1);border:1px solid rgba(244,167,195,0.3);border-radius:8px;color:var(--pink);font-family:'Nunito',sans-serif;font-weight:900;font-size:0.78rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+    .reset-draft-btn:hover{background:rgba(244,167,195,0.2)}
+    .confirm-modal{display:none;position:fixed;inset:0;z-index:450;background:rgba(12,12,24,0.88);backdrop-filter:blur(10px);align-items:center;justify-content:center}
+    .confirm-modal.show{display:flex}
+    .confirm-modal-inner{background:#1a1a30;border-radius:20px;padding:32px 28px;max-width:380px;width:90%;text-align:center;border:1px solid rgba(255,225,86,0.25);animation:pop-in 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+    .confirm-modal-inner .cm-label{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--yellow);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+    .confirm-modal-inner .cm-team{font-size:0.8rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px}
+    .confirm-modal-inner .cm-player{font-family:'Boogaloo',cursive;font-size:2.6rem;color:#fff;line-height:1;margin-bottom:6px}
+    .confirm-modal-inner .cm-meta{font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.45);margin-bottom:24px;line-height:1.6}
+    .confirm-actions{display:flex;gap:10px}
+    .btn-confirm-yes{flex:1;padding:11px;background:linear-gradient(135deg,var(--mint),var(--sky));border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer;transition:all 0.2s}
+    .btn-confirm-yes:hover{filter:brightness(1.1);transform:scale(1.02)}
+    .btn-confirm-no{flex:1;padding:11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);cursor:pointer;transition:all 0.2s}
+    .btn-confirm-no:hover{background:rgba(244,167,195,0.12);border-color:rgba(244,167,195,0.3);color:var(--pink)}
+    .draft-complete{display:none;position:fixed;inset:0;z-index:500;background:rgba(18,18,31,0.95);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;overflow-y:auto}
+    .draft-complete.show{display:flex}
+    .draft-complete h2{font-family:'Boogaloo',cursive;font-size:4rem;background:linear-gradient(135deg,var(--yellow),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+    .draft-complete p{color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:700;margin-bottom:30px}
+    .complete-teams{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:640px;width:100%}
+    .complete-team h3{font-family:'Boogaloo',cursive;font-size:1.8rem;margin-bottom:10px}
+    .complete-team.donkeys h3{color:var(--donkey)} .complete-team.brains h3{color:var(--lavender)}
+    .complete-team ul{list-style:none;display:flex;flex-direction:column;gap:4px}
+    .complete-team li{font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.8)}
+    .close-complete{margin-top:30px;padding:14px 36px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--mint),var(--lavender));font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer;transition:all 0.2s}
+    .close-complete:hover{transform:scale(1.05)}
+    .pick-modal{display:none;position:fixed;inset:0;z-index:400;background:rgba(18,18,31,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center}
+    .pick-modal.show{display:flex}
+    .pick-modal-inner{background:#1e1e38;border-radius:20px;padding:32px;max-width:420px;width:90%;text-align:center;border:1px solid rgba(110,220,196,0.3);animation:pop-in 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+    @keyframes pop-in{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}
+    .pick-modal-inner h3{font-family:'Boogaloo',cursive;font-size:2rem;color:var(--yellow);margin-bottom:6px}
+    .pick-modal-inner .modal-team{font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:20px;letter-spacing:1px;text-transform:uppercase}
+    .pick-modal-inner .modal-player{font-family:'Boogaloo',cursive;font-size:2.5rem;color:#fff;margin-bottom:4px}
+    .pick-modal-inner .modal-stat{font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.5)}
+    .modal-confirm{margin-top:24px;padding:12px 32px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--mint),var(--sky));font-family:'Nunito',sans-serif;font-weight:900;font-size:0.9rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer}
+    .confetti-piece{position:fixed;top:-10px;border-radius:3px;animation:confetti-fall linear forwards;pointer-events:none;z-index:600}
+    @keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+    /* ── CAPTAIN SELECTION OVERLAY ── */
+    .captain-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(10,10,22,0.97);flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 20px 60px}
+    .captain-overlay.show{display:flex}
+    .captain-overlay h2{font-family:'Boogaloo',cursive;font-size:3rem;letter-spacing:3px;background:linear-gradient(135deg,var(--yellow),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;text-align:center}
+    .captain-overlay .cap-sub{font-size:0.85rem;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;text-align:center}
+    .captain-teams{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:880px;width:100%}
+    .captain-team-card{background:var(--card-bg);border-radius:var(--radius);padding:22px;border:1px solid rgba(255,255,255,0.08)}
+    .captain-team-card.donkeys{border-top:3px solid var(--donkey)}
+    .captain-team-card.brains{border-top:3px solid var(--lavender)}
+    .captain-team-title{font-family:'Boogaloo',cursive;font-size:1.6rem;letter-spacing:1px;margin-bottom:4px}
+    .captain-team-card.donkeys .captain-team-title{color:var(--donkey)}
+    .captain-team-card.brains .captain-team-title{color:var(--lavender)}
+    .captain-status{font-size:0.72rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.3);margin-bottom:14px}
+    .captain-status.selected{color:var(--yellow)}
+    .captain-player-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .cap-player-btn{padding:10px 12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;transition:all 0.2s;text-align:left}
+    .cap-player-btn:hover:not(.taken){transform:translateY(-2px);background:rgba(255,255,255,0.07)}
+    .cap-player-btn.taken{opacity:0.3;cursor:default;pointer-events:none}
+    .cap-player-btn.selected-captain{border-color:var(--yellow);background:rgba(255,225,86,0.12)}
+    .cap-btn-name{font-weight:900;font-size:0.82rem;color:#fff}
+    .cap-btn-hcp{font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.35);margin-top:2px}
+    .cap-btn-tier{font-size:0.55rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+    .captain-confirm-btn{margin-top:28px;padding:14px 48px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--yellow),var(--donkey));font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer;transition:all 0.2s}
+    .captain-confirm-btn:hover:not(:disabled){transform:scale(1.05);filter:brightness(1.1)}
+    .captain-confirm-btn:disabled{opacity:0.3;cursor:not-allowed}
+    @media(max-width:640px){.captain-teams{grid-template-columns:1fr}}
+    @media(max-width:900px){.draft-layout{grid-template-columns:1fr}.sidebar{order:-1}.complete-teams{grid-template-columns:1fr}nav{padding:10px 16px}.nav-links{display:none}}
+    ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+    /* ── START DRAFT BANNER ── */
+    .start-draft-banner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;padding:20px 32px;background:rgba(110,220,196,0.06);border-bottom:1px solid rgba(110,220,196,0.15)}
+    .start-draft-banner.hidden{display:none}
+    .btn-start-draft{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;letter-spacing:2px;text-transform:uppercase;padding:14px 40px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--mint),var(--sky));color:var(--darker);cursor:pointer;transition:all 0.2s;box-shadow:0 0 24px rgba(110,220,196,0.25)}
+    .btn-start-draft:hover{transform:scale(1.05);filter:brightness(1.1);box-shadow:0 0 32px rgba(110,220,196,0.4)}
+    /* ── PASSCODE MODAL ── */
+    .passcode-modal{display:none;position:fixed;inset:0;z-index:700;background:rgba(12,12,24,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center}
+    .passcode-modal.show{display:flex}
+    .passcode-inner{background:#1a1a30;border-radius:20px;padding:36px 32px;max-width:360px;width:90%;text-align:center;border:1px solid rgba(110,220,196,0.3);animation:pop-in 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+    .passcode-inner .pc-icon{font-size:2.2rem;margin-bottom:10px}
+    .passcode-inner h3{font-family:'Boogaloo',cursive;font-size:1.8rem;color:var(--mint);margin-bottom:6px;letter-spacing:1px}
+    .passcode-inner p{font-size:0.8rem;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:1px;margin-bottom:22px;text-transform:uppercase}
+    .passcode-input{width:100%;padding:12px 16px;background:rgba(255,255,255,0.07);border:2px solid rgba(110,220,196,0.25);border-radius:10px;font-family:'Share Tech Mono',monospace;font-size:1.6rem;color:#fff;text-align:center;letter-spacing:8px;outline:none;transition:border-color 0.2s}
+    .passcode-input:focus{border-color:rgba(110,220,196,0.6)}
+    .passcode-input.error{border-color:rgba(244,167,195,0.7);animation:shake 0.35s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+    .passcode-error{font-size:0.75rem;font-weight:800;color:var(--pink);letter-spacing:1px;margin-top:8px;min-height:18px;text-transform:uppercase}
+    .passcode-actions{display:flex;gap:10px;margin-top:18px}
+    .btn-pc-submit{flex:1;padding:11px;background:linear-gradient(135deg,var(--mint),var(--sky));border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:var(--darker);cursor:pointer;transition:all 0.2s}
+    .btn-pc-submit:hover{filter:brightness(1.1);transform:scale(1.02)}
+    .btn-pc-cancel{flex:1;padding:11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);border-radius:10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);cursor:pointer;transition:all 0.2s}
+    .btn-pc-cancel:hover{background:rgba(244,167,195,0.12);border-color:rgba(244,167,195,0.3);color:var(--pink)}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html"><img src="assets/logo.png" alt="DBGA Logo" /><span>DBGA</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="draft.html" class="active">Draft Board</a></li>
+    <li><a href="courses.html">Courses</a></li>
+    <li><a href="airbnb.html">The House</a></li>
+  </ul>
+</nav>
+<div class="page-header">
+  <h1>DBGA Draft Board</h1>
+  <p>Snake Draft &middot; 15 Players &middot; 2026 Season</p>
+</div>
+<div class="coin-flip-banner" id="coinFlipBanner">
+  <span>Coin flip:</span>
+  <span class="coin-result" id="coinResultBadge">&mdash;</span>
+  <span id="coinResultText">gets the extra player (8 picks)</span>
+</div>
+<div class="start-draft-banner" id="startDraftBanner">
+  <button class="btn-start-draft" onclick="beginDraft()">&#127919; Start Draft</button>
+</div>
+<div class="timer-bar" id="timerBar" style="display:none">
+  <div class="pick-indicator">Pick <span id="currentPickNum">1</span> of 15 &nbsp;&middot;&nbsp; <span id="onTheClockTeam">&#129487; The Donkeys</span> on the clock</div>
+  <div class="timer-display" id="timerDisplay">60</div>
+  <div class="timer-progress"><div class="timer-progress-fill" id="timerFill" style="width:100%"></div></div>
+  <button class="timer-btn btn-start" id="timerStartBtn" onclick="startTimer()">&#9654; Start</button>
+  <button class="timer-btn btn-pause" id="timerPauseBtn" onclick="pauseTimer()" style="display:none">&#9646;&#9646; Pause</button>
+  <button class="timer-btn btn-reset" onclick="resetTimer()">&#8635; Reset</button>
+</div>
+<div class="tier-legend">
+  <div class="tier-legend-item"><div class="tier-dot" style="background:var(--tier-elite)"></div>Elite (Top 4)</div>
+  <div class="tier-legend-item"><div class="tier-dot" style="background:var(--tier-solid)"></div>Solid</div>
+  <div class="tier-legend-item"><div class="tier-dot" style="background:var(--tier-boom)"></div>Boom or Bust</div>
+  <div class="tier-legend-item"><div class="tier-dot" style="background:var(--tier-wildcard)"></div>Wild Card (Bottom 4)</div>
+</div>
+<div class="draft-layout">
+  <div class="available-section">
+    <div class="section-header">
+      <h2>Available Players</h2>
+      <div class="best-available-banner">&#11088; Best Available: <span id="bestAvailName">&mdash;</span></div>
+    </div>
+    <div class="players-grid" id="playersGrid"></div>
+  </div>
+  <div class="sidebar">
+    <div class="team-card donkeys">
+      <div class="team-header">
+        <div class="team-name">&#129487; The Donkeys <span id="donkeysExtraBadge"></span></div>
+        <div class="draft-grade" id="donkeysGrade" style="color:var(--donkey)">&ndash;</div>
+      </div>
+      <div class="team-proj">Projected Score: <span id="donkeysProj">&mdash;</span></div>
+      <div class="team-picks" id="donkeysPicks"></div>
+    </div>
+    <div class="team-card brains">
+      <div class="team-header">
+        <div class="team-name">&#129504; The Brains <span id="brainsExtraBadge"></span></div>
+        <div class="draft-grade" id="brainsGrade" style="color:var(--lavender)">&ndash;</div>
+      </div>
+      <div class="team-proj">Projected Score: <span id="brainsProj">&mdash;</span></div>
+      <div class="team-picks" id="brainsPicks"></div>
+    </div>
+    <div class="draft-log-card">
+      <h3>&#128203; Draft Log</h3>
+      <div class="log-entries" id="draftLog">
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.25);text-align:center;padding:10px;">No picks yet &mdash; let's get started!</div>
+      </div>
+      <button class="reset-draft-btn" onclick="resetDraft()">&#128260; Reset Draft</button>
+    </div>
+  </div>
+</div>
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-modal-inner">
+    <div class="cm-label">Confirm Pick</div>
+    <div class="cm-team" id="cmTeam"></div>
+    <div class="cm-player" id="cmPlayer"></div>
+    <div class="cm-meta" id="cmMeta"></div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-no" onclick="cancelDraft()">&#10005; Cancel</button>
+      <button class="btn-confirm-yes" onclick="confirmDraft()">&#10003; Draft 'em</button>
+    </div>
+  </div>
+</div>
+<div class="pick-modal" id="pickModal">
+  <div class="pick-modal-inner">
+    <h3 id="modalPickNum">Pick #1</h3>
+    <div class="modal-team" id="modalTeam"></div>
+    <div class="modal-player" id="modalPlayerName"></div>
+    <div class="modal-stat" id="modalStat"></div>
+    <button class="modal-confirm" onclick="closeModal()">&#10003; Confirmed</button>
+  </div>
+</div>
+<!-- CAPTAIN SELECTION OVERLAY -->
+<div class="captain-overlay" id="captainOverlay">
+  <h2>&#128081; Captain Selection</h2>
+  <div class="cap-sub">Each team picks their captain before the snake draft begins</div>
+  <div class="captain-teams">
+    <div class="captain-team-card donkeys">
+      <div class="captain-team-title">&#129487; The Donkeys</div>
+      <div class="captain-status" id="donkeyCapStatus">No captain selected</div>
+      <div class="captain-player-grid" id="donkeyCapGrid"></div>
+    </div>
+    <div class="captain-team-card brains">
+      <div class="captain-team-title">&#129504; The Brains</div>
+      <div class="captain-status" id="brainCapStatus">No captain selected</div>
+      <div class="captain-player-grid" id="brainCapGrid"></div>
+    </div>
+  </div>
+  <button class="captain-confirm-btn" id="captainConfirmBtn" disabled onclick="confirmCaptains()">Lock In Captains &amp; Start Draft</button>
+</div>
+<div class="draft-complete" id="draftComplete">
+  <h2>&#127942; Draft Complete!</h2>
+  <p>May the best donkey brain win. Let's get on the course.</p>
+  <div class="complete-teams">
+    <div class="complete-team donkeys"><h3>&#129487; The Donkeys</h3><ul id="completeDonkeys"></ul></div>
+    <div class="complete-team brains"><h3>&#129504; The Brains</h3><ul id="completeBrains"></ul></div>
+  </div>
+  <button class="close-complete" onclick="document.getElementById('draftComplete').classList.remove('show')">Close</button>
+</div>
+<!-- PASSCODE MODAL -->
+<div class="passcode-modal" id="passcodeModal">
+  <div class="passcode-inner">
+    <div class="pc-icon">&#128272;</div>
+    <h3>Commissioner Access</h3>
+    <p>Enter passcode to control the draft</p>
+    <input class="passcode-input" id="passcodeInput" type="password" maxlength="10" placeholder="••••" autocomplete="off" />
+    <div class="passcode-error" id="passcodeError"></div>
+    <div class="passcode-actions">
+      <button class="btn-pc-cancel" onclick="closePasscodeModal()">Cancel</button>
+      <button class="btn-pc-submit" onclick="submitPasscode()">Unlock</button>
+    </div>
+  </div>
+</div>
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec';
+const COURSES = {
+  'Twisted Dunes':        { slope:136, rating:71.2 },
+  'Prestwick CC':         { slope:138, rating:72.2 },
+  'TPC Myrtle':           { slope:143, rating:70.9 },
+  'Triggs Memorial':      { slope:128, rating:71.1 },
+  'Crystal Lake':         { slope:117, rating:66.2 },
+  'Connecticut National': { slope:121, rating:68.7 },
+};
+const HISTORY = [
+  { name:'Brendan Barry',    year:2025, course:'TPC Myrtle',           gross:111 },
+  { name:'Brendan Barry',    year:2025, course:'Prestwick CC',         gross:111 },
+  { name:'Brendan Barry',    year:2024, course:'Twisted Dunes',        gross:115 },
+  { name:'Brendan Barry',    year:2024, course:'Twisted Dunes',        gross:112 },
+  { name:'Brendan Barry',    year:2023, course:'Triggs Memorial',      gross:114 },
+  { name:'Brendan Barry',    year:2023, course:'Crystal Lake',         gross:92  },
+  { name:'Brendan Barry',    year:2023, course:'Connecticut National', gross:105 },
+  { name:'Carson Smith',     year:2025, course:'TPC Myrtle',           gross:94  },
+  { name:'Carson Smith',     year:2025, course:'Prestwick CC',         gross:88  },
+  { name:'Carson Smith',     year:2024, course:'Twisted Dunes',        gross:98  },
+  { name:'Carson Smith',     year:2024, course:'Twisted Dunes',        gross:102 },
+  { name:'Carson Smith',     year:2023, course:'Triggs Memorial',      gross:97  },
+  { name:'Carson Smith',     year:2023, course:'Crystal Lake',         gross:100 },
+  { name:'Carson Smith',     year:2023, course:'Connecticut National', gross:104 },
+  { name:'Devan Dhand',      year:2025, course:'TPC Myrtle',           gross:100 },
+  { name:'Devan Dhand',      year:2025, course:'Prestwick CC',         gross:107 },
+  { name:'Devan Dhand',      year:2024, course:'Twisted Dunes',        gross:115 },
+  { name:'Devan Dhand',      year:2024, course:'Twisted Dunes',        gross:112 },
+  { name:'Devan Dhand',      year:2023, course:'Triggs Memorial',      gross:94  },
+  { name:'Devan Dhand',      year:2023, course:'Crystal Lake',         gross:105 },
+  { name:'Devan Dhand',      year:2023, course:'Connecticut National', gross:101 },
+  { name:'Ed Weaver',        year:2024, course:'Twisted Dunes',        gross:100 },
+  { name:'Ed Weaver',        year:2024, course:'Twisted Dunes',        gross:102 },
+  { name:'Ed Weaver',        year:2023, course:'Triggs Memorial',      gross:100 },
+  { name:'Ed Weaver',        year:2023, course:'Crystal Lake',         gross:93  },
+  { name:'Ed Weaver',        year:2023, course:'Connecticut National', gross:96  },
+  { name:'Jack Lyons',       year:2025, course:'TPC Myrtle',           gross:90  },
+  { name:'Jack Lyons',       year:2025, course:'Prestwick CC',         gross:93  },
+  { name:'Jack Lyons',       year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Jack Lyons',       year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Jack Lyons',       year:2023, course:'Triggs Memorial',      gross:85  },
+  { name:'Jack Lyons',       year:2023, course:'Crystal Lake',         gross:87  },
+  { name:'Jack Lyons',       year:2023, course:'Connecticut National', gross:80  },
+  { name:'Jason Sulmonetti', year:2024, course:'Twisted Dunes',        gross:105 },
+  { name:'Jason Sulmonetti', year:2024, course:'Twisted Dunes',        gross:117 },
+  { name:'Jason Sulmonetti', year:2023, course:'Triggs Memorial',      gross:108 },
+  { name:'Jason Sulmonetti', year:2023, course:'Crystal Lake',         gross:119 },
+  { name:'Jason Sulmonetti', year:2023, course:'Connecticut National', gross:114 },
+  { name:'Josh McLeman',     year:2025, course:'TPC Myrtle',           gross:99  },
+  { name:'Josh McLeman',     year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Josh McLeman',     year:2024, course:'Twisted Dunes',        gross:91  },
+  { name:'Josh McLeman',     year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Josh McLeman',     year:2023, course:'Triggs Memorial',      gross:93  },
+  { name:'Josh McLeman',     year:2023, course:'Crystal Lake',         gross:95  },
+  { name:'Josh McLeman',     year:2023, course:'Connecticut National', gross:95  },
+  { name:'Justin Estrella',  year:2025, course:'TPC Myrtle',           gross:110 },
+  { name:'Justin Estrella',  year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Justin Estrella',  year:2024, course:'Twisted Dunes',        gross:100 },
+  { name:'Justin Estrella',  year:2024, course:'Twisted Dunes',        gross:98  },
+  { name:'Justin Estrella',  year:2023, course:'Triggs Memorial',      gross:93  },
+  { name:'Justin Estrella',  year:2023, course:'Crystal Lake',         gross:100 },
+  { name:'Justin Estrella',  year:2023, course:'Connecticut National', gross:105 },
+  { name:'Mitchell Rotondi', year:2025, course:'TPC Myrtle',           gross:109 },
+  { name:'Mitchell Rotondi', year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Mitchell Rotondi', year:2024, course:'Twisted Dunes',        gross:116 },
+  { name:'Mitchell Rotondi', year:2024, course:'Twisted Dunes',        gross:111 },
+  { name:'Mitchell Rotondi', year:2023, course:'Triggs Memorial',      gross:98  },
+  { name:'Mitchell Rotondi', year:2023, course:'Crystal Lake',         gross:105 },
+  { name:'Mitchell Rotondi', year:2023, course:'Connecticut National', gross:102 },
+  { name:'Matt DiPano',      year:2025, course:'Prestwick CC',         gross:95  },
+  { name:'Matt DiPano',      year:2025, course:'TPC Myrtle',           gross:104 },
+  { name:'Matt DiPano',      year:2024, course:'Twisted Dunes',        gross:107 },
+  { name:'Matt DiPano',      year:2024, course:'Twisted Dunes',        gross:113 },
+  { name:'Matt DiPano',      year:2023, course:'Triggs Memorial',      gross:110 },
+  { name:'Matt DiPano',      year:2023, course:'Crystal Lake',         gross:112 },
+  { name:'Matt DiPano',      year:2023, course:'Connecticut National', gross:107 },
+  { name:'Trevor Ross',      year:2025, course:'TPC Myrtle',           gross:135 },
+  { name:'Trevor Ross',      year:2025, course:'Prestwick CC',         gross:116 },
+  { name:'Trevor Ross',      year:2023, course:'Triggs Memorial',      gross:115 },
+  { name:'Trevor Ross',      year:2023, course:'Crystal Lake',         gross:148 },
+  { name:'Trevor Ross',      year:2023, course:'Connecticut National', gross:123 },
+  { name:'David Resmini',    year:2025, course:'TPC Myrtle',           gross:111 },
+  { name:'David Resmini',    year:2025, course:'Prestwick CC',         gross:107 },
+  { name:'Matt Holm',        year:2025, course:'TPC Myrtle',           gross:92  },
+  { name:'Matt Holm',        year:2025, course:'Prestwick CC',         gross:93  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes',        gross:97  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes',        gross:94  },
+  { name:'Matt Holm',        year:2023, course:'Triggs Memorial',      gross:87  },
+  { name:'Matt Holm',        year:2023, course:'Crystal Lake',         gross:93  },
+  { name:'Matt Holm',        year:2023, course:'Connecticut National', gross:93  },
+];
+function diff(gross, course) { const c=COURSES[course]; if(!c) return null; return ((gross-c.rating)*113)/c.slope; }
+function calcHcp(rounds) { if(!rounds.length) return null; const diffs=rounds.map(r=>diff(r.gross,r.course)).filter(Boolean).sort((a,b)=>a-b); const n=Math.max(1,Math.floor(diffs.length*0.4)); return Math.round(diffs.slice(0,n).reduce((s,d)=>s+d,0)/n*10)/10; }
+function avgGross(rounds) { if(!rounds.length) return null; return Math.round(rounds.reduce((s,r)=>s+r.gross,0)/rounds.length*10)/10; }
+function stdev(rounds) { if(rounds.length<2) return null; const avg=rounds.reduce((s,r)=>s+r.gross,0)/rounds.length; return Math.round(Math.sqrt(rounds.reduce((s,r)=>s+Math.pow(r.gross-avg,2),0)/(rounds.length-1))*10)/10; }
+function bestRound(rounds) { return rounds.length?Math.min(...rounds.map(r=>r.gross)):null; }
+function worstRound(rounds) { return rounds.length?Math.max(...rounds.map(r=>r.gross)):null; }
+function trend(rounds) { const yrs=[...new Set(rounds.map(r=>r.year))].sort((a,b)=>b-a); if(yrs.length<2) return 'stable'; const ra=avgGross(rounds.filter(r=>r.year===yrs[0])); const pa=avgGross(rounds.filter(r=>r.year!==yrs[0])); if(!ra||!pa) return 'stable'; return ra-pa<-3?'improving':ra-pa>3?'declining':'stable'; }
+function projScore(rounds, hcp) { if(!rounds.length) return Math.round(72+hcp*1.1); const yrs=[...new Set(rounds.map(r=>r.year))].sort((a,b)=>b-a); let ws=0,tw=0; yrs.forEach((yr,i)=>{ const w=Math.pow(0.7,i); const a=avgGross(rounds.filter(r=>r.year===yr)); if(a){ws+=a*w;tw+=w;} }); return tw>0?Math.round(ws/tw):Math.round(72+hcp*1.1); }
+
+const ANALYST = {
+  'Jack Lyons':        '"7 rounds played across 3 trips. Avg 88.7, best 80. Shot 80-85-87 in 2023, 93-93 in 2024, 90-93 in 2025. Trending slightly upward from his 2023 peak, but 2025 numbers are still elite. Lowest HCP in the field. Projects to 90."',
+  'Matt Holm':         '"7 rounds played across 3 trips. Avg 92.7, best 87. Scored 87-93-93 in 2023, 94-97 in 2024, 92-93 in 2025. Remarkably stable across all three years and six courses (sigma=3). Projects to 93."',
+  'Carson Smith':      '"7 rounds played. Avg 97.6, best 88. The 88 at Prestwick remains the lowest recorded DBGA score. 2025 avg (91) was his best year. Shows improving trend year over year. Highest upside in the field. Projects to 96."',
+  'Josh McLeman':      '"7 rounds played. Avg 96, best 91. Scored 93-95-95 in 2023, 91-93 in 2024, 99-106 in 2025. That 2025 slip is notable -- best year was 2024, recent trend is declining. Floor is solid, ceiling uncertain. Projects to 97."',
+  'Ed Weaver':         '"5 rounds played across 2 trips. Avg 98.2, best 93. Scored 93-96-100 in 2023, 100-102 in 2024. Low variance (sigma=3.6) and consistent across courses. No 2025 data. Projects to 99 on weighted recency."',
+  'Justin Estrella':   '"7 rounds played. Avg 101.7, best 93. Scored 93-100-105 in 2023, 98-100 in 2024, 106-110 in 2025. Each year is worse than the last -- a clear three-year declining trend. Projects to 103 on weighted recency."',
+  'Matt DiPano':       '"7 rounds played. Avg 106.9, best 95. Scored 107-110-112 in 2023, 107-113 in 2024, then 95-104 in 2025 -- a dramatic 10-stroke avg improvement. The improving trend is real and well-supported across all three trips. Projects to 105."',
+  'Devan Dhand':       '"7 rounds played. Avg 104.9, best 94. Scored 94-101-105 in 2023, 112-115 in 2024, 100-107 in 2025. The 2024 blowup was an outlier -- 2023 and 2025 both look better. Trend shows as stable. Projects to 106."',
+  'Mitchell Rotondi':  '"7 rounds played. Avg 106.7, best 98. Scored 98-102-105 in 2023, 111-116 in 2024, 106-109 in 2025. 2024 was the worst year by far; 2025 looks like a bounce-back. Projects to 107."',
+  'Jason Sulmonetti':  '"5 rounds played across 2 trips. Avg 112.6, best 105. Scored 108-114-119 in 2023, 105-117 in 2024. Variance is huge in both years (sigma=6.1). The range within each trip is double digits -- classic Boom or Bust. Projects to 113."',
+  'Brendan Barry':     '"7 rounds played. Avg 108.6, best 92. The 92 at Crystal Lake in 2023 is a massive outlier -- remove it and he barely breaks 110 every round. In 2024 and 2025 he shot 111-115 with zero variation. Projects to 109."',
+  'David Resmini':     '"2 rounds played (2025 only). Avg 109, best 107. Scored 107-111 across two courses. Solid debut but no prior data for trend analysis. Projects to 109."',
+  'Trevor Ross':       '"5 rounds played across 2 trips. Avg 127.4, best 115. Scored 115-123-148 in 2023, 116-135 in 2025. That 148 at Crystal Lake is the highest single-round score in DBGA history. Every year features a round over 120. Projects to 127."',
+  'Justin Roberts':    '"0 historical rounds. Handicap index: 15.5. Projection is entirely HCP-derived -- no variance data available."',
+  'Corey DaSilva':     '"0 historical rounds. Handicap index: 35 (manually assigned). Projection is HCP-derived. No variance, trend, or course data available."',
+};
+
+const ROSTER_DEFS = [
+  { name:'Jack Lyons',        hcpOverride:null },
+  { name:'Carson Smith',      hcpOverride:null },
+  { name:'Josh McLeman',      hcpOverride:null },
+  { name:'Matt Holm',         hcpOverride:null },
+  { name:'Ed Weaver',         hcpOverride:null },
+  { name:'Justin Roberts',    hcpOverride:15.5 },
+  { name:'Justin Estrella',   hcpOverride:null },
+  { name:'Devan Dhand',       hcpOverride:null },
+  { name:'Matt DiPano',       hcpOverride:null },
+  { name:'David Resmini',     hcpOverride:null },
+  { name:'Mitchell Rotondi',  hcpOverride:null },
+  { name:'Jason Sulmonetti',  hcpOverride:null },
+  { name:'Brendan Barry',     hcpOverride:null },
+  { name:'Trevor Ross',       hcpOverride:null },
+  { name:'Corey DaSilva',     hcpOverride:35   },
+];
+
+const rawPlayers = ROSTER_DEFS.map(def => {
+  const rounds=HISTORY.filter(r=>r.name===def.name);
+  const hcp=def.hcpOverride??calcHcp(rounds);
+  return { name:def.name, rounds, hcp, avg:avgGross(rounds), best:bestRound(rounds), worst:worstRound(rounds), sd:stdev(rounds), proj:projScore(rounds,hcp??20), trend:trend(rounds), analystNote:ANALYST[def.name]||'"No data."', drafted:false, team:null, captain:false };
+}).sort((a,b)=>a.proj-b.proj).map((p,i)=>({...p,draftRank:i+1}));
+
+const TOTAL=rawPlayers.length;
+rawPlayers.forEach(p=>{
+  if(p.draftRank<=4) p.tier='Elite';
+  else if(p.draftRank>TOTAL-4) p.tier='WildCard';
+  else p.tier=(p.sd!==null&&p.sd>7)?'BoomBust':'Solid';
+});
+const PLAYERS=rawPlayers;
+const TIER_COLORS={Elite:'var(--tier-elite)',Solid:'var(--tier-solid)',BoomBust:'var(--tier-boom)',WildCard:'var(--tier-wildcard)'};
+
+const TEAM_NAMES={donkeys:'&#129487; The Donkeys',brains:'&#129504; The Brains'};
+const TEAM_NAMES_PLAIN={donkeys:'The Donkeys',brains:'The Brains'};
+function buildDraftOrder(extraTeam){const base=['donkeys','brains','brains','donkeys','donkeys','brains','brains','donkeys','donkeys','brains','brains','donkeys','donkeys','brains','donkeys'];base[14]=extraTeam;return base.map((team,i)=>({pick:i+1,team}));}
+
+// ─── CAPTAIN STATE + SESSION ────────────────────────────────────────────
+let captains = { donkeys: null, brains: null };
+const TIER_COLORS_CAP = { Elite:'var(--tier-elite)', Solid:'var(--tier-solid)', BoomBust:'var(--tier-boom)', WildCard:'var(--tier-wildcard)' };
+
+let coinWinner, DRAFT_ORDER, currentPick, draftLog, pendingDraftName;
+try {
+  const saved = JSON.parse(localStorage.getItem('dbga_draft_state')||'null');
+  if (saved && saved.coinWinner) {
+    coinWinner = saved.coinWinner;
+    currentPick = saved.currentPick||0;
+    draftLog = saved.draftLog||[];
+    // Restore player state
+    (saved.picks||[]).forEach(sp=>{
+      const p=PLAYERS.find(pl=>pl.name===sp.name);
+      if(p){p.drafted=sp.drafted;p.team=sp.team;p.captain=sp.captain||false;}
+    });
+    // Restore captains
+    captains = saved.captains||{donkeys:null,brains:null};
+  } else {
+    coinWinner = Math.random()<0.5?'donkeys':'brains';
+    currentPick = 0; draftLog = []; pendingDraftName = null;
+  }
+} catch(e) {
+  coinWinner = Math.random()<0.5?'donkeys':'brains';
+  currentPick = 0; draftLog = []; pendingDraftName = null;
+}
+pendingDraftName = null;
+
+let TEAM_COUNTS={donkeys:coinWinner==='donkeys'?8:7,brains:coinWinner==='brains'?8:7};
+DRAFT_ORDER=buildDraftOrder(coinWinner);
+document.getElementById('coinResultBadge').textContent=TEAM_NAMES_PLAIN[coinWinner];
+document.getElementById('coinResultBadge').className='coin-result '+coinWinner;
+document.getElementById('coinResultText').textContent='gets the extra player (8 picks)';
+try{document.getElementById(coinWinner+'ExtraBadge').outerHTML='<span class="team-extra-badge" id="'+coinWinner+'ExtraBadge">+8 picks</span>';}catch(e){}
+
+
+
+// ─── TIMER ────────────────────────────────────────────────────────────────
+const PICK_TIME=60;
+let timerVal=PICK_TIME,timerInterval=null,timerRunning=false;
+// ─── PASSCODE GATE ────────────────────────────────────────────────────────
+const DRAFT_PASSCODE = '1997';
+let draftUnlocked = false;
+let _passcodeCallback = null;
+function requirePasscode(callback) {
+  if (draftUnlocked) { callback(); return; }
+  _passcodeCallback = callback;
+  const modal = document.getElementById('passcodeModal');
+  const input = document.getElementById('passcodeInput');
+  document.getElementById('passcodeError').textContent = '';
+  input.value = '';
+  input.classList.remove('error');
+  modal.classList.add('show');
+  setTimeout(() => input.focus(), 100);
+}
+function submitPasscode() {
+  const input = document.getElementById('passcodeInput');
+  if (input.value === DRAFT_PASSCODE) {
+    draftUnlocked = true;
+    document.getElementById('passcodeModal').classList.remove('show');
+    if (_passcodeCallback) { const cb = _passcodeCallback; _passcodeCallback = null; cb(); }
+  } else {
+    input.classList.add('error');
+    document.getElementById('passcodeError').textContent = 'Incorrect passcode';
+    input.value = '';
+    setTimeout(() => input.classList.remove('error'), 400);
+  }
+}
+function closePasscodeModal() {
+  _passcodeCallback = null;
+  document.getElementById('passcodeModal').classList.remove('show');
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('passcodeModal').classList.contains('show') && e.key === 'Enter') submitPasscode();
+  if (document.getElementById('passcodeModal').classList.contains('show') && e.key === 'Escape') closePasscodeModal();
+});
+
+window.startTimer=function(){requirePasscode(function(){if(timerRunning)return;timerRunning=true;document.getElementById('timerStartBtn').style.display='none';document.getElementById('timerPauseBtn').style.display='';timerInterval=setInterval(()=>{timerVal--;updateTimerUI();if(timerVal<=0){clearInterval(timerInterval);timerRunning=false;playAirHorn();document.getElementById('timerDisplay').textContent='&#128168;';document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';}},1000);});};
+window.pauseTimer=function(){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';};
+window.resetTimer=function(){clearInterval(timerInterval);timerRunning=false;timerVal=PICK_TIME;updateTimerUI();document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';};
+function updateTimerUI(){const el=document.getElementById('timerDisplay'),fill=document.getElementById('timerFill'),pct=(timerVal/PICK_TIME)*100;el.textContent=timerVal;fill.style.width=pct+'%';const cls=timerVal<=10?'danger':timerVal<=20?'warning':'';el.className='timer-display'+(cls?' '+cls:'');fill.className='timer-progress-fill'+(cls?' '+cls:'');}
+function playAirHorn(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.setValueAtTime(220,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(110,ctx.currentTime+0.8);gain.gain.setValueAtTime(0.4,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);osc.start();osc.stop(ctx.currentTime+0.8);}catch(e){}}
+function playPickSound(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,0.1,0.2].forEach((t,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=[523,659,784][i];gain.gain.setValueAtTime(0.2,ctx.currentTime+t);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.2);osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+0.2);});}catch(e){}}
+function spawnConfetti(){const colors=['#6EDCC4','#B88FE0','#F4A7C3','#FFE156','#7EC8E3'];for(let i=0;i<40;i++){const el=document.createElement('div');el.className='confetti-piece';const s=Math.random()*10+6;el.style.cssText='left:'+Math.random()*100+'vw;width:'+s+'px;height:'+s+'px;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-duration:'+(Math.random()*1.5+1)+'s;animation-delay:'+(Math.random()*0.4)+'s;';document.body.appendChild(el);setTimeout(()=>el.remove(),2500);}}
+function calcGrade(teamKey){const picks=PLAYERS.filter(p=>p.team===teamKey);if(!picks.length)return'-';const s=picks.reduce((s,p)=>s+p.draftRank,0)/picks.length/PLAYERS.length;if(s<0.35)return'A+';if(s<0.42)return'A';if(s<0.50)return'B+';if(s<0.58)return'B';if(s<0.65)return'C+';return'C';}
+function gradeColor(g){if(g.startsWith('A'))return'#6EDCC4';if(g.startsWith('B'))return'#FFE156';return'#F4A7C3';}
+
+// ─── RENDER PLAYERS ───────────────────────────────────────────────────────
+function renderPlayers(){
+  const grid=document.getElementById('playersGrid');grid.innerHTML='';
+  const undrafted=PLAYERS.filter(p=>!p.drafted);const best=undrafted[0];
+  document.getElementById('bestAvailName').textContent=best?best.name:'None';
+  PLAYERS.forEach(player=>{
+    const isBest=!player.drafted&&player===best;
+    const trendIcon=player.trend==='improving'?'&#9650;':player.trend==='declining'?'&#9660;':'-';
+    const safeId=player.name.replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+    const safeName=player.name.replace(/'/g,"\\'");
+    const tierLabel=player.tier==='BoomBust'?'Boom/Bust':player.tier;
+    const trendColor=player.trend==='improving'?'var(--mint)':player.trend==='declining'?'var(--pink)':'rgba(255,255,255,0.3)';
+    const captainBadge=player.captain?' <span style="font-size:0.7rem">&#128081;</span>':'';
+    const card=document.createElement('div');
+    card.className='player-card'+(player.drafted?' drafted':'')+(isBest?' best-pick':'');
+    card.id='card-'+safeId;
+    card.innerHTML=
+      '<div class="card-front">'
+      +'<div class="card-front-top">'
+      +'<div class="draft-rank">RANK #'+player.draftRank+'</div>'
+      +'<div class="tier-badge tier-'+player.tier+'">'+tierLabel+'</div>'
+      +'</div>'
+      +'<div class="player-name">'+player.name+captainBadge+'</div>'
+      +'<div class="card-stats">'
+      +'<div class="stat-box"><div class="stat-val">'+(player.hcp!=null?player.hcp:'?')+'</div><div class="stat-lbl">HCP</div></div>'
+      +'<div class="stat-box"><div class="stat-val">'+player.proj+'</div><div class="stat-lbl">Projected</div></div>'
+      +'<div class="stat-box"><div class="stat-val">'+(player.avg!=null?player.avg:'-')+'</div><div class="stat-lbl">Avg Gross</div></div>'
+      +'<div class="stat-box"><div class="stat-val">'+(player.best!=null?player.best:'-')+'</div><div class="stat-lbl">Best Rd</div></div>'
+      +'</div>'
+      +'<div class="trend-indicator trend-'+player.trend+'">'+trendIcon+' '+player.trend+'</div>'
+      +'<button class="scout-btn" onclick="event.stopPropagation();flipCard(\''+safeId+'\')">&#128203; Scout Report</button>'
+      +'</div>'
+      +'<div class="card-back">'
+      +'<div class="scouting-title">&#128225; Analyst Scouting Report</div>'
+      +'<div class="scouting-name">'+player.name+'</div>'
+      +'<div class="scouting-stat-grid">'
+      +'<div class="scouting-stat"><div class="sv">'+player.rounds.length+'</div><div class="sl">Rounds</div></div>'
+      +'<div class="scouting-stat"><div class="sv">'+(player.sd!=null?player.sd:'-')+'</div><div class="sl">Std Dev</div></div>'
+      +'<div class="scouting-stat"><div class="sv">'+(player.best!=null?player.best:'-')+'</div><div class="sl">Best Rd</div></div>'
+      +'<div class="scouting-stat"><div class="sv">'+(player.worst!=null?player.worst:'-')+'</div><div class="sl">Worst Rd</div></div>'
+      +'</div>'
+      +'<div class="trend-row"><span class="lbl">Trend</span><span class="val" style="color:'+trendColor+'">'+trendIcon+' '+player.trend.toUpperCase()+'</span></div>'
+      +'<div class="analyst-quote">'+player.analystNote+'</div>'
+      +(!player.drafted
+        ?'<button class="draft-btn" onclick="event.stopPropagation();draftPlayer(\''+safeName+'\')">+ Draft This Player</button>'
+        :'<div style="text-align:center;font-size:0.72rem;color:rgba(255,255,255,0.3);padding:8px">Already Drafted</div>')
+      +'<div class="flip-back-hint" onclick="event.stopPropagation();flipCard(\''+safeId+'\')">&#8592; Back to card</div>'
+      +'</div>';
+    card.querySelector('.card-front').addEventListener('click',function(e){if(e.target.closest('.scout-btn'))return;if(!player.drafted)draftPlayer(player.name);});
+    grid.appendChild(card);
+  });
+}
+window.flipCard=function(safeId){document.getElementById('card-'+safeId).classList.toggle('flipped');};
+
+// ─── DRAFT ────────────────────────────────────────────────────────────────
+window.draftPlayer=function(name){
+  requirePasscode(function(){
+    if(currentPick>=DRAFT_ORDER.length)return;
+    const player=PLAYERS.find(p=>p.name===name);if(!player||player.drafted)return;
+    const info=DRAFT_ORDER[currentPick];const tierLabel=player.tier==='BoomBust'?'Boom/Bust':player.tier;
+    pendingDraftName=name;
+    document.getElementById('cmTeam').innerHTML=TEAM_NAMES[info.team]+' \u2014 Pick #'+info.pick;
+    document.getElementById('cmPlayer').textContent=player.name;
+    document.getElementById('cmMeta').innerHTML='HCP '+(player.hcp!=null?player.hcp:'?')+' &nbsp;&middot;&nbsp; Projected '+player.proj+' &nbsp;&middot;&nbsp; <span style="color:'+TIER_COLORS[player.tier]+';font-weight:900">'+tierLabel+'</span>';
+    document.getElementById('confirmModal').classList.add('show');
+  });
+};
+window.cancelDraft=function(){pendingDraftName=null;document.getElementById('confirmModal').classList.remove('show');};
+window.confirmDraft=function(){
+  document.getElementById('confirmModal').classList.remove('show');
+  if(!pendingDraftName)return;
+  const name=pendingDraftName;pendingDraftName=null;
+  const player=PLAYERS.find(p=>p.name===name);if(!player||player.drafted)return;
+  const info=DRAFT_ORDER[currentPick];player.drafted=true;player.team=info.team;
+  draftLog.push({pick:info.pick,team:info.team,playerName:name});currentPick++;
+  document.getElementById('modalPickNum').textContent='Pick #'+info.pick;
+  document.getElementById('modalTeam').innerHTML=TEAM_NAMES[info.team].toUpperCase();
+  document.getElementById('modalPlayerName').textContent=player.name;
+  document.getElementById('modalStat').textContent='HCP '+(player.hcp!=null?player.hcp:'?')+'  \u00b7  Projected '+player.proj+'  \u00b7  '+player.tier+' Tier';
+  document.getElementById('pickModal').classList.add('show');
+  playPickSound();spawnConfetti();resetTimer();
+  renderPlayers();renderTeams();renderLog();updatePickIndicator();
+  saveDraftToSheet();
+  if(currentPick>=DRAFT_ORDER.length)setTimeout(showDraftComplete,1200);
+};
+window.closeModal=function(){document.getElementById('pickModal').classList.remove('show');};
+
+// ─── CAPTAIN SELECTION ────────────────────────────────────────────────────
+function renderCaptainGrid(teamKey) {
+  const gridId = teamKey==='donkeys' ? 'donkeyCapGrid' : 'brainCapGrid';
+  const grid = document.getElementById(gridId);
+  const otherCaptain = teamKey==='donkeys' ? captains.brains : captains.donkeys;
+  grid.innerHTML = PLAYERS.map(p => {
+    const isTaken = otherCaptain===p.name;
+    const isSel = captains[teamKey]===p.name;
+    const tl = p.tier==='BoomBust' ? 'Boom/Bust' : p.tier;
+    const nm = p.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return '<button class="cap-player-btn'+(isTaken?' taken':'')+(isSel?' selected-captain':'')+'" onclick="selectCaptain(\''+teamKey+'\',\''+nm+'\')">'
+      +'<div class="cap-btn-name">'+p.name+'</div>'
+      +'<div class="cap-btn-hcp">HCP '+(p.hcp!=null?p.hcp:'?')+' &middot; Proj '+p.proj+'</div>'
+      +'<div class="cap-btn-tier" style="color:'+TIER_COLORS_CAP[p.tier]+'">'+tl+'</div>'
+      +'</button>';
+  }).join('');
+  const statusEl = document.getElementById(teamKey==='donkeys' ? 'donkeyCapStatus' : 'brainCapStatus');
+  if (captains[teamKey]) {
+    statusEl.textContent = '&#128081; '+captains[teamKey]+' is captain';
+    statusEl.className = 'captain-status selected';
+  } else {
+    statusEl.textContent = 'No captain selected';
+    statusEl.className = 'captain-status';
+  }
+  document.getElementById('captainConfirmBtn').disabled = !(captains.donkeys && captains.brains);
+}
+
+window.selectCaptain = function(teamKey, name) {
+  captains[teamKey] = name;
+  renderCaptainGrid('donkeys');
+  renderCaptainGrid('brains');
+};
+
+window.confirmCaptains = function() {
+  if (!captains.donkeys || !captains.brains) return;
+  [['donkeys', captains.donkeys], ['brains', captains.brains]].forEach(function(pair) {
+    const team=pair[0], name=pair[1];
+    const p = PLAYERS.find(pl => pl.name===name);
+    if (!p) return;
+    p.drafted=true; p.team=team; p.captain=true;
+    draftLog.unshift({ pick: team==='donkeys' ? 'C1' : 'C2', team, playerName:name, isCaptain:true });
+  });
+  document.getElementById('captainOverlay').classList.remove('show');
+  document.getElementById('startDraftBanner').classList.add('hidden');
+  document.getElementById('timerBar').style.display='';
+  renderPlayers(); renderTeams(); renderLog(); updatePickIndicator();
+  saveDraftToSheet();
+};
+
+function showCaptainOverlay() {
+  if (captains.donkeys || captains.brains) return;
+  renderCaptainGrid('donkeys');
+  renderCaptainGrid('brains');
+  document.getElementById('captainOverlay').classList.add('show');
+}
+window.beginDraft = function() {
+  requirePasscode(function() {
+    showCaptainOverlay();
+  });
+};
+
+// ─── RENDER TEAMS/LOG ─────────────────────────────────────────────────────
+function renderTeams(){
+  ['donkeys','brains'].forEach(team=>{
+    const picks=PLAYERS.filter(p=>p.team===team);
+    const c=document.getElementById(team+'Picks');c.innerHTML='';
+    picks.forEach((p,i)=>{
+      const el=document.createElement('div');
+      el.className='team-pick-row'+(p.captain?' pick-row-captain':'');
+      el.innerHTML='<div class="pick-num">'+(p.captain?'&#128081;':'#'+(i+1))+'</div><div class="pick-name">'+p.name+'</div><div class="pick-hcp">HCP '+(p.hcp!=null?p.hcp:'?')+'</div>';
+      c.appendChild(el);
+    });
+    for(let i=picks.length;i<Math.min(picks.length+2,TEAM_COUNTS[team]);i++){const el=document.createElement('div');el.className='empty-slot';el.textContent='Pick '+(i+1)+' \u2014 on the clock...';c.appendChild(el);}
+    const proj=picks.reduce((s,p)=>s+(p.proj||0),0);
+    document.getElementById(team+'Proj').textContent=picks.length?proj:'\u2014';
+    const grade=calcGrade(team),gradeEl=document.getElementById(team+'Grade');gradeEl.textContent=grade;gradeEl.style.color=gradeColor(grade);
+  });
+}
+function renderLog(){
+  const el=document.getElementById('draftLog');
+  if(!draftLog.length){el.innerHTML='<div style="font-size:0.72rem;color:rgba(255,255,255,0.25);text-align:center;padding:10px;">No picks yet \u2014 let\'s get started!</div>';return;}
+  el.innerHTML=[...draftLog].reverse().map(e=>'<div class="log-entry"><span class="pick-label">Pick #'+e.pick+'</span> &middot; <span class="team-label-'+e.team+'">'+TEAM_NAMES[e.team]+'</span> selects <strong>'+e.playerName+'</strong></div>').join('');
+}
+function updatePickIndicator(){
+  if(currentPick>=DRAFT_ORDER.length){document.getElementById('currentPickNum').textContent='\u2014';document.getElementById('onTheClockTeam').textContent='&#10003; Draft Complete!';return;}
+  const next=DRAFT_ORDER[currentPick];document.getElementById('currentPickNum').textContent=next.pick;document.getElementById('onTheClockTeam').innerHTML=TEAM_NAMES[next.team];
+}
+function showDraftComplete(){
+  const d=PLAYERS.filter(p=>p.team==='donkeys'),b=PLAYERS.filter(p=>p.team==='brains');
+  document.getElementById('completeDonkeys').innerHTML=d.map(p=>'<li>'+p.name+(p.captain?' &#128081;':'')+' <span style="color:rgba(255,255,255,0.4)">('+p.proj+')</span></li>').join('');
+  document.getElementById('completeBrains').innerHTML=b.map(p=>'<li>'+p.name+(p.captain?' &#128081;':'')+' <span style="color:rgba(255,255,255,0.4)">('+p.proj+')</span></li>').join('');
+  document.getElementById('draftComplete').classList.add('show');
+  spawnConfetti();spawnConfetti();saveDraftToSheet();
+}
+window.resetDraft=function(){
+  requirePasscode(function(){
+    if(!confirm('Reset the entire draft? This cannot be undone.'))return;
+    // Clear localStorage first so a new coin flip fires
+    try{localStorage.removeItem('dbga_draft_state');}catch(e){}
+    // Re-run coin flip
+    coinWinner=Math.random()<0.5?'donkeys':'brains';
+    DRAFT_ORDER=buildDraftOrder(coinWinner);
+    TEAM_COUNTS.donkeys=coinWinner==='donkeys'?8:7;
+    TEAM_COUNTS.brains=coinWinner==='brains'?8:7;
+    document.getElementById('coinResultBadge').textContent=TEAM_NAMES_PLAIN[coinWinner];
+    document.getElementById('coinResultBadge').className='coin-result '+coinWinner;
+    try{document.getElementById(coinWinner+'ExtraBadge').outerHTML='<span class="team-extra-badge" id="'+coinWinner+'ExtraBadge">+8 picks</span>';}catch(e){}
+    PLAYERS.forEach(p=>{p.drafted=false;p.team=null;p.captain=false;});
+    currentPick=0;draftLog=[];pendingDraftName=null;
+    captains={donkeys:null,brains:null};
+    resetTimer();renderPlayers();renderTeams();renderLog();updatePickIndicator();
+    saveDraftToSheet();
+    document.getElementById('startDraftBanner').classList.remove('hidden');
+    document.getElementById('timerBar').style.display='none';
+  });
+};
+
+// ─── SHEET SYNC ──────────────────────────────────────────────────────────
+async function saveDraftToSheet() {
+  try {
+    localStorage.setItem('dbga_draft_state', JSON.stringify({
+      coinWinner,
+      picks: PLAYERS.map(p=>({ name:p.name, drafted:p.drafted, team:p.team, captain:p.captain||false })),
+      currentPick,
+      draftLog,
+      captains
+    }));
+  } catch(e) { console.warn('localStorage save failed:', e); }
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL==='YOUR_APPS_SCRIPT_URL_HERE') return;
+  const picks = PLAYERS
+    .filter(p=>p.drafted&&p.team)
+    .sort((a,b)=>{ const aLog=draftLog.find(l=>l.playerName===a.name); const bLog=draftLog.find(l=>l.playerName===b.name); return (aLog&&aLog.pick?parseInt(aLog.pick)||99:99)-(bLog&&bLog.pick?parseInt(bLog.pick)||99:99); })
+    .map(p=>{ const logEntry=draftLog.find(l=>l.playerName===p.name); return { name:p.name, team:p.team, pickNumber:logEntry&&logEntry.pick?logEntry.pick:0, captain:p.captain||false }; });
+  fetch(APPS_SCRIPT_URL, { method:'POST', body:JSON.stringify({ type:'draft', picks }) }).catch(e=>console.warn('Draft save failed:',e));
+}
+
+renderPlayers();renderTeams();renderLog();updatePickIndicator();
+// If restoring a completed draft or a draft already in progress, show timer bar
+const _draftInProgress = captains.donkeys || captains.brains || currentPick > 0;
+if (_draftInProgress) {
+  document.getElementById('startDraftBanner').classList.add('hidden');
+  document.getElementById('timerBar').style.display='';
+}
+if(currentPick>=DRAFT_ORDER.length && PLAYERS.filter(p=>p.drafted).length>=15){
+  setTimeout(showDraftComplete,200);
+}
+</script>
+</body>
+</html>

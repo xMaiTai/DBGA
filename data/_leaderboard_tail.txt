@@ -1,0 +1,110 @@
+const SHEET_ID='2PACX-1vQbkalSJfOSnGTs0DEumVMMSbRwhTVIHF-4SYsRNsXrMgQC1N181zItgCRCxV5rnfoDV3Upy2tyFI69';
+let liveScores=[],activeTab='gross',activeRound='all',historyYear='all',prevPositions={};
+async function fetchLiveScores(){try{const url=`https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;const resp=await fetch(url);const text=await resp.text();const rows=text.trim().split('\n').map(r=>r.split(',').map(c=>c.trim()));const headers=rows[0];const data=rows.slice(1).filter(r=>r.some(c=>c));return data.map(row=>Object.fromEntries(headers.map((h,i)=>[h,row[i]||''])));}catch(e){return[];}}
+function buildRows(scoreData,type){return ROSTER.map(player=>{const hcp=calcHcp(player.name);const proj=projScore(player.name);const playerRounds=scoreData.filter(r=>r.Name===player.name);const r1gross=playerRounds.find(r=>r.Round==='1'||r.Round==='R1')?.GrossTotal||playerRounds.find(r=>r.Round==='1')?.GrossScore;const r2gross=playerRounds.find(r=>r.Round==='2'||r.Round==='R2')?.GrossTotal||playerRounds.find(r=>r.Round==='2')?.GrossScore;const r1g=r1gross?parseInt(r1gross):null;const r2g=r2gross?parseInt(r2gross):null;const r1net=r1g!==null?Math.round(r1g-hcp):null;const r2net=r2g!==null?Math.round(r2g-hcp):null;const grossTotal=(r1g!==null&&r2g!==null)?r1g+r2g:(r1g!==null)?r1g:(r2g!==null)?r2g:null;const netTotal=(r1net!==null&&r2net!==null)?r1net+r2net:(r1net!==null)?r1net:(r2net!==null)?r2net:null;const thru=playerRounds.length>0?`R${Math.max(...playerRounds.map(r=>parseInt(r.Round)||0))}`:'–';return{name:player.name,nickname:player.nickname,team:player.team,hcp,proj,r1g,r2g,r1net,r2net,grossTotal,netTotal,total:type==='net'?netTotal:grossTotal,thru};});}
+function renderTable(containerId,rows,type,round){const container=document.getElementById(containerId);const isLive=liveScores.length>0;let displayRows=rows.map(r=>{let total=null;if(round==='1')total=type==='net'?r.r1net:r.r1g;else if(round==='2')total=type==='net'?r.r2net:r.r2g;else total=r.total;return{...r,displayTotal:total};});displayRows.sort((a,b)=>{if(a.displayTotal===null&&b.displayTotal===null)return 0;if(a.displayTotal===null)return 1;if(b.displayTotal===null)return -1;return a.displayTotal-b.displayTotal;});let pos=1,leader=null;displayRows.forEach(r=>{if(r.displayTotal!==null){if(leader===null)leader=r.displayTotal;r.position=pos++;r.strokesBack=r.displayTotal-leader;}else{r.position=null;r.strokesBack=null;}});const posKey=`${type}-${round}`;displayRows.forEach(r=>{const prev=prevPositions[`${r.name}-${posKey}`];r.prevPos=prev??null;if(r.position!==null)prevPositions[`${r.name}-${posKey}`]=r.position;});if(!isLive){container.innerHTML=`<div class="waiting-state"><div class="waiting-emoji">⛳</div><h3>No scores yet</h3><p>Scores will appear here once someone starts updating the Google Sheet on trip day. Hit Refresh to check for updates.</p></div>`;return;}const r1Label=type==='net'?'R1 Net':'R1 Gross';const r2Label=type==='net'?'R2 Net':'R2 Gross';const totalLabel=round==='all'?'Total':(round==='1'?r1Label:r2Label);container.innerHTML=`<table class="lb-table"><thead><tr><th>Pos</th><th>Player</th><th class="num">${totalLabel}</th><th class="num">Back</th>${round==='all'?`<th class="num">${r1Label}</th><th class="num">${r2Label}</th>`:''}<th class="num">HCP</th><th class="num">Proj.</th><th class="num">Thru</th></tr></thead><tbody>${displayRows.map(r=>{const posNum=r.position??'–';const posClass=r.position===1?'pos-1':r.position===2?'pos-2':r.position===3?'pos-3':'';const moveHTML=r.prevPos!==null&&r.position!==null?(r.position<r.prevPos?`<span class="pos-move move-up">▲${r.prevPos-r.position}</span>`:r.position>r.prevPos?`<span class="pos-move move-down">▼${r.position-r.prevPos}</span>`:`<span class="pos-move move-same">–</span>`):''  ;const scoreClass=r.displayTotal===null?'score-na':r.displayTotal<72*(round==='all'?2:1)?'score-under':r.displayTotal>85*(round==='all'?2:1)?'score-over':'score-even';const scoreDisp=r.displayTotal!==null?r.displayTotal:'—';const backDisp=r.strokesBack===null?'—':r.strokesBack===0?'<span class="back-lead">LEAD</span>':`+${r.strokesBack}`;const teamDot=`<span class="team-dot" style="background:${TEAM_INFO[r.team]?.dot}"></span>`;const r1disp=type==='net'?(r.r1net??'—'):(r.r1g??'—');const r2disp=type==='net'?(r.r2net??'—'):(r.r2g??'—');return `<tr><td><div class="pos-cell ${posClass}"><div class="pos-num">${posNum}</div>${moveHTML}</div></td><td><div class="name-cell">${teamDot}<span class="player-fullname">${r.name}</span><span class="player-nick">${r.nickname}</span></div></td><td class="num score-cell ${scoreClass}">${scoreDisp}</td><td class="num back-cell">${backDisp}</td>${round==='all'?`<td class="num round-cell">${r1disp}</td><td class="num round-cell">${r2disp}</td>`:''}<td class="num hcp-cell">${r.hcp}</td><td class="num proj-cell">${r.proj}</td><td class="num thru-cell">${r.thru}</td></tr>`;}).join('')}</tbody></table>`;}
+function renderRoundSelector(containerId,type){const el=document.getElementById(containerId);const activeClass=type==='net'?'net-active':'active';el.innerHTML=['all','1','2'].map(r=>`<button class="round-btn ${activeRound===r?activeClass:''}" onclick="setRound('${r}','${type}')">${r==='all'?'📊 All Rounds':`Round ${r}`}</button>`).join('');}
+
+// ─── TEAMS TAB — reads draft state from localStorage ─────────────────────
+const DRAFT_STORAGE_KEY = 'dbga_draft_state';
+
+function getDraftTeams() {
+  // Returns { donkeys: ['Name', ...], brains: ['Name', ...] } or null if no draft
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const state = JSON.parse(raw);
+    if (!state.picks || !state.picks.some(p => p.drafted)) return null;
+    const donkeys = state.picks.filter(p => p.team === 'donkeys').map(p => p.name);
+    const brains  = state.picks.filter(p => p.team === 'brains').map(p => p.name);
+    return { donkeys, brains, coinWinner: state.coinWinner, complete: state.currentPick >= 15 };
+  } catch(e) { return null; }
+}
+
+function renderTeams(rows) {
+  const el = document.getElementById('teamsContent');
+  const draftTeams = getDraftTeams();
+
+  // ── NO DRAFT DATA: show "awaiting" state ─────────────────────────────
+  if (!draftTeams) {
+    el.innerHTML = `
+      <div class="waiting-state" style="padding:50px 20px">
+        <div class="waiting-emoji">🎯</div>
+        <h3>Awaiting Draft Results</h3>
+        <p>Head to the <a href="draft.html" style="color:var(--mint);font-weight:800">Draft Board</a> to run the draft. Team rosters will appear here once picks have been made.</p>
+      </div>`;
+    return;
+  }
+
+  // ── DRAFT DATA EXISTS: build team rows by overriding the roster ───────
+  // Use the drafted team assignments instead of the hardcoded ROSTER teams
+  const effectiveRows = rows.map(r => {
+    const teamAssignment = draftTeams.donkeys.includes(r.name) ? 'donkeys'
+                         : draftTeams.brains.includes(r.name)  ? 'brains'
+                         : null;
+    return { ...r, team: teamAssignment };
+  }).filter(r => r.team !== null);
+
+  const donkeyRows = effectiveRows.filter(r => r.team === 'donkeys');
+  const brainRows  = effectiveRows.filter(r => r.team === 'brains');
+
+  const teamTotal = (teamRows) => {
+    const scores = teamRows.map(r => r.grossTotal).filter(s => s !== null);
+    return scores.length ? scores.reduce((a,b) => a+b, 0) : null;
+  };
+  const dt = teamTotal(donkeyRows);
+  const bt = teamTotal(brainRows);
+  const lead = dt !== null && bt !== null
+    ? (dt < bt ? `🫏 Donkeys lead by ${bt-dt}` : dt > bt ? `🧠 Brains lead by ${dt-bt}` : '🤝 All Square')
+    : '⏳ Scores pending';
+
+  // Draft status banner
+  const draftStatus = draftTeams.complete
+    ? `<div style="font-size:0.72rem;font-weight:800;color:var(--mint);letter-spacing:1px;text-transform:uppercase;text-align:center;padding:4px 0 16px">✅ Draft Complete · ${draftTeams.donkeys.length + draftTeams.brains.length} of 15 players drafted</div>`
+    : `<div style="font-size:0.72rem;font-weight:800;color:var(--yellow);letter-spacing:1px;text-transform:uppercase;text-align:center;padding:4px 0 16px">⏳ Draft in Progress · ${draftTeams.donkeys.length + draftTeams.brains.length} of 15 picks made</div>`;
+
+  const teamCard = (teamKey, teamRows, total) => {
+    const info = TEAM_INFO[teamKey];
+    const avg  = teamRows.filter(r=>r.grossTotal).length ? Math.round(teamRows.filter(r=>r.grossTotal).reduce((s,r)=>s+r.grossTotal,0)/teamRows.filter(r=>r.grossTotal).length) : '—';
+    const best = teamRows.filter(r=>r.grossTotal).length ? Math.min(...teamRows.filter(r=>r.grossTotal).map(r=>r.grossTotal)) : '—';
+    return `<div class="team-standing-card ${teamKey}">
+      <div class="team-standing-header">
+        <div class="team-standing-name">${info.name}</div>
+        <div><div class="team-score-big" style="color:${info.color}">${total??'—'}</div><div class="team-score-lbl">Combined Gross</div></div>
+      </div>
+      <div class="team-stats-grid">
+        <div class="team-stat-box"><div class="team-stat-val">${teamRows.length}</div><div class="team-stat-lbl">Players</div></div>
+        <div class="team-stat-box"><div class="team-stat-val">${avg}</div><div class="team-stat-lbl">Avg Score</div></div>
+        <div class="team-stat-box"><div class="team-stat-val">${best}</div><div class="team-stat-lbl">Best Round</div></div>
+      </div>
+      <div class="team-player-list">
+        ${teamRows.sort((a,b)=>(a.grossTotal??999)-(b.grossTotal??999)).map(r=>`
+          <div class="team-player-row">
+            <span class="tpr-name">${r.name}</span>
+            <span class="tpr-score">${r.grossTotal??'—'}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  };
+
+  el.innerHTML = `
+    ${draftStatus}
+    <div class="team-vs-bar"><span class="team-lead-badge">${lead}</span></div>
+    <div class="teams-grid">
+      ${teamCard('donkeys', donkeyRows, dt)}
+      ${teamCard('brains', brainRows, bt)}
+    </div>`;
+}
+
+function renderHistory(year){const years=[...new Set(HISTORY.map(r=>r.year))].sort((a,b)=>b-a);const yf=document.getElementById('yearFilter');yf.innerHTML=['all',...years].map(y=>`<button class="year-btn ${historyYear==y?'active':''}" onclick="setHistYear('${y}')">${y==='all'?'All Years':y}</button>`).join('');const filtered=year==='all'?HISTORY:HISTORY.filter(r=>r.year==year);const playerMap={};filtered.forEach(r=>{if(!playerMap[r.name])playerMap[r.name]=[];playerMap[r.name].push(r);});const playerRows=Object.entries(playerMap).map(([name,rounds])=>{const avg=Math.round(rounds.reduce((s,r)=>s+r.gross,0)/rounds.length*10)/10;const best=Math.min(...rounds.map(r=>r.gross));const worst=Math.max(...rounds.map(r=>r.gross));const p=ROSTER.find(r=>r.name===name);return{name,nickname:p?.nickname||'',team:p?.team||'',rounds:rounds.length,avg,best,worst};}).sort((a,b)=>a.avg-b.avg);document.getElementById('historyTableWrap').innerHTML=`<table class="lb-table"><thead><tr><th>Rank</th><th>Player</th><th class="num">Rounds</th><th class="num">Avg Gross</th><th class="num">Best</th><th class="num">Worst</th></tr></thead><tbody>${playerRows.map((r,i)=>{const teamDot=r.team?`<span class="team-dot" style="background:${TEAM_INFO[r.team]?.dot}"></span>`:'';return`<tr><td><div class="pos-cell ${i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':''}"><div class="pos-num">${i+1}</div></div></td><td><div class="name-cell">${teamDot}<span class="player-fullname">${r.name}</span><span class="player-nick">${r.nickname}</span></div></td><td class="num round-cell">${r.rounds}</td><td class="num score-cell score-even">${r.avg}</td><td class="num score-cell score-under">${r.best}</td><td class="num score-cell score-over">${r.worst}</td></tr>`;}).join('')}</tbody></table>`;}
+function updateStatus(hasData){const pill=document.getElementById('statusPill');const txt=document.getElementById('statusText');const sub=document.getElementById('pageSubtitle');if(hasData){pill.className='status-pill status-live';txt.textContent='Live';sub.textContent='2026 Season · Live Scoring';}else{pill.className='status-pill status-waiting';txt.textContent='Waiting for trip day';sub.textContent='2026 Season · Pre-Trip';}document.getElementById('lastUpdated').textContent='Last updated: '+new Date().toLocaleTimeString();}
+window.switchTab=function(tab){activeTab=tab;document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(`panel-${tab}`).classList.add('active');document.querySelector(`.tab-btn.${tab}`)?document.querySelector(`.tab-btn.${tab}`).classList.add('active'):[...document.querySelectorAll('.tab-btn')].find(b=>b.onclick?.toString().includes(`'${tab}'`))?.classList.add('active');renderCurrent();};
+window.setRound=function(round,type){activeRound=round;renderCurrent();};
+window.setHistYear=function(year){historyYear=year;renderHistory(year);};
+function renderCurrent(){const rows=buildRows(liveScores,'gross');if(activeTab==='gross'){renderRoundSelector('grossRoundSelector','gross');renderTable('grossTableWrap',rows,'gross',activeRound);}else if(activeTab==='net'){renderRoundSelector('netRoundSelector','net');renderTable('netTableWrap',buildRows(liveScores,'net'),'net',activeRound);}else if(activeTab==='teams'){renderTeams(rows);}else if(activeTab==='history'){renderHistory(historyYear);}}
+async function loadData(){document.getElementById('lastUpdated').textContent='Refreshing...';liveScores=await fetchLiveScores();updateStatus(liveScores.length>0);renderCurrent();renderHistory(historyYear);}
+setInterval(loadData,120000);
+loadData();
+</script>
+</body>
+</html>

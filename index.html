@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBGA – Donkey Brain Golf Association</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+      --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+      --card-bg:rgba(255,255,255,0.07); --radius:18px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Nunito',sans-serif;background:var(--dark);color:#fff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px),radial-gradient(circle,var(--sky) 1px,transparent 1px);background-size:60px 60px,90px 90px,45px 45px;background-position:0 0,30px 30px,15px 15px;opacity:0.05;pointer-events:none;z-index:0}
+
+    /* ── NAV ── */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 40px;background:rgba(26,26,46,0.88);backdrop-filter:blur(14px);border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+    .nav-logo img{height:48px;width:48px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(110,220,196,0.5))}
+    .nav-logo span{font-family:'Boogaloo',cursive;font-size:2rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:8px;list-style:none}
+    .nav-links a{text-decoration:none;color:rgba(255,255,255,0.7);font-weight:700;font-size:0.85rem;letter-spacing:0.5px;text-transform:uppercase;padding:8px 16px;border-radius:50px;transition:all 0.2s}
+    .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+
+    /* ── HERO ── */
+    .hero{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 20px 50px;overflow:hidden}
+    .hero::after{content:'';position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(184,143,224,0.22) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+    .hero-logo{width:250px;height:250px;object-fit:contain;position:relative;z-index:2;filter:drop-shadow(0 0 28px rgba(110,220,196,0.4)) drop-shadow(0 0 56px rgba(184,143,224,0.3));animation:float 4s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+    .hero-title{font-family:'Boogaloo',cursive;font-size:clamp(4.5rem,13vw,9.5rem);line-height:1;letter-spacing:8px;margin-top:16px;position:relative;z-index:2;background:linear-gradient(135deg,var(--mint) 0%,var(--sky) 30%,var(--lavender) 65%,var(--pink) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 4px 24px rgba(110,220,196,0.25))}
+    .hero-subtitle{font-size:1.2rem;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:6px;position:relative;z-index:2}
+    .hero-tagline{margin-top:18px;font-size:1.1rem;font-weight:600;color:var(--yellow);position:relative;z-index:2}
+
+    /* ── LEADERBOARD SECTION ── */
+    .leaderboards{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1160px;margin:0 auto;padding:10px 40px 70px}
+    .board-card{background:var(--card-bg);border-radius:var(--radius);padding:28px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.09);transition:transform 0.3s ease,box-shadow 0.3s ease}
+    .board-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,0.35)}
+    .board-card.gross{border-top:3px solid var(--mint)}
+    .board-card.net{border-top:3px solid var(--lavender)}
+
+    .section-label{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+    .section-label h2{font-family:'Boogaloo',cursive;font-size:1.9rem;letter-spacing:1px}
+    .board-card.gross .section-label h2{color:var(--mint)}
+    .board-card.net   .section-label h2{color:var(--lavender)}
+    .section-sublabel{font-size:0.72rem;font-weight:800;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:18px}
+
+    .badge{font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:2px;padding:4px 12px;border-radius:50px}
+    .badge-projected{background:rgba(255,225,86,0.12);color:var(--yellow);border:1px solid rgba(255,225,86,0.35)}
+
+    /* ── LEADERBOARD ROWS ── */
+    .lb-rows{display:flex;flex-direction:column;gap:8px}
+    .lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);transition:background 0.2s}
+    .lb-row:hover{background:rgba(255,255,255,0.07)}
+    .lb-row.rank-1{border-color:rgba(255,225,86,0.35);background:rgba(255,225,86,0.06)}
+    .lb-row.rank-2{border-color:rgba(192,192,192,0.25)}
+    .lb-row.rank-3{border-color:rgba(205,127,50,0.25)}
+
+    .lb-pos{font-family:'Boogaloo',cursive;font-size:1.5rem;width:28px;text-align:center;flex-shrink:0}
+    .rank-1 .lb-pos{color:var(--yellow)}
+    .rank-2 .lb-pos{color:#C0C0C0}
+    .rank-3 .lb-pos{color:#CD7F32}
+    .lb-pos-other{color:rgba(255,255,255,0.25)}
+
+    .lb-info{flex:1;min-width:0}
+    .lb-name{font-weight:800;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lb-meta{font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:0.5px;margin-top:1px}
+
+    .lb-score{font-family:'Share Tech Mono',monospace;font-size:1.1rem;font-weight:bold;flex-shrink:0;text-align:right}
+    .board-card.gross .lb-score{color:var(--mint)}
+    .board-card.net   .lb-score{color:var(--lavender)}
+    .rank-1 .lb-score{color:var(--yellow)}
+
+    .lb-bar-wrap{width:60px;flex-shrink:0}
+    .lb-bar{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden}
+    .lb-bar-fill{height:100%;border-radius:3px;opacity:0.55}
+    .board-card.gross .lb-bar-fill{background:var(--mint)}
+    .board-card.net   .lb-bar-fill{background:var(--lavender)}
+    .rank-1 .lb-bar-fill{background:var(--yellow);opacity:0.7}
+
+    .winner-banner{margin-top:16px;padding:12px 16px;border-radius:10px;display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:800}
+    .board-card.gross .winner-banner{background:rgba(110,220,196,0.08);border:1px solid rgba(110,220,196,0.2);color:var(--mint)}
+    .board-card.net   .winner-banner{background:rgba(184,143,224,0.08);border:1px solid rgba(184,143,224,0.2);color:var(--lavender)}
+    .winner-banner .trophy{font-size:1.1rem}
+    .winner-banner .winner-name{font-family:'Boogaloo',cursive;font-size:1.1rem;color:#fff}
+
+    .proj-note{margin-top:10px;font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.25);text-align:center;letter-spacing:0.5px}
+
+    /* ── PAGE NAV PILLS ── */
+    .page-nav{position:relative;z-index:1;display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:0 20px 80px}
+    .page-nav a{text-decoration:none;font-weight:800;font-size:0.88rem;letter-spacing:1px;text-transform:uppercase;padding:14px 28px;border-radius:50px;border:2px solid transparent;transition:all 0.25s ease}
+    .page-nav a.mint    {background:rgba(110,220,196,0.12);color:var(--mint);   border-color:rgba(110,220,196,0.5)}
+    .page-nav a.lavender{background:rgba(184,143,224,0.12);color:var(--lavender);border-color:rgba(184,143,224,0.5)}
+    .page-nav a.sky     {background:rgba(126,200,227,0.12);color:var(--sky);    border-color:rgba(126,200,227,0.5)}
+    .page-nav a.pink    {background:rgba(244,167,195,0.12);color:var(--pink);   border-color:rgba(244,167,195,0.5)}
+    .page-nav a:hover{transform:translateY(-3px) scale(1.05);filter:brightness(1.3)}
+
+    /* ── FOOTER ── */
+    footer{position:relative;z-index:1;text-align:center;padding:28px 20px;border-top:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.28);font-size:0.82rem;font-weight:600}
+    footer span{background:linear-gradient(135deg,var(--mint),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    @media(max-width:768px){.leaderboards{grid-template-columns:1fr;padding:10px 20px 60px}nav{padding:12px 20px}.nav-links{display:none}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <img src="assets/logo.png" alt="DBGA Logo" />
+    <span>DBGA</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="draft.html">Draft Board</a></li>
+    <li><a href="courses.html">Courses</a></li>
+    <li><a href="airbnb.html">The House</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <img src="assets/logo.png" alt="DBGA Donkey Brain Logo" class="hero-logo" />
+  <h1 class="hero-title">DBGA</h1>
+  <p class="hero-subtitle">Donkey Brain Golf Association</p>
+  <p class="hero-tagline">Where donkey brains play bad golf &nbsp;🫏</p>
+</section>
+
+<section class="leaderboards" id="leaderboards">
+  <!-- rendered by JS below -->
+</section>
+
+<div class="page-nav">
+  <a href="leaderboard.html" class="mint">Full Leaderboard</a>
+  <a href="scores.html" class="sky">Score Entry</a>
+  <a href="matchplay.html" class="pink">Pairings</a>
+  <a href="draft.html" class="lavender">Draft Board</a>
+  <a href="courses.html" class="sky">Courses</a>
+  <a href="airbnb.html" class="pink">The House</a>
+</div>
+
+<footer>
+  <p><span>Donkey Brain Golf Association</span> &nbsp;·&nbsp; May your drives be long and your beers be cold 🫏⛳</p>
+</footer>
+
+<script>
+// ── SHARED DATA (mirrors draft.html / leaderboard.html) ────────────────────
+const COURSES = {
+  'Twisted Dunes':        { slope:136, rating:71.2 },
+  'Prestwick CC':         { slope:138, rating:72.2 },
+  'TPC Myrtle':           { slope:143, rating:70.9 },
+  'Triggs Memorial':      { slope:128, rating:71.1 },
+  'Crystal Lake':         { slope:117, rating:66.2 },
+  'Connecticut National': { slope:121, rating:68.7 },
+};
+const HISTORY = [
+  { name:'Brendan Barry',    year:2025, course:'TPC Myrtle',           gross:111 },
+  { name:'Brendan Barry',    year:2025, course:'Prestwick CC',         gross:111 },
+  { name:'Brendan Barry',    year:2024, course:'Twisted Dunes',        gross:115 },
+  { name:'Brendan Barry',    year:2024, course:'Twisted Dunes',        gross:112 },
+  { name:'Brendan Barry',    year:2023, course:'Triggs Memorial',      gross:114 },
+  { name:'Brendan Barry',    year:2023, course:'Crystal Lake',         gross:92  },
+  { name:'Brendan Barry',    year:2023, course:'Connecticut National', gross:105 },
+  { name:'Carson Smith',     year:2025, course:'TPC Myrtle',           gross:94  },
+  { name:'Carson Smith',     year:2025, course:'Prestwick CC',         gross:88  },
+  { name:'Carson Smith',     year:2024, course:'Twisted Dunes',        gross:98  },
+  { name:'Carson Smith',     year:2024, course:'Twisted Dunes',        gross:102 },
+  { name:'Carson Smith',     year:2023, course:'Triggs Memorial',      gross:97  },
+  { name:'Carson Smith',     year:2023, course:'Crystal Lake',         gross:100 },
+  { name:'Carson Smith',     year:2023, course:'Connecticut National', gross:104 },
+  { name:'Devan Dhand',      year:2025, course:'TPC Myrtle',           gross:100 },
+  { name:'Devan Dhand',      year:2025, course:'Prestwick CC',         gross:107 },
+  { name:'Devan Dhand',      year:2024, course:'Twisted Dunes',        gross:115 },
+  { name:'Devan Dhand',      year:2024, course:'Twisted Dunes',        gross:112 },
+  { name:'Devan Dhand',      year:2023, course:'Triggs Memorial',      gross:94  },
+  { name:'Devan Dhand',      year:2023, course:'Crystal Lake',         gross:105 },
+  { name:'Devan Dhand',      year:2023, course:'Connecticut National', gross:101 },
+  { name:'Ed Weaver',        year:2024, course:'Twisted Dunes',        gross:100 },
+  { name:'Ed Weaver',        year:2024, course:'Twisted Dunes',        gross:102 },
+  { name:'Ed Weaver',        year:2023, course:'Triggs Memorial',      gross:100 },
+  { name:'Ed Weaver',        year:2023, course:'Crystal Lake',         gross:93  },
+  { name:'Ed Weaver',        year:2023, course:'Connecticut National', gross:96  },
+  { name:'Jack Lyons',       year:2025, course:'TPC Myrtle',           gross:90  },
+  { name:'Jack Lyons',       year:2025, course:'Prestwick CC',         gross:93  },
+  { name:'Jack Lyons',       year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Jack Lyons',       year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Jack Lyons',       year:2023, course:'Triggs Memorial',      gross:85  },
+  { name:'Jack Lyons',       year:2023, course:'Crystal Lake',         gross:87  },
+  { name:'Jack Lyons',       year:2023, course:'Connecticut National', gross:80  },
+  { name:'Jason Sulmonetti', year:2024, course:'Twisted Dunes',        gross:105 },
+  { name:'Jason Sulmonetti', year:2024, course:'Twisted Dunes',        gross:117 },
+  { name:'Jason Sulmonetti', year:2023, course:'Triggs Memorial',      gross:108 },
+  { name:'Jason Sulmonetti', year:2023, course:'Crystal Lake',         gross:119 },
+  { name:'Jason Sulmonetti', year:2023, course:'Connecticut National', gross:114 },
+  { name:'Josh McLeman',     year:2025, course:'TPC Myrtle',           gross:99  },
+  { name:'Josh McLeman',     year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Josh McLeman',     year:2024, course:'Twisted Dunes',        gross:91  },
+  { name:'Josh McLeman',     year:2024, course:'Twisted Dunes',        gross:93  },
+  { name:'Josh McLeman',     year:2023, course:'Triggs Memorial',      gross:93  },
+  { name:'Josh McLeman',     year:2023, course:'Crystal Lake',         gross:95  },
+  { name:'Josh McLeman',     year:2023, course:'Connecticut National', gross:95  },
+  { name:'Justin Estrella',  year:2025, course:'TPC Myrtle',           gross:110 },
+  { name:'Justin Estrella',  year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Justin Estrella',  year:2024, course:'Twisted Dunes',        gross:100 },
+  { name:'Justin Estrella',  year:2024, course:'Twisted Dunes',        gross:98  },
+  { name:'Justin Estrella',  year:2023, course:'Triggs Memorial',      gross:93  },
+  { name:'Justin Estrella',  year:2023, course:'Crystal Lake',         gross:100 },
+  { name:'Justin Estrella',  year:2023, course:'Connecticut National', gross:105 },
+  { name:'Mitchell Rotondi', year:2025, course:'TPC Myrtle',           gross:109 },
+  { name:'Mitchell Rotondi', year:2025, course:'Prestwick CC',         gross:106 },
+  { name:'Mitchell Rotondi', year:2024, course:'Twisted Dunes',        gross:116 },
+  { name:'Mitchell Rotondi', year:2024, course:'Twisted Dunes',        gross:111 },
+  { name:'Mitchell Rotondi', year:2023, course:'Triggs Memorial',      gross:98  },
+  { name:'Mitchell Rotondi', year:2023, course:'Crystal Lake',         gross:105 },
+  { name:'Mitchell Rotondi', year:2023, course:'Connecticut National', gross:102 },
+  { name:'Matt DiPano',      year:2025, course:'Prestwick CC',         gross:95  },
+  { name:'Matt DiPano',      year:2025, course:'TPC Myrtle',           gross:104 },
+  { name:'Matt DiPano',      year:2024, course:'Twisted Dunes',        gross:107 },
+  { name:'Matt DiPano',      year:2024, course:'Twisted Dunes',        gross:113 },
+  { name:'Matt DiPano',      year:2023, course:'Triggs Memorial',      gross:110 },
+  { name:'Matt DiPano',      year:2023, course:'Crystal Lake',         gross:112 },
+  { name:'Matt DiPano',      year:2023, course:'Connecticut National', gross:107 },
+  { name:'Trevor Ross',      year:2025, course:'TPC Myrtle',           gross:135 },
+  { name:'Trevor Ross',      year:2025, course:'Prestwick CC',         gross:116 },
+  { name:'Trevor Ross',      year:2023, course:'Triggs Memorial',      gross:115 },
+  { name:'Trevor Ross',      year:2023, course:'Crystal Lake',         gross:148 },
+  { name:'Trevor Ross',      year:2023, course:'Connecticut National', gross:123 },
+  { name:'David Resmini',    year:2025, course:'TPC Myrtle',           gross:111 },
+  { name:'David Resmini',    year:2025, course:'Prestwick CC',         gross:107 },
+  { name:'Matt Holm',        year:2025, course:'TPC Myrtle',           gross:92  },
+  { name:'Matt Holm',        year:2025, course:'Prestwick CC',         gross:93  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes',        gross:97  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes',        gross:94  },
+  { name:'Matt Holm',        year:2023, course:'Triggs Memorial',      gross:87  },
+  { name:'Matt Holm',        year:2023, course:'Crystal Lake',         gross:93  },
+  { name:'Matt Holm',        year:2023, course:'Connecticut National', gross:93  },
+];
+const HCP_OVERRIDE = { 'Justin Roberts': 15, 'Corey DaSilva': 35 };
+const ROSTER = [
+  'Jack Lyons','Matt Holm','Carson Smith','Josh McLeman','Ed Weaver',
+  'Justin Roberts','Justin Estrella','Devan Dhand','Matt DiPano','David Resmini',
+  'Mitchell Rotondi','Jason Sulmonetti','Brendan Barry','Trevor Ross','Corey DaSilva'
+];
+
+function diff(gross, course) { const c=COURSES[course]; if(!c) return null; return ((gross-c.rating)*113)/c.slope; }
+function calcHcp(rounds) { if(!rounds.length) return null; const diffs=rounds.map(r=>diff(r.gross,r.course)).filter(Boolean).sort((a,b)=>a-b); const n=Math.max(1,Math.floor(diffs.length*0.4)); return Math.round(diffs.slice(0,n).reduce((s,d)=>s+d,0)/n*10)/10; }
+function avgGross(rounds) { if(!rounds.length) return null; return rounds.reduce((s,r)=>s+r.gross,0)/rounds.length; }
+function projPerRound(rounds, hcp) {
+  if(!rounds.length) return Math.round(72+hcp*1.1);
+  const yrs=[...new Set(rounds.map(r=>r.year))].sort((a,b)=>b-a);
+  let ws=0,tw=0;
+  yrs.forEach((yr,i)=>{ const w=Math.pow(0.7,i); const a=avgGross(rounds.filter(r=>r.year===yr)); if(a){ws+=a*w;tw+=w;} });
+  return tw>0?Math.round(ws/tw):Math.round(72+hcp*1.1);
+}
+
+// Build player list with 2-round projections
+const players = ROSTER.map(name => {
+  const rounds = HISTORY.filter(r=>r.name===name);
+  const hcp = HCP_OVERRIDE[name] ?? calcHcp(rounds) ?? 15;
+  const p1 = projPerRound(rounds, hcp);
+  const proj2 = p1 * 2;
+  const net2  = Math.round(proj2 - hcp * 2);
+  return { name, hcp, proj2, net2 };
+});
+
+const grossRanked = [...players].sort((a,b)=>a.proj2-b.proj2);
+const netRanked   = [...players].sort((a,b)=>a.net2-b.net2);
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function rankClass(i) {
+  return i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+}
+
+function buildBoard(ranked, type) {
+  const isGross = type === 'gross';
+  const title   = isGross ? 'Gross Score' : 'Net Score';
+  const color   = isGross ? 'var(--mint)' : 'var(--lavender)';
+  const winner  = ranked[0];
+  const best    = ranked[0][isGross ? 'proj2' : 'net2'];
+  const worst   = ranked[ranked.length-1][isGross ? 'proj2' : 'net2'];
+  const range   = worst - best || 1;
+
+  const rows = ranked.map((p, i) => {
+    const score = isGross ? p.proj2 : p.net2;
+    const barPct = Math.round(100 - ((score - best) / range) * 75);
+    const meta = isGross
+      ? `HCP ${p.hcp}`
+      : `Gross ${p.proj2} · HCP ${p.hcp}`;
+    return `
+      <div class="lb-row ${rankClass(i)}">
+        <div class="lb-pos ${i > 2 ? 'lb-pos-other' : ''}">${i+1}</div>
+        <div class="lb-info">
+          <div class="lb-name">${p.name}</div>
+          <div class="lb-meta">${meta}</div>
+        </div>
+        <div class="lb-bar-wrap">
+          <div class="lb-bar"><div class="lb-bar-fill" style="width:${barPct}%"></div></div>
+        </div>
+        <div class="lb-score">${score}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="board-card ${type}">
+      <div class="section-label">
+        <h2>${title}</h2>
+        <span class="badge badge-projected">Projected</span>
+      </div>
+      <div class="section-sublabel">2-round total · pre-trip forecast</div>
+      <div class="lb-rows">${rows}</div>
+      <div class="winner-banner">
+        <span class="trophy">🏆</span>
+        <span>Projected winner:</span>
+        <span class="winner-name">${winner.name}</span>
+        <span style="font-family:'Share Tech Mono',monospace;color:${color}">${isGross ? winner.proj2 : winner.net2}</span>
+      </div>
+      <div class="proj-note">Based on weighted historical averages · updates after draft</div>
+    </div>`;
+}
+
+document.getElementById('leaderboards').innerHTML =
+  buildBoard(grossRanked, 'gross') +
+  buildBoard(netRanked, 'net');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBGA 2026 Courses</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+      --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+      --card-bg:rgba(255,255,255,0.06); --radius:14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Nunito',sans-serif;background:var(--darker);color:#fff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px);background-size:60px 60px,90px 90px;background-position:0 0,30px 30px;opacity:0.04;pointer-events:none;z-index:0}
+
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:10px 32px;background:rgba(18,18,31,0.92);backdrop-filter:blur(16px);border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo img{height:40px;width:40px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(110,220,196,0.5))}
+    .nav-logo span{font-family:'Boogaloo',cursive;font-size:1.7rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:6px;list-style:none}
+    .nav-links a{text-decoration:none;color:rgba(255,255,255,0.65);font-weight:700;font-size:0.82rem;letter-spacing:0.5px;text-transform:uppercase;padding:7px 14px;border-radius:50px;transition:all 0.2s}
+    .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+    .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+
+    .page-header{position:relative;z-index:1;text-align:center;padding:40px 20px 32px}
+    .page-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2.5rem,7vw,5rem);letter-spacing:4px;background:linear-gradient(135deg,var(--mint),var(--sky));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .page-header p{color:rgba(255,255,255,0.45);font-size:0.9rem;font-weight:700;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+
+    .course-tabs{position:relative;z-index:1;display:flex;justify-content:center;gap:12px;padding:0 20px 32px}
+    .course-tab{font-family:'Boogaloo',cursive;font-size:1.2rem;letter-spacing:1px;padding:12px 30px;border-radius:50px;border:2px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.25s}
+    .course-tab.active-owls{background:rgba(110,220,196,0.12);color:var(--mint);border-color:rgba(110,220,196,0.4)}
+    .course-tab.active-jack{background:rgba(184,143,224,0.12);color:var(--lavender);border-color:rgba(184,143,224,0.4)}
+    .course-tab:hover{transform:translateY(-2px)}
+
+    .course-panel{display:none;position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 24px 80px}
+    .course-panel.active{display:block}
+
+    .course-hero{background:var(--card-bg);border-radius:var(--radius);padding:28px 32px;margin-bottom:24px;border:1px solid rgba(255,255,255,0.08);display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+    .course-hero.owls{border-top:3px solid var(--mint)}
+    .course-hero.jack{border-top:3px solid var(--lavender)}
+    .course-title{font-family:'Boogaloo',cursive;font-size:2.4rem;letter-spacing:2px;line-height:1.1;margin-bottom:6px}
+    .course-hero.owls .course-title{color:var(--mint)}
+    .course-hero.jack .course-title{color:var(--lavender)}
+    .course-location{font-size:0.82rem;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+    .course-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+    .stat-pill{background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.07)}
+    .stat-val{font-family:'Share Tech Mono',monospace;font-size:1.1rem;font-weight:bold;color:#fff}
+    .stat-lbl{font-size:0.6rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px}
+    .course-desc{font-size:0.88rem;font-weight:700;color:rgba(255,255,255,0.6);line-height:1.7}
+    .course-desc strong{color:rgba(255,255,255,0.85)}
+
+    .course-map{border-radius:12px;overflow:hidden;height:280px;border:1px solid rgba(255,255,255,0.1)}
+    .course-map iframe{width:100%;height:100%;border:0;display:block}
+
+    .tee-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .tee-btn{font-family:'Nunito',sans-serif;font-weight:800;font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:50px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s}
+    .tee-btn:hover{filter:brightness(1.2)}
+    .tee-btn.active{border-color:currentColor;background:rgba(255,255,255,0.08);filter:brightness(1.2)}
+    .tee-black{color:#fff} .tee-blue{color:#7EC8E3} .tee-white{color:#e8e8e8}
+    .tee-gold{color:#FFE156} .tee-green{color:#6EDCC4}
+    .tee-back{color:#fff} .tee-front{color:#B88FE0}
+
+    .scorecard-wrap{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,0.08);margin-bottom:24px}
+    .sc-label{padding:0 4px 12px;display:flex;align-items:center;justify-content:space-between}
+    .sc-label h3{font-family:'Boogaloo',cursive;font-size:1.3rem;letter-spacing:1px}
+
+    table.scorecard{width:100%;border-collapse:collapse;font-size:0.82rem}
+    table.scorecard thead{background:rgba(255,255,255,0.05)}
+    table.scorecard th{padding:8px 10px;font-size:0.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-align:center;border-bottom:1px solid rgba(255,255,255,0.08)}
+    table.scorecard th:first-child{text-align:left;padding-left:16px;width:52px}
+    table.scorecard td{padding:9px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:700;font-family:'Share Tech Mono',monospace}
+    table.scorecard td:first-child{text-align:left;padding-left:16px;font-family:'Boogaloo',cursive;font-size:1.1rem;color:rgba(255,255,255,0.6)}
+    table.scorecard tr:last-child td{border-bottom:none}
+    table.scorecard tr:hover td{background:rgba(255,255,255,0.02)}
+    .sc-total-row td{background:rgba(255,255,255,0.05) !important;font-weight:900;font-size:0.88rem}
+    .sc-total-row td:first-child{font-family:'Boogaloo',cursive;font-size:1rem;color:rgba(255,255,255,0.8);letter-spacing:1px}
+    .sc-grand-total td{background:rgba(255,255,255,0.08) !important;border-top:2px solid rgba(255,255,255,0.12) !important;font-size:0.9rem}
+    .par-3{color:#7EC8E3} .par-4{color:#fff} .par-5{color:#6EDCC4}
+    .yds-cell{color:rgba(255,255,255,0.85)}
+    .hcp-cell-sc{color:rgba(255,255,255,0.4)}
+    .sc-nine-label td{background:rgba(0,0,0,0.2);padding:5px 16px;font-size:0.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.25);font-family:'Nunito',sans-serif;border-top:1px solid rgba(255,255,255,0.06)}
+    .sc-nine-label td:first-child{font-family:'Nunito',sans-serif;font-size:0.62rem;color:rgba(255,255,255,0.25)}
+
+    .tees-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+    .tee-card{background:var(--card-bg);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+    .tee-dot-lg{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+    .tee-info-name{font-weight:900;font-size:0.82rem;color:#fff;margin-bottom:2px}
+    .tee-info-sub{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.4)}
+
+    .hole-tips{background:var(--card-bg);border-radius:var(--radius);padding:24px;border:1px solid rgba(255,255,255,0.08);margin-bottom:24px}
+    .hole-tips h3{font-family:'Boogaloo',cursive;font-size:1.3rem;color:var(--sky);margin-bottom:16px;letter-spacing:1px}
+    .tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+    .tip-card{background:rgba(255,255,255,0.04);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,0.06)}
+    .tip-hole{font-family:'Boogaloo',cursive;font-size:1rem;color:var(--yellow);margin-bottom:4px}
+    .tip-text{font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.55);line-height:1.6}
+
+    @media(max-width:768px){
+      nav{padding:10px 16px}.nav-links{display:none}
+      .course-hero{grid-template-columns:1fr}
+      .course-map{height:220px}
+      .course-stats{grid-template-columns:repeat(2,1fr)}
+      .course-panel{padding:0 12px 60px}
+    }
+    ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><img src="assets/logo.png" alt="DBGA Logo" /><span>DBGA</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="draft.html">Draft Board</a></li>
+    <li><a href="courses.html" class="active">Courses</a></li>
+    <li><a href="airbnb.html">The House</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <h1>2026 Courses</h1>
+  <p>White Mountains, New Hampshire &nbsp;&middot;&nbsp; Two Rounds of Donkey Brain Golf</p>
+</div>
+
+<div class="course-tabs">
+  <button class="course-tab active-owls" onclick="showCourse('owls')">Owl's Nest</button>
+  <button class="course-tab" onclick="showCourse('jack')">The Jack</button>
+</div>
+
+<!-- ═══ OWL'S NEST ═══ -->
+<div class="course-panel active" id="panel-owls">
+
+  <div class="course-hero owls">
+    <div>
+      <div class="course-title">Owl's Nest Resort</div>
+      <div class="course-location">Campton / Thornton, NH &nbsp;&middot;&nbsp; White Mountain National Forest</div>
+      <div class="course-stats">
+        <div class="stat-pill"><div class="stat-val">72</div><div class="stat-lbl">Par</div></div>
+        <div class="stat-pill"><div class="stat-val">6,818</div><div class="stat-lbl">Yards (Black)</div></div>
+        <div class="stat-pill"><div class="stat-val">73.0</div><div class="stat-lbl">Rating</div></div>
+        <div class="stat-pill"><div class="stat-val">133</div><div class="stat-lbl">Slope</div></div>
+      </div>
+      <p class="course-desc">
+        Designed by <strong>Mark Mungeam (1998)</strong> and later refined by <strong>Jack Nicklaus Design (2016)</strong>, Owl's Nest sits in the White Mountains along the Pemigewasset River. The course plays in three distinct sections: <strong>links-style holes</strong> around the clubhouse, <strong>water-flanked holes</strong> around a four-acre spring-fed pond, and — the showstopper — <strong>six holes atop Sunset Hill</strong> with dramatic elevation changes and panoramic mountain views. Expect OB on several holes and bentgrass greens running fast.
+      </p>
+    </div>
+    <div>
+      <div class="course-map">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1500!2d-71.6546538!3d43.8710175!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cb3e72d4ec8e7a5%3A0x1!2sOwl's%20Nest%20Resort%20%26%20Golf%20Club!5e1!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-label">
+    <h3 style="color:var(--mint)">Scorecard</h3>
+    <div class="tee-selector" id="owls-tee-selector">
+      <button class="tee-btn tee-black" onclick="setTee('owls','black',this)">Black</button>
+      <button class="tee-btn tee-blue" onclick="setTee('owls','blue',this)">Blue</button>
+      <button class="tee-btn tee-white active" onclick="setTee('owls','white',this)">White</button>
+      <button class="tee-btn tee-gold" onclick="setTee('owls','gold',this)">Gold</button>
+      <button class="tee-btn tee-green" onclick="setTee('owls','green',this)">Green</button>
+    </div>
+  </div>
+
+  <div class="scorecard-wrap">
+    <table class="scorecard" id="owls-scorecard"></table>
+  </div>
+
+  <div class="sc-label"><h3 style="color:var(--sky);font-size:1.1rem">All Tees (Men)</h3></div>
+  <div class="tees-grid">
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#222;border:2px solid #aaa"></div><div><div class="tee-info-name">Black</div><div class="tee-info-sub">6,818 yds &middot; 133 / 73.0</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#1a6bb5"></div><div><div class="tee-info-name">Blue</div><div class="tee-info-sub">6,447 yds &middot; 131 / 71.0</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#ddd"></div><div><div class="tee-info-name">White</div><div class="tee-info-sub">6,110 yds &middot; 125 / 69.5</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#FFE156"></div><div><div class="tee-info-name">Gold</div><div class="tee-info-sub">5,686 yds &middot; 120 / 67.6</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#6EDCC4"></div><div><div class="tee-info-name">Green</div><div class="tee-info-sub">5,174 yds &middot; 110 / 64.9</div></div></div>
+  </div>
+
+  <div class="hole-tips">
+    <h3>Course Notes &amp; Playing Tips</h3>
+    <div class="tips-grid">
+      <div class="tip-card"><div class="tip-hole">Hole 1 &middot; Par 4 &middot; 400 yds</div><div class="tip-text">Driver may not be the play &mdash; OB lurks on both sides. Aim down the right for the best angle into this two-tiered green. A front pin can yield pars; a back pin position is much harder.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 2 &middot; Par 4 &middot; 433 yds</div><div class="tip-text">Massively downhill dogleg right. You can see the pond and waste area below from the tee. One of the signature holes on the front nine.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 3 &middot; Par 4 &middot; 441 yds &middot; #1 HCP</div><div class="tip-text">The toughest hole. Don't flirt with the two deep fairway bunkers. A mid-to-long iron into a shallow green makes this punishing even with a good drive.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 4 &middot; Par 5 &middot; 542 yds</div><div class="tip-text">Best approach angle is from the left to minimize the water hazard right. Only the longest hitters can carry the deep greenside bunkers to a small green.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 7 &middot; Par 3 &middot; 213 yds</div><div class="tip-text">Long par 3 &mdash; trust the distance and make a full swing. Shots that land short stop dead. Back and middle pin positions play significantly harder.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 9 &middot; Par 5 &middot; 541 yds</div><div class="tip-text">Sharp dogleg right. Hit a towering fade but beware hidden bunkers. Favor the left on your approach &mdash; it can funnel onto the green. OB on both sides of a narrow fairway.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 13 &middot; Par 5 &middot; 521 yds</div><div class="tip-text">Uphill par 5 on Sunset Hill. OB and homes are uncomfortably close. A feature hole on the back despite the quirky elevation changes.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 16 &middot; Par 4 &middot; 473 yds</div><div class="tip-text">The most dramatic hole &mdash; a bunkerless, all-downhill par 4 that can play 300+ yards off the tee with a good hit and run. Blast away.</div></div>
+      <div class="tip-card"><div class="tip-hole">Sunset Hill (Holes 13&ndash;18)</div><div class="tip-text">The final six holes feature dramatic elevation changes and panoramic White Mountain views. Wind is a real factor &mdash; club up into headwinds off the hilltop tees.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ THE JACK ═══ -->
+<div class="course-panel" id="panel-jack">
+
+  <div class="course-hero jack">
+    <div>
+      <div class="course-title">The Jack Golf Course</div>
+      <div class="course-location">Woodstock, NH &nbsp;&middot;&nbsp; Along the Pemigewasset River</div>
+      <div class="course-stats">
+        <div class="stat-pill"><div class="stat-val">70</div><div class="stat-lbl">Par</div></div>
+        <div class="stat-pill"><div class="stat-val">6,109</div><div class="stat-lbl">Yards (Back)</div></div>
+        <div class="stat-pill"><div class="stat-val">68.6</div><div class="stat-lbl">Rating</div></div>
+        <div class="stat-pill"><div class="stat-val">117</div><div class="stat-lbl">Slope</div></div>
+      </div>
+      <p class="course-desc">
+        Originally opened in <strong>1948</strong> as Jack O'Lantern Resort, this <strong>Bob Keating-designed</strong> layout is one of the oldest courses in the White Mountains. Set along the <strong>Pemigewasset River</strong>, several holes run alongside the water and a historic covered bridge. Tight, tree-lined fairways squeezed between the river and the old Boston &amp; Maine railroad tracks &mdash; stray shots go OB fast. The new ownership has been actively restoring the layout to its former character. A charming, old-school New England track that plays friendlier than Owl's Nest.
+      </p>
+    </div>
+    <div>
+      <div class="course-map">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1500!2d-71.6784429!3d43.9499821!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cb3d7a0f1dc8f3f%3A0x1!2sThe%20Jack%20Golf%20Course!5e1!3m2!1sen!2sus!4v1700000000001!5m2!1sen!2sus" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-label">
+    <h3 style="color:var(--lavender)">Scorecard</h3>
+    <div class="tee-selector" id="jack-tee-selector">
+      <button class="tee-btn tee-black" onclick="setTee('jack','black',this)">Black</button>
+      <button class="tee-btn tee-blue" onclick="setTee('jack','blue',this)">Blue</button>
+      <button class="tee-btn tee-white active" onclick="setTee('jack','white',this)">White</button>
+      <button class="tee-btn tee-gold" onclick="setTee('jack','gold',this)">Gold</button>
+      <button class="tee-btn tee-green" onclick="setTee('jack','green',this)">Green</button>
+    </div>
+  </div>
+
+  <div class="scorecard-wrap">
+    <table class="scorecard" id="jack-scorecard"></table>
+  </div>
+
+  <div class="sc-label"><h3 style="color:var(--sky);font-size:1.1rem">All Tees (Men)</h3></div>
+  <div class="tees-grid">
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#222;border:2px solid #aaa"></div><div><div class="tee-info-name">Black</div><div class="tee-info-sub">6,109 yds &middot; 117 / 68.6</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#1a6bb5"></div><div><div class="tee-info-name">Blue</div><div class="tee-info-sub">5,692 yds &middot; 116 / 67.5</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#ddd"></div><div><div class="tee-info-name">White</div><div class="tee-info-sub">5,072 yds &middot; 116 / 68.0</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#FFE156"></div><div><div class="tee-info-name">Gold</div><div class="tee-info-sub">4,620 yds &middot; 108 / 65.5</div></div></div>
+    <div class="tee-card"><div class="tee-dot-lg" style="background:#6EDCC4"></div><div><div class="tee-info-name">Green</div><div class="tee-info-sub">4,071 yds &middot; 99 / 62.1</div></div></div>
+  </div>
+
+  <div class="hole-tips">
+    <h3>Course Notes &amp; Playing Tips</h3>
+    <div class="tips-grid">
+      <div class="tip-card"><div class="tip-hole">Hole 3 &middot; Par 4 &middot; 415 yds &middot; #1 HCP</div><div class="tip-text">The toughest hole on the course. Tight and demanding &mdash; accuracy off the tee is essential. The rough here plays very long.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 6 &middot; Par 4 &middot; 424 yds</div><div class="tip-text">Longest par 4 on the front. The railroad tracks lurk right &mdash; many "fores!" get shouted on busy days. Aim left of center off the tee.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 11 &middot; Par 4 &middot; 400 yds &middot; #3 HCP</div><div class="tip-text">One of the tougher driving holes on the back nine. The Pemi River runs alongside and comes aggressively into play on wayward shots.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 13 &middot; Par 5 &middot; 525 yds</div><div class="tip-text">The only par 5 on the back nine. A reachable three-shotter with a good drive &mdash; the most scoreable hole on the back side.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 17 &middot; Par 4 &middot; 445 yds &middot; #2 HCP</div><div class="tip-text">The longest par 4 and second-toughest hole. Uphill with a narrow landing zone. Take more club than you think on your approach.</div></div>
+      <div class="tip-card"><div class="tip-hole">Hole 18 &middot; Par 5 &middot; 525 yds</div><div class="tip-text">Finishing hole runs back toward the clubhouse. A solid drive can set up a birdie opportunity &mdash; a fun closer with the covered bridge in view.</div></div>
+      <div class="tip-card"><div class="tip-hole">The Railroad Tracks</div><div class="tip-text">Several holes run parallel to the old Boston &amp; Maine rail line. Shots flying over the tracks are common &mdash; call "fore!" early and expect bounce-backs into play.</div></div>
+      <div class="tip-card"><div class="tip-hole">The Pemigewasset River</div><div class="tip-text">The Pemi runs along multiple holes. A number of greens sit near or alongside the water &mdash; beautiful but unforgiving for offline approaches.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const OWLS = {
+  holes: [
+    [1,4,13],[2,4,7],[3,4,1],[4,5,3],[5,3,17],[6,4,11],[7,3,9],[8,4,15],[9,5,5],
+    [10,3,18],[11,4,12],[12,4,4],[13,5,2],[14,3,16],[15,4,10],[16,4,6],[17,5,8],[18,4,14],
+  ],
+  tees: {
+    black: [400,433,441,542,190,343,213,380,541, 152,356,428,521,220,282,473,526,377],
+    blue:  [373,403,396,518,167,314,193,360,506, 141,334,394,489,196,267,447,499,356],
+    white: [349,378,367,475,155,295,175,340,469, 128,318,364,459,178,252,415,478,335],
+    gold:  [316,345,330,426,128,256,147,307,433, 116,290,327,412,160,225,378,437,314],
+    green: [283,310,296,388,103,228,118,272,408, 103,255,283,361,138,198,332,394,280],
+  }
+};
+
+const JACK = {
+  holes: [
+    [1,4,10],[2,4,12],[3,4,1],[4,4,5],[5,3,17],[6,4,4],[7,4,16],[8,3,14],[9,4,8],
+    [10,4,13],[11,4,3],[12,3,11],[13,5,9],[14,4,6],[15,4,15],[16,3,18],[17,4,2],[18,5,7],
+  ],
+  tees: {
+    black: [377,368,415,370,175,424,328,175,330, 342,400,165,525,300,305,140,445,525],
+    blue:  [355,350,395,355,162,400,308,162,310, 323,378,152,502,285,285,130,420,500],
+    white: [310,308,350,315,145,355,265,140,275, 280,335,135,440,250,255,110,370,440],
+    gold:  [275,272,315,280,125,318,235,120,245, 248,300,115,395,222,225,95,330,395],
+    green: [245,242,282,248,105,280,205,100,215, 218,265,100,350,192,195,80,292,350],
+  }
+};
+
+const activeTee = {owls:'white', jack:'white'};
+
+function sum(arr){ return arr.reduce((a,b)=>a+b,0); }
+function parClass(p){ return p===3?'par-3':p===5?'par-5':'par-4'; }
+
+function renderScorecard(course) {
+  const data   = course==='owls' ? OWLS : JACK;
+  const tee    = activeTee[course];
+  const yds    = data.tees[tee];
+  const holes  = data.holes;
+  const color  = course==='owls' ? 'var(--mint)' : 'var(--lavender)';
+  const front9 = holes.slice(0,9);
+  const back9  = holes.slice(9);
+  const outYds = sum(yds.slice(0,9));
+  const inYds  = sum(yds.slice(9));
+  const outPar = sum(front9.map(h=>h[1]));
+  const inPar  = sum(back9.map(h=>h[1]));
+
+  const rows = (holeSet, offset) => holeSet.map((h,i) => {
+    const [num,par,hcp] = h;
+    return `<tr>
+      <td>${num}</td>
+      <td class="${parClass(par)}">${par}</td>
+      <td class="hcp-cell-sc">${hcp}</td>
+      <td class="yds-cell">${yds[offset+i]}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById(`${course}-scorecard`).innerHTML = `
+    <thead><tr>
+      <th>Hole</th><th>Par</th><th>HCP</th>
+      <th style="color:${color}">Yards</th>
+    </tr></thead>
+    <tbody>
+      <tr class="sc-nine-label"><td colspan="4">Front Nine</td></tr>
+      ${rows(front9,0)}
+      <tr class="sc-total-row">
+        <td>OUT</td>
+        <td class="${parClass(outPar)}">${outPar}</td>
+        <td></td>
+        <td class="yds-cell" style="color:${color};font-weight:900">${outYds}</td>
+      </tr>
+      <tr class="sc-nine-label"><td colspan="4">Back Nine</td></tr>
+      ${rows(back9,9)}
+      <tr class="sc-total-row">
+        <td>IN</td>
+        <td class="${parClass(inPar)}">${inPar}</td>
+        <td></td>
+        <td class="yds-cell" style="color:${color};font-weight:900">${inYds}</td>
+      </tr>
+      <tr class="sc-grand-total">
+        <td>TOTAL</td>
+        <td style="color:${color};font-weight:900">${outPar+inPar}</td>
+        <td></td>
+        <td style="color:${color};font-weight:900;font-size:1rem;font-family:'Share Tech Mono',monospace">${outYds+inYds}</td>
+      </tr>
+    </tbody>`;
+}
+
+window.setTee = function(course, tee, btn) {
+  activeTee[course] = tee;
+  document.querySelectorAll(`#${course}-tee-selector .tee-btn`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderScorecard(course);
+};
+
+window.showCourse = function(course) {
+  document.querySelectorAll('.course-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`panel-${course}`).classList.add('active');
+  document.querySelectorAll('.course-tab').forEach(t => {
+    t.className = 'course-tab';
+    if(course==='owls' && t.textContent.includes("Owl")) t.classList.add('active-owls');
+    if(course==='jack' && t.textContent.includes("Jack")) t.classList.add('active-jack');
+  });
+};
+
+renderScorecard('owls');
+renderScorecard('jack');
+</script>
+</body>
+</html>

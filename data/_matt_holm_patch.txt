@@ -1,0 +1,5 @@
+  { name:'Matt Holm',        year:2025, course:'TPC Myrtle',    gross:92  },
+  { name:'Matt Holm',        year:2025, course:'Prestwick CC',  gross:93  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes', gross:97  },
+  { name:'Matt Holm',        year:2024, course:'Twisted Dunes', gross:94  },
+  { name:'David Resmini',    year:2025, course:'TPC Myrtle',    gross:111 },

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBGA 2026 &middot; The House</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+      --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+      --card-bg:rgba(255,255,255,0.06); --radius:14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Nunito',sans-serif;background:var(--darker);color:#fff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px);background-size:60px 60px,90px 90px;background-position:0 0,30px 30px;opacity:0.04;pointer-events:none;z-index:0}
+
+    nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:10px 32px;background:rgba(18,18,31,0.92);backdrop-filter:blur(16px);border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo img{height:40px;width:40px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(110,220,196,0.5))}
+    .nav-logo span{font-family:'Boogaloo',cursive;font-size:1.7rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:6px;list-style:none}
+    .nav-links a{text-decoration:none;color:rgba(255,255,255,0.65);font-weight:700;font-size:0.82rem;letter-spacing:0.5px;text-transform:uppercase;padding:7px 14px;border-radius:50px;transition:all 0.2s}
+    .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+    .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+
+    .page-header{position:relative;z-index:1;text-align:center;padding:40px 20px 32px}
+    .page-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2.5rem,7vw,5rem);letter-spacing:4px;background:linear-gradient(135deg,var(--pink),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .page-header p{color:rgba(255,255,255,0.45);font-size:0.9rem;font-weight:700;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+
+    .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+
+    .card{background:var(--card-bg);border-radius:var(--radius);padding:24px 28px;border:1px solid rgba(255,255,255,0.08);margin-bottom:20px}
+    .card-title{font-family:'Boogaloo',cursive;font-size:1.4rem;letter-spacing:1px;margin-bottom:16px}
+
+    .hero-card{border-top:3px solid var(--pink);padding:28px}
+    .property-name{font-family:'Boogaloo',cursive;font-size:2rem;letter-spacing:1px;color:var(--pink);line-height:1.1;margin-bottom:6px}
+    .property-sub{font-size:0.8rem;font-weight:800;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:22px}
+
+    .checkinout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+    .cio-box{border-radius:10px;padding:16px 18px;text-align:center}
+    .cio-box.cin{background:rgba(110,220,196,0.1);border:1px solid rgba(110,220,196,0.25)}
+    .cio-box.cout{background:rgba(244,167,195,0.1);border:1px solid rgba(244,167,195,0.25)}
+    .cio-label{font-size:0.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+    .cio-box.cin .cio-label{color:var(--mint)}
+    .cio-box.cout .cio-label{color:var(--pink)}
+    .cio-time{font-family:'Boogaloo',cursive;font-size:1.8rem;color:#fff;line-height:1}
+    .cio-day{font-size:0.72rem;font-weight:800;color:rgba(255,255,255,0.4);margin-top:3px}
+
+    .address-block{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.07)}
+    .addr-icon{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+    .addr-text .addr-main{font-weight:900;font-size:1rem;color:#fff;margin-bottom:2px}
+    .addr-text .addr-sub{font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.4)}
+    .addr-link{display:inline-block;margin-top:10px;font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--mint);text-decoration:none;background:rgba(110,220,196,0.1);border:1px solid rgba(110,220,196,0.3);padding:6px 16px;border-radius:50px;transition:all 0.2s}
+    .addr-link:hover{background:rgba(110,220,196,0.2)}
+
+    .checkin-card{border-top:3px solid var(--yellow)}
+    .keypad-note{display:flex;align-items:center;gap:12px;background:rgba(255,225,86,0.08);border:1px solid rgba(255,225,86,0.2);border-radius:10px;padding:14px 18px;font-size:0.85rem;font-weight:800;color:rgba(255,255,255,0.7)}
+    .keypad-icon{font-size:1.5rem;flex-shrink:0}
+
+    .rules-card{border-top:3px solid var(--lavender)}
+    .rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .rule-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;font-size:0.82rem;font-weight:800}
+    .rule-item.ok{background:rgba(110,220,196,0.07);border:1px solid rgba(110,220,196,0.15);color:rgba(255,255,255,0.75)}
+    .rule-item.no{background:rgba(244,167,195,0.07);border:1px solid rgba(244,167,195,0.15);color:rgba(255,255,255,0.75)}
+    .rule-icon{font-size:1.1rem;flex-shrink:0}
+    .rule-label{flex:1}
+    .rule-badge{font-size:0.58rem;font-weight:900;padding:2px 8px;border-radius:50px;margin-top:2px;display:inline-block}
+    .badge-ok{background:rgba(110,220,196,0.15);color:var(--mint)}
+    .badge-no{background:rgba(244,167,195,0.15);color:var(--pink)}
+    .pets-note{margin-top:12px;padding:12px 16px;background:rgba(255,225,86,0.06);border:1px solid rgba(255,225,86,0.15);border-radius:10px;font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.55);line-height:1.6}
+    .pets-note strong{color:var(--yellow)}
+
+    .sidebar .card{margin-bottom:16px}
+
+    .countdown-card{border-top:3px solid var(--sky);text-align:center}
+    .countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+    .cd-box{background:rgba(255,255,255,0.06);border-radius:10px;padding:12px 6px}
+    .cd-num{font-family:'Share Tech Mono',monospace;font-size:1.6rem;font-weight:bold;color:var(--sky)}
+    .cd-lbl{font-size:0.58rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);margin-top:3px}
+
+    .stay-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.85rem}
+    .stay-row:last-child{border-bottom:none}
+    .stay-key{font-weight:800;color:rgba(255,255,255,0.45);font-size:0.75rem;letter-spacing:0.5px;text-transform:uppercase}
+    .stay-val{font-weight:900;color:#fff;text-align:right}
+
+    .map-card{border-top:3px solid var(--donkey);padding:0;overflow:hidden}
+    .map-card-inner{padding:18px 20px 14px}
+    .map-card-inner h3{font-family:'Boogaloo',cursive;font-size:1.2rem;color:var(--donkey);letter-spacing:1px;margin-bottom:4px}
+    .map-card-inner p{font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.35)}
+    .map-embed{height:200px}
+    .map-embed iframe{width:100%;height:100%;border:0;display:block}
+
+    .nearby-card{border-top:3px solid var(--mint)}
+    .nearby-list{display:flex;flex-direction:column;gap:8px}
+    .nearby-item{display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:800;color:rgba(255,255,255,0.65);padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .nearby-item:last-child{border-bottom:none}
+    .nearby-icon{font-size:1rem;flex-shrink:0;width:24px;text-align:center}
+    .nearby-dist{font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.3);margin-left:auto;white-space:nowrap}
+
+    @media(max-width:900px){
+      .wrap{grid-template-columns:1fr}
+      .sidebar{order:-1}
+      nav{padding:10px 16px}.nav-links{display:none}
+    }
+    @media(max-width:520px){
+      .checkinout{grid-template-columns:1fr}
+      .rules-grid{grid-template-columns:1fr}
+    }
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><img src="assets/logo.png" alt="DBGA Logo" /><span>DBGA</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="draft.html">Draft Board</a></li>
+    <li><a href="courses.html">Courses</a></li>
+    <li><a href="airbnb.html" class="active">The House</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <h1>The House</h1>
+  <p>18 Treeline Road &nbsp;&middot;&nbsp; Thornton, NH &nbsp;&middot;&nbsp; Sugar Run Estates</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ── MAIN COLUMN ── -->
+  <div>
+
+    <div class="card hero-card">
+      <div class="property-name">White Mountain Escape</div>
+      <div class="property-sub">w/ Separate In-Law Suite &nbsp;&middot;&nbsp; Hosted by Evolve</div>
+      <div class="checkinout">
+        <div class="cio-box cin">
+          <div class="cio-label">Check-in</div>
+          <div class="cio-time">4:00 PM</div>
+          <div class="cio-day">After 4 PM &nbsp;&middot;&nbsp; Thu, Jul 31</div>
+        </div>
+        <div class="cio-box cout">
+          <div class="cio-label">Checkout</div>
+          <div class="cio-time">10:00 AM</div>
+          <div class="cio-day">Before 10 AM &nbsp;&middot;&nbsp; Sun, Aug 2</div>
+        </div>
+      </div>
+      <div class="address-block">
+        <div class="addr-icon">📍</div>
+        <div class="addr-text">
+          <div class="addr-main">18 Treeline Road</div>
+          <div class="addr-sub">Thornton, NH 03285 &nbsp;&middot;&nbsp; Sugar Run Estates</div>
+          <a class="addr-link" href="https://maps.google.com/?q=18+Treeline+Road+Thornton+NH+03285" target="_blank">Get Directions</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card checkin-card">
+      <div class="card-title" style="color:var(--yellow)">Getting In</div>
+      <div class="keypad-note">
+        <span class="keypad-icon">🔑</span>
+        <span><strong style="color:var(--yellow)">Self check-in via keypad.</strong> Contact host Evolve for the door code before arrival. Check-in is after 4:00 PM &mdash; don't show up early without confirming.</span>
+      </div>
+    </div>
+
+  </div><!-- ── END MAIN COLUMN ── -->
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar">
+
+    <div class="card countdown-card">
+      <div class="card-title" style="color:var(--sky)">Days Until Tee Time</div>
+      <div class="countdown-grid">
+        <div class="cd-box"><div class="cd-num" id="cd-days">--</div><div class="cd-lbl">Days</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-hrs">--</div><div class="cd-lbl">Hours</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-min">--</div><div class="cd-lbl">Mins</div></div>
+        <div class="cd-box"><div class="cd-num" id="cd-sec">--</div><div class="cd-lbl">Secs</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-top:3px solid var(--pink)">
+      <div class="card-title" style="color:var(--pink)">Stay Details</div>
+      <div class="stay-row"><span class="stay-key">Property</span><span class="stay-val">White Mountain Escape</span></div>
+      <div class="stay-row"><span class="stay-key">Address</span><span class="stay-val">18 Treeline Rd, Thornton NH</span></div>
+      <div class="stay-row"><span class="stay-key">Check-in</span><span class="stay-val">Thu Jul 31 '26 &middot; After 4 PM</span></div>
+      <div class="stay-row"><span class="stay-key">Checkout</span><span class="stay-val">Sun Aug 2 '26 &middot; Before 10 AM</span></div>
+      <div class="stay-row"><span class="stay-key">Guests</span><span class="stay-val">Up to 20</span></div>
+      <div class="stay-row"><span class="stay-key">Host</span><span class="stay-val">Evolve</span></div>
+      <div class="stay-row"><span class="stay-key">Entry</span><span class="stay-val">Keypad (contact host)</span></div>
+    </div>
+
+    <div class="card map-card">
+      <div class="map-card-inner">
+        <h3>Location</h3>
+        <p>Sugar Run Estates, Thornton NH</p>
+      </div>
+      <div class="map-embed">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1500!2d-71.6900!3d43.9100!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2s18+Treeline+Rd+Thornton+NH+03285!5e0!3m2!1sen!2sus!4v1700000000002!5m2!1sen!2sus" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+
+    <div class="card nearby-card">
+      <div class="card-title" style="color:var(--mint)">Nearby</div>
+      <div class="nearby-list">
+        <div class="nearby-item"><span class="nearby-icon">⛳</span>Owl's Nest Resort<span class="nearby-dist">~2 mi</span></div>
+        <div class="nearby-item"><span class="nearby-icon">⛳</span>The Jack Golf Course<span class="nearby-dist">~8 mi</span></div>
+        <div class="nearby-item"><span class="nearby-icon">⛷️</span>Loon Mountain Resort<span class="nearby-dist">~9 mi</span></div>
+        <div class="nearby-item"><span class="nearby-icon">🏔️</span>White Mountain Nat'l Forest<span class="nearby-dist">On doorstep</span></div>
+        <div class="nearby-item"><span class="nearby-icon">🍺</span>Woodstock Inn Brewery<span class="nearby-dist">~9 mi</span></div>
+        <div class="nearby-item"><span class="nearby-icon">🛒</span>Hannaford Supermarket<span class="nearby-dist">~8 mi</span></div>
+        <div class="nearby-item"><span class="nearby-icon">🏥</span>Speare Memorial Hospital<span class="nearby-dist">~7 mi</span></div>
+      </div>
+    </div>
+
+  </div><!-- ── END SIDEBAR ── -->
+
+</div><!-- end wrap -->
+
+<script>
+  const TARGET = new Date('2026-07-31T16:00:00-04:00');
+  function updateCountdown() {
+    const diff = TARGET - new Date();
+    if (diff <= 0) {
+      ['cd-days','cd-hrs','cd-min','cd-sec'].forEach(id => document.getElementById(id).textContent = '0');
+      return;
+    }
+    document.getElementById('cd-days').textContent = Math.floor(diff / 86400000);
+    document.getElementById('cd-hrs').textContent  = Math.floor((diff % 86400000) / 3600000);
+    document.getElementById('cd-min').textContent  = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('cd-sec').textContent  = Math.floor((diff % 60000) / 1000);
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
