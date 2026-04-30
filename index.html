@@ -126,7 +126,7 @@
   <ul class="nav-links">
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html">Scores</a></li>
-    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -150,7 +150,7 @@
 <div class="page-nav">
   <a href="leaderboard.html" class="mint">Full Leaderboard</a>
   <a href="scores.html" class="sky">Score Entry</a>
-  <a href="matchplay.html" class="pink">Pairings</a>
+  <a href="matchplay.html" class="pink">Match Play</a>
   <a href="draft.html" class="lavender">Draft Board</a>
   <a href="courses.html" class="sky">Courses</a>
   <a href="airbnb.html" class="pink">The House</a>
@@ -252,11 +252,12 @@ const HISTORY = [
   { name:'Matt Holm',        year:2023, course:'Crystal Lake',         gross:93  },
   { name:'Matt Holm',        year:2023, course:'Connecticut National', gross:93  },
 ];
-const HCP_OVERRIDE = { 'Justin Roberts': 15, 'Corey DaSilva': 35 };
+const HCP_OVERRIDE = { 'Justin Roberts': 15, 'Corey DaSilva': 35, 'David Allen': 23 };
 const ROSTER = [
   'Jack Lyons','Matt Holm','Carson Smith','Josh McLeman','Ed Weaver',
   'Justin Roberts','Justin Estrella','Devan Dhand','Matt DiPano','David Resmini',
-  'Mitchell Rotondi','Jason Sulmonetti','Brendan Barry','Trevor Ross','Corey DaSilva'
+  'Mitchell Rotondi','Jason Sulmonetti','Brendan Barry','Trevor Ross','Corey DaSilva',
+  'David Allen'
 ];
 
 function diff(gross, course) { const c=COURSES[course]; if(!c) return null; return ((gross-c.rating)*113)/c.slope; }

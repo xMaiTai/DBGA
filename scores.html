@@ -173,6 +173,40 @@
     .sum-total-label{font-size:0.72rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35)}
     .sum-total-val{font-family:'Share Tech Mono',monospace;font-size:1.3rem;font-weight:bold;color:var(--mint)}
 
+    /* HOLE UNSAVED WARNING */
+    .hole-warning{padding:10px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;color:#f87171;font-size:0.78rem;font-weight:800;margin-top:12px;line-height:1.6;letter-spacing:0.2px;display:none}
+    /* SUMMARY FEEDBACK */
+    .summary-success{padding:14px 18px;background:rgba(110,220,196,0.1);border:1px solid rgba(110,220,196,0.3);border-radius:12px;color:var(--mint);font-size:0.85rem;font-weight:800;text-align:center;margin-bottom:12px}
+    .summary-incomplete{padding:12px 16px;background:rgba(255,225,86,0.08);border:1px solid rgba(255,225,86,0.25);border-radius:10px;color:var(--yellow);font-size:0.78rem;font-weight:800;margin-bottom:12px;text-align:center}
+    .summary-save-error{padding:12px 16px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#f87171;font-size:0.82rem;font-weight:800;text-align:center;margin-bottom:12px}
+    /* FOURSOME PLAYER SELECTION */
+    .foursome-card{border:2px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.03);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+    .foursome-card:hover{background:rgba(255,255,255,0.06)}
+    .foursome-card.selected{border-color:rgba(110,220,196,0.5);background:rgba(110,220,196,0.06)}
+    .foursome-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .foursome-label{font-size:0.62rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.3)}
+    .foursome-tee{font-size:0.65rem;font-weight:800;color:rgba(255,255,255,0.4)}
+    .foursome-players-list{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .fsp-chip{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;font-size:0.78rem;font-weight:800}
+    .fsp-chip .fsp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .fsp-chip.donkey{color:var(--donkey);background:rgba(200,169,126,0.08)}
+    .fsp-chip.donkey .fsp-dot{background:var(--donkey)}
+    .fsp-chip.brain{color:var(--lavender);background:rgba(184,143,224,0.08)}
+    .fsp-chip.brain .fsp-dot{background:var(--lavender)}
+    .section-divider{font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin:16px 0 10px;display:flex;align-items:center;gap:10px}
+    .section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08)}
+
+    /* FOURSOME HOLE PLAYER PROGRESS */
+    .hole-fs-row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+    .hole-fs-item{border-radius:10px;padding:6px 10px;min-width:58px;text-align:center;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);transition:all 0.15s;cursor:default}
+    .hole-fs-item.active{border-color:var(--mint);background:rgba(110,220,196,0.1)}
+    .hole-fs-item.scored{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
+    .hole-fs-item .hfi-name{font-size:0.56rem;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.3);margin-bottom:2px}
+    .hole-fs-item.active .hfi-name{color:rgba(110,220,196,0.8)}
+    .hole-fs-item .hfi-score{font-family:'Share Tech Mono',monospace;font-size:1.05rem;font-weight:bold;color:rgba(255,255,255,0.3)}
+    .hole-fs-item.active .hfi-score{color:var(--mint)}
+    .hole-fs-item.scored .hfi-score{color:#fff}
+
     @media(max-width:400px){
       .player-grid{grid-template-columns:1fr}
       .numpad{gap:8px}
@@ -188,7 +222,7 @@
     <li><a href="index.html">Home</a></li>
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html" class="active">Scores</a></li>
-    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -282,6 +316,8 @@
       <div class="hole-progress" id="holePips"></div>
       <div class="hole-card">
         <div class="hole-course" id="holeCourse"></div>
+        <div id="holeFsRow" class="hole-fs-row" style="display:none"></div>
+        <div id="holePlayer" style="font-family:'Boogaloo',cursive;font-size:1.3rem;color:#fff;margin-bottom:2px"></div>
         <div class="hole-num" id="holeNum">1</div>
         <div class="hole-par-hcp" id="holeParHcp"></div>
         <div class="score-display empty" id="scoreDisplay">—</div>
@@ -300,6 +336,7 @@
           <button class="np-btn" onclick="numInput('9')">9</button>
           <button class="np-btn next" id="nextHoleBtn" onclick="confirmHole()">Next</button>
         </div>
+        <div class="hole-warning" id="holeWarning"></div>
       </div>
     </div>
     <div class="nav-btns" style="margin-top:8px">
@@ -330,7 +367,7 @@
 
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
 const PIN = '1997';
 
 // ─── COURSE DATA ──────────────────────────────────────────────────────────
@@ -368,17 +405,27 @@ const ROSTER = [
   { name:'Brendan Barry',    team:'donkeys', hcp:28.3 },
   { name:'Trevor Ross',      team:'brains',  hcp:37.3 },
   { name:'Corey DaSilva',    team:'donkeys', hcp:35.0 },
+  { name:'David Allen',      team:'brains',  hcp:23.0 },
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────
 let selectedRound  = null;   // 'R1' | 'R2' | 'R3'
-let selectedPlayer = null;   // player name or pair Donkey1 name
-let selectedPair   = null;   // { donkey1, donkey2, team } for R2
+let selectedPlayer = null;   // player name or pair ID
+let selectedPair   = null;   // { player1, player2, team } for R2
 let holeScores     = Array(18).fill(null);
+let confirmedHoles = Array(18).fill(false);
+let saveTimerPending = false;
 let currentHole    = 0;      // 0-indexed
 let scoreBuffer    = '';
-let sheetData      = {};     // cached from Apps Script
-let scramblePairs  = [];     // parsed from sheet Scramble tab
+let sheetData      = {};
+let scramblePairs  = [];
+
+// Foursome scoring state
+let foursomeMode      = false;
+let foursomePlayers   = []; // [{ name, team, isPair?, player1?, player2? }]
+let foursomeScores    = {}; // { playerName: Array(18) }
+let foursomeConfirmed = {}; // { playerName: Array(18) }
+let foursomePlayerIdx = 0;  // which player is currently being scored
 
 // ─── PIN ──────────────────────────────────────────────────────────────────
 function checkPin() {
@@ -404,18 +451,36 @@ document.addEventListener('keydown', e => {
 
 // ─── SHEET DATA ───────────────────────────────────────────────────────────
 async function loadSheetData() {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec') return;
+  if (!APPS_SCRIPT_URL) return;
   try {
     const res = await fetch(APPS_SCRIPT_URL);
     sheetData = await res.json();
-    // Parse scramble pairs
-    scramblePairs = (sheetData['Scramble'] || []).map(r => ({
-      team: (r.Team||'').toLowerCase(),
-      donkey1: r.Player1||'', // for donkey pair: Player1 is Donkey1
-      donkey2: r.Player2||'', // actually these are just player1/player2
-      player1: r.Player1||'',
-      player2: r.Player2||'',
-    }));
+    // Parse scramble pairs from Pairings tab (Round 2 rows)
+    // Each R2 pairings row contains one DiPano pair and one Dhand pair
+    scramblePairs = [];
+    (sheetData['Pairings'] || [])
+      .filter(r => parseInt(r.Round) === 2)
+      .forEach(r => {
+        if (r.Donkey1 || r.Donkey2) {
+          scramblePairs.push({
+            team: 'donkeys',
+            player1: r.Donkey1 || '',
+            player2: r.Donkey2 || '',
+          });
+        }
+        if (r.Brain1 || r.Brain2) {
+          scramblePairs.push({
+            team: 'brains',
+            player1: r.Brain1 || '',
+            player2: r.Brain2 || '',
+          });
+        }
+      });
+    // If player selection is visible for any round, re-render now that pairings data has arrived
+    if (selectedRound &&
+        document.getElementById('view-player').style.display !== 'none') {
+      renderPlayerList();
+    }
     // Pre-load existing scores for current selection
     if (selectedRound && selectedPlayer) loadExistingScores();
   } catch(e) { console.error('Sheet load error', e); }
@@ -424,14 +489,16 @@ async function loadSheetData() {
 function loadExistingScores() {
   const tabKey = selectedRound === 'R1' ? 'Scores_R1'
                : selectedRound === 'R2' ? 'Scores_R2' : 'Scores_R3';
-  const idField = selectedRound === 'R2' ? 'Donkey1' : 'Name';
   const rows = sheetData[tabKey] || [];
-  const row = rows.find(r => r[idField] === selectedPlayer);
+  // Scores are keyed by Name (individuals) or Name/PairID (R2 scramble pairs)
+  const row = rows.find(r => (r.Name || r.PairID || r.Donkey1 || '') === selectedPlayer);
   if (row) {
     holeScores = Array.from({length:18}, (_,i) => {
       const v = parseInt(row[`H${i+1}`]);
       return isNaN(v) ? null : v;
     });
+    // Scores loaded from sheet are already confirmed saved
+    confirmedHoles = holeScores.map(s => s !== null);
     // Advance to first unfilled hole
     const firstEmpty = holeScores.findIndex(s => s === null);
     currentHole = firstEmpty === -1 ? 17 : firstEmpty;
@@ -458,6 +525,7 @@ function selectRound(round, el) {
   selectedPlayer = null;
   selectedPair   = null;
   holeScores     = Array(18).fill(null);
+  confirmedHoles = Array(18).fill(false);
   currentHole    = 0;
   document.querySelectorAll('.round-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -468,33 +536,142 @@ function selectRound(round, el) {
 function renderPlayerList() {
   const el = document.getElementById('playerList');
   const title = document.getElementById('playerCardTitle');
+  title.textContent = 'Select Player or Foursome';
 
-  if (selectedRound === 'R2') {
-    // Scramble: show pairs from sheet, or all roster pairs if sheet not loaded
-    title.textContent = 'Select Scramble Pair';
-    const pairs = scramblePairs.length > 0 ? scramblePairs : buildDefaultPairs();
-    el.innerHTML = pairs.map(p => {
-      const teamColor = p.team === 'donkeys' ? 'var(--donkey)' : 'var(--lavender)';
-      const teamLabel = p.team === 'donkeys' ? '🫏 Donkeys' : '🧠 Brains';
-      const isSelected = selectedPlayer === p.player1;
-      return `<button class="pair-btn ${isSelected?'selected':''}"
-        onclick="selectPair('${p.player1}','${p.player2}','${p.team}',this)">
-        <div class="pair-names">${p.player1} &amp; ${p.player2}</div>
-        <div class="pair-team" style="color:${teamColor}">${teamLabel}</div>
-      </button>`;
+  const foursomes = getFoursomesForRound(selectedRound);
+  let html = '';
+
+  // ── FOURSOME SECTION ──
+  if (foursomes.length) {
+    html += `<div style="font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin-bottom:10px">Score Entire Foursome</div>`;
+    html += foursomes.map((fs, fi) => {
+      const teeLabel = fs.teeTime ? `Tee ${fs.teeTime}` : `Group ${fi+1}`;
+      const chips = fs.players.map(p => {
+        const tc = p.team === 'donkeys' ? 'donkey' : 'brain';
+        const displayName = p.isPair ? p.name : p.name.split(' ')[0] + ' ' + (p.name.split(' ')[1]||'');
+        return `<div class="fsp-chip ${tc}"><div class="fsp-dot"></div>${displayName}</div>`;
+      }).join('');
+      const fsKey = fs.players.map(p=>p.name).join('|');
+      const isSelected = foursomeMode && foursomePlayers.map(p=>p.name).join('|') === fsKey;
+      return `<div class="foursome-card ${isSelected?'selected':''}" onclick="selectFoursome(${fi},this)">
+        <div class="foursome-meta">
+          <span class="foursome-label">Foursome</span>
+          <span class="foursome-tee">${teeLabel}</span>
+        </div>
+        <div class="foursome-players-list">${chips}</div>
+      </div>`;
     }).join('');
+    html += `<div class="section-divider">Solo</div>`;
+  }
+
+  // ── INDIVIDUAL / PAIR SECTION ──
+  if (selectedRound === 'R2') {
+    const pairs = scramblePairs.length > 0 ? scramblePairs : [];
+    if (!pairs.length) {
+      const isLoading = Object.keys(sheetData).length === 0;
+      html += isLoading
+        ? `<div style="font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.35);text-align:center;padding:20px 0">Loading pairs…</div>`
+        : `<div style="font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.35);text-align:center;padding:20px 0">No scramble pairs found. Set up R2 pairings in the <a href="matchplay.html" style="color:var(--mint)">Match Play</a> page first.</div>`;
+    } else {
+      html += pairs.map(p => {
+        const pairId = [p.player1, p.player2].filter(Boolean).join(' & ');
+        const teamColor = p.team === 'donkeys' ? 'var(--donkey)' : 'var(--lavender)';
+        const teamLabel = p.team === 'donkeys' ? 'Team DiPano' : 'Team Dhand';
+        const isSelected = !foursomeMode && selectedPlayer === pairId;
+        return `<button class="pair-btn ${isSelected?'selected':''}"
+          onclick="selectPair('${p.player1}','${p.player2}','${p.team}',this)">
+          <div class="pair-names">${p.player1} &amp; ${p.player2}</div>
+          <div class="pair-team" style="color:${teamColor}">${teamLabel}</div>
+        </button>`;
+      }).join('');
+    }
   } else {
-    // Individual: show all players
-    title.textContent = 'Select Player';
-    el.innerHTML = `<div class="player-grid">${ROSTER.map(p => {
+    html += `<div class="player-grid">${ROSTER.map(p => {
       const teamClass = p.team;
-      const isSelected = selectedPlayer === p.name;
+      const isSelected = !foursomeMode && selectedPlayer === p.name;
       return `<button class="player-btn ${teamClass} ${isSelected?'selected':''}"
         onclick="selectPlayer('${p.name}',this)">
         <div class="pb-name">${p.name}</div>
-        <div class="pb-info">${p.team === 'donkeys' ? '🫏' : '🧠'} HCP ${p.hcp}</div>
+        <div class="pb-info">HCP ${p.hcp}</div>
       </button>`;
     }).join('')}</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ─── FOURSOME HELPERS ─────────────────────────────────────────────────────
+function getFoursomesForRound(round) {
+  if (!round) return [];
+  const rndNum = parseInt(round.replace('R', ''));
+  const isR2 = round === 'R2';
+  return (sheetData['Pairings'] || [])
+    .filter(r => parseInt(r.Round) === rndNum)
+    .map(r => {
+      const players = [];
+      if (isR2) {
+        const p1 = [r.Donkey1, r.Donkey2].filter(Boolean);
+        const p2 = [r.Brain1,  r.Brain2 ].filter(Boolean);
+        if (p1.length) players.push({ name: p1.join(' & '), team: 'donkeys', isPair: true, player1: r.Donkey1||'', player2: r.Donkey2||'' });
+        if (p2.length) players.push({ name: p2.join(' & '), team: 'brains',  isPair: true, player1: r.Brain1||'',  player2: r.Brain2||''  });
+      } else {
+        if (r.Donkey1) players.push({ name: r.Donkey1, team: 'donkeys' });
+        if (r.Donkey2) players.push({ name: r.Donkey2, team: 'donkeys' });
+        if (r.Brain1)  players.push({ name: r.Brain1,  team: 'brains'  });
+        if (r.Brain2)  players.push({ name: r.Brain2,  team: 'brains'  });
+      }
+      return { players, teeTime: r.TeeTime || '' };
+    })
+    .filter(f => f.players.length > 0);
+}
+
+function selectFoursome(foursomeIdx, cardEl) {
+  const fs = getFoursomesForRound(selectedRound)[foursomeIdx];
+  if (!fs) return;
+  foursomeMode      = true;
+  foursomePlayers   = fs.players;
+  foursomePlayerIdx = 0;
+  foursomeScores    = {};
+  foursomeConfirmed = {};
+  fs.players.forEach(p => {
+    foursomeScores[p.name]    = Array(18).fill(null);
+    foursomeConfirmed[p.name] = Array(18).fill(false);
+  });
+  currentHole = 0;
+  switchToFoursomePlayer(0);
+  document.querySelectorAll('.foursome-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.player-btn, .pair-btn').forEach(b => b.classList.remove('selected'));
+  if (cardEl) cardEl.classList.add('selected');
+  document.getElementById('playerNextBtn').disabled = false;
+  // Load any existing saved scores for each player
+  fs.players.forEach(p => loadExistingScoresForFoursomePlayer(p));
+}
+
+function switchToFoursomePlayer(idx) {
+  foursomePlayerIdx = idx;
+  const p = foursomePlayers[idx];
+  selectedPlayer = p.name;
+  selectedPair   = p.isPair ? { player1: p.player1, player2: p.player2, team: p.team } : null;
+  holeScores     = foursomeScores[p.name];
+  confirmedHoles = foursomeConfirmed[p.name];
+}
+
+function loadExistingScoresForFoursomePlayer(p) {
+  const tabKey = selectedRound === 'R1' ? 'Scores_R1'
+               : selectedRound === 'R2' ? 'Scores_R2' : 'Scores_R3';
+  const row = (sheetData[tabKey] || [])
+    .find(r => (r.Name || r.PairID || r.Donkey1 || '') === p.name);
+  if (!row) return;
+  const loaded = Array.from({length:18}, (_,i) => {
+    const v = parseInt(row[`H${i+1}`]);
+    return isNaN(v) ? null : v;
+  });
+  foursomeScores[p.name]    = loaded;
+  foursomeConfirmed[p.name] = loaded.map(s => s !== null);
+  // If this player is currently active, sync the live references
+  if (p.name === selectedPlayer) {
+    holeScores     = foursomeScores[p.name];
+    confirmedHoles = foursomeConfirmed[p.name];
   }
 }
 
@@ -504,21 +681,30 @@ function buildDefaultPairs() {
 }
 
 function selectPlayer(name, el) {
+  foursomeMode   = false;
+  foursomePlayers = [];
   selectedPlayer = name;
+  selectedPair   = null;
   document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.foursome-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('playerNextBtn').disabled = false;
-  holeScores = Array(18).fill(null);
+  holeScores     = Array(18).fill(null);
+  confirmedHoles = Array(18).fill(false);
   loadExistingScores();
 }
 
 function selectPair(p1, p2, team, el) {
-  selectedPlayer = p1;
+  foursomeMode   = false;
+  foursomePlayers = [];
+  selectedPlayer = [p1, p2].filter(Boolean).join(' & ');
   selectedPair   = { player1:p1, player2:p2, team };
   document.querySelectorAll('.pair-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.foursome-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('playerNextBtn').disabled = false;
-  holeScores = Array(18).fill(null);
+  holeScores     = Array(18).fill(null);
+  confirmedHoles = Array(18).fill(false);
   loadExistingScores();
 }
 
@@ -530,6 +716,30 @@ function renderHoleEntry() {
 
   // Course label
   document.getElementById('holeCourse').textContent = course.name;
+  // Foursome player progress chips
+  const fsRowEl = document.getElementById('holeFsRow');
+  if (foursomeMode && foursomePlayers.length) {
+    fsRowEl.style.display = 'flex';
+    fsRowEl.innerHTML = foursomePlayers.map((p, idx) => {
+      const score = foursomeScores[p.name][h];
+      const isActive = idx === foursomePlayerIdx;
+      const isDone   = !isActive && score !== null;
+      const cls = isActive ? 'active' : isDone ? 'scored' : '';
+      const firstName = p.isPair ? p.player1.split(' ')[0] + ' & ' + p.player2.split(' ')[0]
+                                 : p.name.split(' ')[0];
+      return `<div class="hole-fs-item ${cls}">
+        <div class="hfi-name">${firstName}</div>
+        <div class="hfi-score">${score ?? '·'}</div>
+      </div>`;
+    }).join('');
+  } else {
+    fsRowEl.style.display = 'none';
+  }
+  // Player / pair name
+  const playerLabel = selectedRound === 'R2' && selectedPair
+    ? `${selectedPair.player1} & ${selectedPair.player2}`
+    : selectedPlayer || '';
+  document.getElementById('holePlayer').textContent = playerLabel;
   // Hole number
   document.getElementById('holeNum').textContent = `Hole ${h+1}`;
   // Par / HCP
@@ -542,11 +752,20 @@ function renderHoleEntry() {
 
   updateScoreDisplay();
   renderPips();
+  updateHoleWarning();
 }
 
 function renderPips() {
   const pips = Array.from({length:18}, (_,i) => {
-    const cls = i === currentHole ? 'current' : holeScores[i] !== null ? 'done' : '';
+    let cls = '';
+    if (i === currentHole) {
+      cls = 'current';
+    } else if (foursomeMode) {
+      const allDone = foursomePlayers.every(p => foursomeScores[p.name][i] !== null);
+      cls = allDone ? 'done' : '';
+    } else {
+      cls = holeScores[i] !== null ? 'done' : '';
+    }
     return `<div class="hole-pip ${cls}" onclick="jumpToHole(${i})">${i+1}</div>`;
   }).join('');
   document.getElementById('holePips').innerHTML = pips;
@@ -593,62 +812,158 @@ function numDel() {
 function confirmHole() {
   const score = parseInt(scoreBuffer);
   if (!scoreBuffer || isNaN(score) || score < 1) return;
-  holeScores[currentHole] = score;
-  autosave();
-  if (currentHole < 17) {
-    currentHole++;
-    scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
-    renderHoleEntry();
+
+  if (foursomeMode) {
+    // Write directly by name — never rely on the holeScores alias which the save
+    // loop may have redirected to a different player's array
+    foursomeScores[foursomePlayers[foursomePlayerIdx].name][currentHole] = score;
+    advanceFoursomeAfterEntry();
   } else {
-    goToStep('summary');
+    holeScores[currentHole] = score;
+    autosave();
+    if (currentHole < 17) {
+      currentHole++;
+      scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
+      renderHoleEntry();
+    } else {
+      goToStep('summary');
+    }
   }
 }
 
 function skipHole() {
-  holeScores[currentHole] = null;
-  if (currentHole < 17) {
-    currentHole++;
+  if (foursomeMode) {
+    foursomeScores[foursomePlayers[foursomePlayerIdx].name][currentHole] = null;
+    advanceFoursomeAfterEntry();
+  } else {
+    holeScores[currentHole] = null;
+    if (currentHole < 17) {
+      currentHole++;
+      scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
+      renderHoleEntry();
+    }
+  }
+}
+
+// Advance through foursome players after a score (or skip) is entered
+function advanceFoursomeAfterEntry() {
+  if (foursomePlayerIdx < foursomePlayers.length - 1) {
+    // More players to score on this hole
+    switchToFoursomePlayer(foursomePlayerIdx + 1);
     scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
     renderHoleEntry();
+  } else {
+    // All players done on this hole — autosave and advance to next hole
+    autosaveFoursome();
+    if (currentHole < 17) {
+      currentHole++;
+      switchToFoursomePlayer(0);
+      scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
+      renderHoleEntry();
+    } else {
+      goToStep('summary');
+    }
   }
 }
 
 window.jumpToHole = function(i) {
   currentHole = i;
+  if (foursomeMode) switchToFoursomePlayer(0);
   scoreBuffer = holeScores[i] !== null ? String(holeScores[i]) : '';
   renderHoleEntry();
 };
 
 // ─── AUTO-SAVE ────────────────────────────────────────────────────────────
 let saveTimer = null;
+
+// Solo mode: debounce so rapid keypad edits don't fire a POST per digit
 function autosave() {
+  saveTimerPending = true;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveScores, 1500); // debounce — save 1.5s after last input
+  saveTimer = setTimeout(() => {
+    saveTimerPending = false;
+    saveScores();
+  }, 800);
+}
+
+// Foursome mode: fire immediately — one save per completed hole, no debounce
+// needed. Each call gets its own independent promise so a fast user can't
+// cancel a previous hole's in-flight save.
+function autosaveFoursome() {
+  // Snapshot the player list and their scores at this moment so the async
+  // work is fully self-contained and immune to any later state changes
+  const snapshot = foursomePlayers.map(p => ({
+    name:      p.name,
+    holes:     [...foursomeScores[p.name]],    // copy — not a live reference
+    confirmed: foursomeConfirmed[p.name],       // reference is fine for writing back
+    isPair:    p.isPair,
+  }));
+  (async () => {
+    for (const s of snapshot) {
+      await postScore(s.name, s.holes, s.confirmed);
+    }
+    updateHoleWarning();
+  })();
+}
+
+// Low-level POST — explicit arguments, never reads/writes the globals that
+// the live scoring UI owns (holeScores, selectedPlayer, confirmedHoles).
+// Treats any HTTP 2xx as success: Apps Script writes data before generating
+// its response, so a successful HTTP status means the data is in the sheet
+// even if the response body is non-JSON or uses a different status string.
+async function postScore(name, holes, confirmed) {
+  if (!APPS_SCRIPT_URL) return { ok:false, error:'No URL' };
+  showSaveBar('saving', 'Saving…');
+  // GET with query params — same reliable channel as fetchSheetData.
+  // doGet handles ?action=saveScore writes on the Apps Script side.
+  try {
+    const url = new URL(APPS_SCRIPT_URL);
+    url.searchParams.set('action', 'saveScore');
+    url.searchParams.set('data', JSON.stringify({ round: selectedRound, name, holes }));
+    const res  = await fetch(url.toString());
+    const json = await res.json();
+    if (json.status === 'ok') {
+      if (confirmed) holes.forEach((s, i) => { if (s !== null) confirmed[i] = true; });
+      showSaveBar('saved', 'Saved!');
+      return { ok:true };
+    }
+    showSaveBar('error', json.error || 'Save failed');
+    return { ok:false, error: json.error };
+  } catch(e) {
+    showSaveBar('error', 'Network error — check connection');
+    return { ok:false, error: e.message };
+  }
 }
 
 async function saveScores() {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
-  if (!selectedRound || !selectedPlayer) return;
-  showSaveBar('saving', 'Saving...');
-  try {
-    const payload = {
-      type:  'score',
-      round: selectedRound,
-      name:  selectedPlayer,
-      holes: holeScores,
-    };
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    const result = await res.json();
-    if (result.status === 'ok') {
-      showSaveBar('saved', 'Saved!');
-    } else {
-      showSaveBar('error', result.error || 'Save failed');
-    }
-  } catch(e) {
-    showSaveBar('error', 'Network error');
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return { ok:false, error:'No URL' };
+  if (!selectedRound || !selectedPlayer) return { ok:false, error:'No selection' };
+  const result = await postScore(selectedPlayer, holeScores, confirmedHoles);
+  updateHoleWarning();
+  return result;
+}
+
+function updateHoleWarning() {
+  const el = document.getElementById('holeWarning');
+  if (!el) return;
+  // Don't show while a save is still pending (timer hasn't fired yet)
+  if (saveTimerPending) { el.style.display = 'none'; return; }
+
+  // Find past holes (before currentHole) that have a score but aren't confirmed saved
+  const unsaved = [];
+  for (let i = 0; i < currentHole; i++) {
+    if (holeScores[i] !== null && !confirmedHoles[i]) unsaved.push(i + 1); // 1-indexed
+  }
+
+  if (unsaved.length === 0) {
+    el.style.display = 'none';
+    el.textContent = '';
+  } else {
+    const holeList = unsaved.length === 1
+      ? `Hole ${unsaved[0]} has`
+      : `Holes ${unsaved.join(', ')} have`;
+    el.textContent = `WARNING: ${holeList} not been saved to the leaderboard. Please correct.`;
+    el.style.display = 'block';
   }
 }
 
@@ -656,15 +971,10 @@ async function saveScores() {
 function renderSummary() {
   const el = document.getElementById('summaryContent');
   const course = COURSES[selectedRound];
-  const playerLabel = selectedRound === 'R2' && selectedPair
-    ? `${selectedPair.player1} &amp; ${selectedPair.player2}`
-    : selectedPlayer;
-
   const roundColors = { R1:'var(--sky)', R2:'var(--pink)', R3:'var(--lavender)' };
   const roundNames  = { R1:'R1 · Best Ball', R2:'R2 · Scramble', R3:'R3 · Singles' };
   const color = roundColors[selectedRound];
 
-  // Hole cells
   function cellClass(score, par) {
     if (score === null) return 'empty';
     const d = score - par;
@@ -675,23 +985,21 @@ function renderSummary() {
     return 'double';
   }
 
-  function holeGrid(start, end) {
-    const hdrs = Array.from({length:end-start},(_,i)=>`<div class="sh-cell hdr">${start+i+1}</div>`).join('');
-    const pars = Array.from({length:end-start},(_,i)=>`<div class="sh-cell hdr">${course.pars[start+i]}</div>`).join('');
-    const scrs = Array.from({length:end-start},(_,i)=>{
-      const s = holeScores[start+i];
-      return `<div class="sh-cell ${cellClass(s,course.pars[start+i])}">${s??'·'}</div>`;
-    }).join('');
-    return `${hdrs}${pars}${scrs}`;
-  }
-
-  const front = holeScores.slice(0,9).filter(s=>s!==null).reduce((a,b)=>a+b,0);
-  const back  = holeScores.slice(9).filter(s=>s!==null).reduce((a,b)=>a+b,0);
-  const total = front + back;
-  const played = holeScores.filter(s=>s!==null).length;
-
-  el.innerHTML = `
-    <div class="summary-card">
+  function playerCard(playerLabel, scores) {
+    function holeGrid(start, end) {
+      const hdrs = Array.from({length:end-start},(_,i)=>`<div class="sh-cell hdr">${start+i+1}</div>`).join('');
+      const pars = Array.from({length:end-start},(_,i)=>`<div class="sh-cell hdr">${course.pars[start+i]}</div>`).join('');
+      const scrs = Array.from({length:end-start},(_,i)=>{
+        const s = scores[start+i];
+        return `<div class="sh-cell ${cellClass(s,course.pars[start+i])}">${s??'·'}</div>`;
+      }).join('');
+      return `${hdrs}${pars}${scrs}`;
+    }
+    const front  = scores.slice(0,9).filter(s=>s!==null).reduce((a,b)=>a+b,0);
+    const back   = scores.slice(9).filter(s=>s!==null).reduce((a,b)=>a+b,0);
+    const total  = front + back;
+    const played = scores.filter(s=>s!==null).length;
+    return `<div class="summary-card">
       <div class="sum-player">${playerLabel}</div>
       <span class="sum-round-badge" style="background:rgba(255,255,255,0.06);color:${color};border:1px solid ${color}33">${roundNames[selectedRound]}</span>
       <div class="sum-holes">${holeGrid(0,9)}</div>
@@ -701,26 +1009,86 @@ function renderSummary() {
         <span class="sum-total-val">${total || '—'}</span>
       </div>
     </div>
+    ${played < 18 ? `<div class="summary-incomplete">&#9888; Only ${played}/18 holes recorded for ${playerLabel}.</div>` : ''}`;
+  }
+
+  let cardsHtml = '';
+  if (foursomeMode) {
+    cardsHtml = foursomePlayers.map(p => {
+      const label = p.isPair ? `${p.player1} &amp; ${p.player2}` : p.name;
+      return playerCard(label, foursomeScores[p.name]);
+    }).join('');
+  } else {
+    const label = selectedRound === 'R2' && selectedPair
+      ? `${selectedPair.player1} &amp; ${selectedPair.player2}`
+      : selectedPlayer;
+    cardsHtml = playerCard(label, holeScores);
+  }
+
+  el.innerHTML = `${cardsHtml}
+    <div id="summaryFeedback"></div>
     <div style="text-align:center;padding:8px 0">
-      <button class="btn btn-primary" onclick="saveScores()" style="max-width:200px">
-        Save to Sheet
+      <button class="btn btn-primary" id="saveToLbBtn" onclick="saveToLeaderboard()" style="max-width:260px">
+        Save to Leaderboard
       </button>
     </div>`;
 }
 
+async function saveToLeaderboard() {
+  const btn = document.getElementById('saveToLbBtn');
+  const fb  = document.getElementById('summaryFeedback');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  if (fb)  { fb.innerHTML = ''; }
+
+  if (foursomeMode) {
+    let allOk = true, anyError = '';
+    for (const p of foursomePlayers) {
+      const result = await postScore(p.name, foursomeScores[p.name], foursomeConfirmed[p.name]);
+      if (!result.ok) { allOk = false; anyError = result.error; }
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save to Leaderboard'; }
+    if (!fb) return;
+    if (allOk) {
+      fb.innerHTML = `<div class="summary-success">&#10003; All scores saved to the leaderboard!</div>`;
+    } else {
+      fb.innerHTML = `<div class="summary-save-error">&#10005; Save failed: ${anyError}. Please check your connection and try again.</div>`;
+    }
+  } else {
+    const result = await saveScores();
+    if (btn) { btn.disabled = false; btn.textContent = 'Save to Leaderboard'; }
+    if (!fb) return;
+    const played = holeScores.filter(s => s !== null).length;
+    if (result.ok) {
+      if (played === 18) {
+        fb.innerHTML = `<div class="summary-success">&#10003; All 18 holes saved to the leaderboard!</div>`;
+      } else {
+        fb.innerHTML = `<div class="summary-incomplete">&#10003; Saved — but only ${played}/18 holes were recorded. Return to holes to complete your scorecard.</div>`;
+      }
+    } else {
+      fb.innerHTML = `<div class="summary-save-error">&#10005; Save failed: ${result.error}. Please check your connection and try again.</div>`;
+    }
+  }
+}
+
 // ─── NEW ENTRY ────────────────────────────────────────────────────────────
 function startNew() {
-  selectedRound  = null;
-  selectedPlayer = null;
-  selectedPair   = null;
-  holeScores     = Array(18).fill(null);
-  currentHole    = 0;
-  scoreBuffer    = '';
+  selectedRound     = null;
+  selectedPlayer    = null;
+  selectedPair      = null;
+  holeScores        = Array(18).fill(null);
+  confirmedHoles    = Array(18).fill(false);
+  currentHole       = 0;
+  scoreBuffer       = '';
+  foursomeMode      = false;
+  foursomePlayers   = [];
+  foursomeScores    = {};
+  foursomeConfirmed = {};
+  foursomePlayerIdx = 0;
   document.querySelectorAll('.round-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('roundNextBtn').disabled = true;
   document.getElementById('playerNextBtn').disabled = true;
   goToStep('round');
-  loadSheetData(); // refresh latest data
+  loadSheetData();
 }
 
 // ─── SAVE BAR ─────────────────────────────────────────────────────────────

@@ -174,7 +174,7 @@
     <li><a href="index.html">Home</a></li>
     <li><a href="leaderboard.html" class="active">Leaderboard</a></li>
     <li><a href="scores.html">Scores</a></li>
-    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -223,7 +223,7 @@
 <script>
 // ─── UNIFIED APPS SCRIPT CONFIG ───────────────────────────────────────────
 // Single endpoint — same URL used by leaderboard, matchplay, and scores pages
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
 
 // ─── COURSE DATA ──────────────────────────────────────────────────────────
 const COURSES = {
@@ -320,26 +320,27 @@ const HISTORY = [
 
 // ─── ROSTER ───────────────────────────────────────────────────────────────
 const ROSTER = [
-  { name:'Jack Lyons',        nickname:'The Surgeon',     hcp:null, team:'donkeys' },
-  { name:'Carson Smith',      nickname:'Steady Eddie',    hcp:null, team:'brains'  },
-  { name:'Josh McLeman',      nickname:'The Grinder',     hcp:null, team:'donkeys' },
-  { name:'Matt Holm',         nickname:'Silent Assassin', hcp:null, team:'brains'  },
-  { name:'Ed Weaver',         nickname:'The Weave',       hcp:null, team:'donkeys' },
-  { name:'Justin Roberts',    nickname:'JRob',            hcp:20,   team:'brains'  },
-  { name:'Justin Estrella',   nickname:'El Capitan',      hcp:null, team:'donkeys' },
-  { name:'Devan Dhand',       nickname:'The Philosopher', hcp:null, team:'brains'  },
-  { name:'Matt DiPano',       nickname:'DiPaNo Bogeys',   hcp:null, team:'donkeys' },
-  { name:'David Resmini',     nickname:'The Closer',      hcp:null, team:'brains'  },
-  { name:'Mitchell Rotondi',  nickname:'Roto-Rooter',     hcp:null, team:'donkeys' },
-  { name:'Jason Sulmonetti',  nickname:'Big Swing Sul',   hcp:null, team:'brains'  },
-  { name:'Brendan Barry',     nickname:'Double B',        hcp:null, team:'donkeys' },
-  { name:'Trevor Ross',       nickname:'Wild Card',       hcp:null, team:'brains'  },
-  { name:'Corey DaSilva',     nickname:'Da Wild Card',    hcp:35,   team:'donkeys' },
+  { name:'Jack Lyons',        nickname:'',     hcp:null, team:'donkeys' },
+  { name:'Carson Smith',      nickname:'',    hcp:null, team:'brains'  },
+  { name:'Josh McLeman',      nickname:'',     hcp:null, team:'donkeys' },
+  { name:'Matt Holm',         nickname:'', hcp:null, team:'brains'  },
+  { name:'Ed Weaver',         nickname:'',       hcp:null, team:'donkeys' },
+  { name:'Justin Roberts',    nickname:'',            hcp:15,   team:'brains'  },
+  { name:'Justin Estrella',   nickname:'',      hcp:null, team:'donkeys' },
+  { name:'Devan Dhand',       nickname:'', hcp:null, team:'brains'  },
+  { name:'Matt DiPano',       nickname:'',   hcp:null, team:'donkeys' },
+  { name:'David Resmini',     nickname:'',      hcp:null, team:'brains'  },
+  { name:'Mitchell Rotondi',  nickname:'',     hcp:null, team:'donkeys' },
+  { name:'Jason Sulmonetti',  nickname:'',   hcp:null, team:'brains'  },
+  { name:'Brendan Barry',     nickname:'',        hcp:null, team:'donkeys' },
+  { name:'Trevor Ross',       nickname:'',       hcp:null, team:'brains'  },
+  { name:'Corey DaSilva',     nickname:'',    hcp:35,   team:'donkeys' },
+  { name:'David Allen',       nickname:'',    hcp:23,   team:'brains'  },
 ];
 
 const TEAM_INFO = {
-  donkeys:{ name:'🫏 The Donkeys', color:'var(--donkey)', dot:'#C8A97E' },
-  brains: { name:'🧠 The Brains',  color:'var(--lavender)', dot:'#B88FE0' },
+  donkeys:{ name:'Team DiPano', color:'var(--donkey)', dot:'#C8A97E' },
+  brains: { name:'Team Dhand',  color:'var(--lavender)', dot:'#B88FE0' },
 };
 
 // ─── ANALYST SCOUT REPORTS ────────────────────────────────────────────────
@@ -359,6 +360,7 @@ const ANALYST = {
   'Trevor Ross':       '5 rounds played across 2 trips. Avg 127.4, best 115. Scored 115-123-148 in 2023, 116-135 in 2025. That 148 at Crystal Lake is the highest single-round score in DBGA history. Every year features a round over 120. Projects to 127.',
   'Justin Roberts':    '0 historical rounds. Handicap index: 15.5. Projection is entirely HCP-derived — no variance data available.',
   'Corey DaSilva':     '0 historical rounds. Handicap index: 35 (manually assigned). Projection is HCP-derived. No variance, trend, or course data available.',
+  'David Allen':       '0 historical rounds. Handicap index: 23. Projection is HCP-derived. No variance, trend, or course data available.',
 };
 
 // ─── DRAFT STORAGE ────────────────────────────────────────────────────────
@@ -414,7 +416,7 @@ function projScore(name) {
 
 // ─── LIVE FETCH — unified Apps Script endpoint ────────────────────────────
 async function fetchAllData() {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec') return null;
+  if (!APPS_SCRIPT_URL) return null;
   try {
     const resp = await fetch(APPS_SCRIPT_URL);
     return await resp.json();
@@ -463,16 +465,29 @@ function buildIndividualRows(r1Rows, r3Rows) {
 }
 
 // ─── SCRAMBLE DATA BUILDER ────────────────────────────────────────────────
-// Scramble tab: Team, Player1, Player2 (pair definition)
-// Scores_R2 tab: Donkey1, H1–H18 (scramble hole scores, keyed by Donkey1 name)
-function buildScrambleData(scrambleSheet, r2Rows) {
-  return (scrambleSheet||[]).map(row => {
-    const team = (row.Team||'').toLowerCase().trim();
-    const p1name = row.Player1||'';
-    const p2name = row.Player2||'';
-    // Find the score row — keyed by whichever player is the "donkey" lead
-    // In Scores_R2 the row is keyed by Donkey1 (the first donkey partner name)
-    const scoreRow = (r2Rows||[]).find(r => r.Donkey1 === p1name || r.Donkey1 === p2name);
+// Pairs are defined in the Pairings tab (Round=2), not the Scramble tab.
+// Scores_R2 tab: Name = "Player1 & Player2" (pair ID), H1–H18 (scramble hole scores)
+function buildScrambleData(pairingsSheet, r2Rows) {
+  // Derive pairs from Pairings tab filtered to Round 2
+  const r2Pairings = (pairingsSheet||[]).filter(r => parseInt(r.Round) === 2);
+  const pairs = [];
+  r2Pairings.forEach(row => {
+    if (row.Donkey1 || row.Donkey2) {
+      pairs.push({ team: 'donkeys', p1name: row.Donkey1||'', p2name: row.Donkey2||'' });
+    }
+    if (row.Brain1 || row.Brain2) {
+      pairs.push({ team: 'brains', p1name: row.Brain1||'', p2name: row.Brain2||'' });
+    }
+  });
+
+  return pairs.map(({ team, p1name, p2name }) => {
+    // Score row is keyed by pair ID: "Player1 & Player2" in the Name column
+    const pairId1 = [p1name, p2name].filter(Boolean).join(' & ');
+    const pairId2 = [p2name, p1name].filter(Boolean).join(' & ');
+    const scoreRow = (r2Rows||[]).find(r =>
+      (r.Name && (r.Name === pairId1 || r.Name === pairId2)) ||
+      r.Donkey1 === p1name || r.Donkey1 === p2name
+    );
     const gross = sumHoles(scoreRow);
     const p1idx = p1name ? calcHcpIndex(p1name) : 0;
     const p2idx = p2name ? calcHcpIndex(p2name) : 0;
@@ -566,7 +581,7 @@ function renderIndividualTable(containerId, rows, type, round) {
     if (r.position!==null) prevPositions[`${r.name}-${posKey}`] = r.position;
   });
   if (!isLive) {
-    container.innerHTML = `<div class="waiting-state"><div class="waiting-emoji"></div><h3>No scores yet</h3><p>Scores will appear here once the Google Sheet is updated on trip day.</p></div>`;
+    container.innerHTML = `<div class="waiting-state"><div class="waiting-emoji"></div><h3>No scores yet</h3><p>Scores will appear here once the live scoring begins in round 1. Or.. I'm just loading slowly</p></div>`;
     return;
   }
   const r1Label = type==='net' ? 'R1 Net (Jack)' : 'R1 Gross (Jack)';
@@ -636,13 +651,13 @@ function renderTeams(individualRows, scramblePairs) {
   });
   const dStatus = draftTeams.complete
     ? `<div class="draft-status-banner" style="color:var(--mint)">✅ Draft Complete</div>`
-    : `<div class="draft-status-banner" style="color:var(--yellow)">⏳ Draft in Progress · ${draftTeams.donkeys.length+draftTeams.brains.length} of 15 picks made</div>`;
+    : `<div class="draft-status-banner" style="color:var(--yellow)">⏳ Draft in Progress · ${draftTeams.donkeys.length+draftTeams.brains.length} of 16 picks made</div>`;
 
   const donkeyTotals = calcTeamTotals(effectiveRows, scramblePairs, 'donkeys');
   const brainTotals  = calcTeamTotals(effectiveRows, scramblePairs, 'brains');
   const dt = donkeyTotals.total, bt = brainTotals.total;
   const lead = dt!==null&&bt!==null
-    ? (dt<bt?`🫏 Donkeys lead by ${bt-dt}`:dt>bt?`🧠 Brains lead by ${dt-bt}`:'🤝 All Square')
+    ? (dt<bt?`Team DiPano lead by ${bt-dt}`:dt>bt?`Team Dhand lead by ${dt-bt}`:'🤝 All Square')
     : '⏳ Scores pending';
 
   function teamCard(key, totals) {
@@ -721,8 +736,8 @@ function renderScramble(scramblePairs) {
   const donkeyTotal = donkeyNets.length ? donkeyNets.reduce((a,b)=>a+b,0) : null;
   const brainTotal  = brainNets.length  ? brainNets.reduce((a,b)=>a+b,0)  : null;
   const lead = donkeyTotal!==null&&brainTotal!==null
-    ? (donkeyTotal<brainTotal?`🫏 Donkeys lead by ${brainTotal-donkeyTotal}`
-      :donkeyTotal>brainTotal?`🧠 Brains lead by ${donkeyTotal-brainTotal}`
+    ? (donkeyTotal<brainTotal?`Team DiPano lead by ${brainTotal-donkeyTotal}`
+      :donkeyTotal>brainTotal?`Team Dhand lead by ${donkeyTotal-brainTotal}`
       :'🤝 All Square') : '⏳ Scores pending';
 
   function pairRow(pair) {
@@ -849,13 +864,13 @@ async function loadData() {
   const data = await fetchAllData();
   const r1Rows       = data?.['Scores_R1'] || [];
   const r3Rows       = data?.['Scores_R3'] || [];
-  const scrambleRows = data?.['Scramble']  || [];
+  const pairingsRows = data?.['Pairings']  || [];
   const r2Rows       = data?.['Scores_R2'] || [];
   // Cache draft data globally so getDraftTeams() can read it
   window._sheetDraftData = data?.['Draft'] || [];
   cachedIndividual = buildIndividualRows(r1Rows, r3Rows);
-  cachedScramble   = buildScrambleData(scrambleRows, r2Rows);
-  const hasData = r1Rows.length > 0 || r3Rows.length > 0 || scrambleRows.length > 0;
+  cachedScramble   = buildScrambleData(pairingsRows, r2Rows);
+  const hasData = r1Rows.length > 0 || r3Rows.length > 0 || r2Rows.length > 0;
   updateStatus(hasData);
   renderCurrent();
   renderHistory(historyYear);

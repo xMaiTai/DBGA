@@ -198,6 +198,20 @@
     .start-draft-banner.hidden{display:none}
     .btn-start-draft{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;letter-spacing:2px;text-transform:uppercase;padding:14px 40px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--mint),var(--sky));color:var(--darker);cursor:pointer;transition:all 0.2s;box-shadow:0 0 24px rgba(110,220,196,0.25)}
     .btn-start-draft:hover{transform:scale(1.05);filter:brightness(1.1);box-shadow:0 0 32px rgba(110,220,196,0.4)}
+    /* ── PICK ORDER MODAL ── */
+    .pick-order-modal{display:none;position:fixed;inset:0;z-index:710;background:rgba(12,12,24,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center}
+    .pick-order-modal.show{display:flex}
+    .pick-order-inner{background:#1a1a30;border-radius:20px;padding:36px 32px;max-width:400px;width:90%;text-align:center;border:1px solid rgba(255,225,86,0.3);animation:pop-in 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+    .pick-order-inner h3{font-family:'Boogaloo',cursive;font-size:2rem;color:var(--yellow);margin-bottom:6px;letter-spacing:1px}
+    .pick-order-inner p{font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:28px;text-transform:uppercase}
+    .pick-order-btns{display:flex;gap:12px}
+    .btn-pick-order{flex:1;padding:16px 12px;border:2px solid rgba(255,255,255,0.1);border-radius:14px;background:rgba(255,255,255,0.04);font-family:'Boogaloo',cursive;font-size:1.3rem;letter-spacing:1px;color:#fff;cursor:pointer;transition:all 0.2s}
+    .btn-pick-order:hover{transform:translateY(-3px)}
+    .btn-pick-order.dipano{border-color:rgba(200,169,126,0.5);color:var(--donkey)}
+    .btn-pick-order.dipano:hover{background:rgba(200,169,126,0.12);box-shadow:0 0 20px rgba(200,169,126,0.2)}
+    .btn-pick-order.dhand{border-color:rgba(184,143,224,0.5);color:var(--lavender)}
+    .btn-pick-order.dhand:hover{background:rgba(184,143,224,0.12);box-shadow:0 0 20px rgba(184,143,224,0.2)}
+    .btn-pick-order .bpo-sub{display:block;font-family:'Nunito',sans-serif;font-size:0.65rem;font-weight:800;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
     /* ── PASSCODE MODAL ── */
     .passcode-modal{display:none;position:fixed;inset:0;z-index:700;background:rgba(12,12,24,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center}
     .passcode-modal.show{display:flex}
@@ -224,7 +238,7 @@
     <li><a href="index.html">Home</a></li>
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html">Scores</a></li>
-    <li><a href="matchplay.html">Pairings</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
     <li><a href="draft.html" class="active">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -235,23 +249,13 @@
 </nav>
 <div class="page-header">
   <h1>DBGA Draft Board</h1>
-  <p>Snake Draft &middot; 15 Players &middot; 2026 Season</p>
-</div>
-<div class="coin-flip-banner" id="coinFlipBanner">
-  <span>Coin flip:</span>
-  <span class="coin-result" id="coinResultBadge">&mdash;</span>
-  <span id="coinResultText">gets the extra player (8 picks)</span>
+  <p>Snake Draft &middot; 16 Players &middot; 2026 Season</p>
 </div>
 <div class="start-draft-banner" id="startDraftBanner">
-  <button class="btn-start-draft" onclick="beginDraft()">&#127919; Start Draft</button>
+  <button class="btn-start-draft" onclick="beginDraft()">Start Draft</button>
 </div>
 <div class="timer-bar" id="timerBar" style="display:none">
-  <div class="pick-indicator">Pick <span id="currentPickNum">1</span> of 15 &nbsp;&middot;&nbsp; <span id="onTheClockTeam">&#129487; The Donkeys</span> on the clock</div>
-  <div class="timer-display" id="timerDisplay">60</div>
-  <div class="timer-progress"><div class="timer-progress-fill" id="timerFill" style="width:100%"></div></div>
-  <button class="timer-btn btn-start" id="timerStartBtn" onclick="startTimer()">&#9654; Start</button>
-  <button class="timer-btn btn-pause" id="timerPauseBtn" onclick="pauseTimer()" style="display:none">&#9646;&#9646; Pause</button>
-  <button class="timer-btn btn-reset" onclick="resetTimer()">&#8635; Reset</button>
+  <div class="pick-indicator">Pick <span id="currentPickNum">1</span> of 14 &nbsp;&middot;&nbsp; <span id="onTheClockTeam">Team DiPano</span> on the clock</div>
 </div>
 <div class="tier-legend">
   <div class="tier-legend-item"><div class="tier-dot" style="background:var(--tier-elite)"></div>Elite (Top 4)</div>
@@ -270,7 +274,7 @@
   <div class="sidebar">
     <div class="team-card donkeys">
       <div class="team-header">
-        <div class="team-name">&#129487; The Donkeys <span id="donkeysExtraBadge"></span></div>
+        <div class="team-name">Team DiPano <span id="donkeysExtraBadge"></span></div>
         <div class="draft-grade" id="donkeysGrade" style="color:var(--donkey)">&ndash;</div>
       </div>
       <div class="team-proj">Projected Score: <span id="donkeysProj">&mdash;</span></div>
@@ -278,7 +282,7 @@
     </div>
     <div class="team-card brains">
       <div class="team-header">
-        <div class="team-name">&#129504; The Brains <span id="brainsExtraBadge"></span></div>
+        <div class="team-name">Team Dhand <span id="brainsExtraBadge"></span></div>
         <div class="draft-grade" id="brainsGrade" style="color:var(--lavender)">&ndash;</div>
       </div>
       <div class="team-proj">Projected Score: <span id="brainsProj">&mdash;</span></div>
@@ -320,12 +324,12 @@
   <div class="cap-sub">Each team picks their captain before the snake draft begins</div>
   <div class="captain-teams">
     <div class="captain-team-card donkeys">
-      <div class="captain-team-title">&#129487; The Donkeys</div>
+      <div class="captain-team-title">Team DiPano</div>
       <div class="captain-status" id="donkeyCapStatus">No captain selected</div>
       <div class="captain-player-grid" id="donkeyCapGrid"></div>
     </div>
     <div class="captain-team-card brains">
-      <div class="captain-team-title">&#129504; The Brains</div>
+      <div class="captain-team-title">Team Dhand</div>
       <div class="captain-status" id="brainCapStatus">No captain selected</div>
       <div class="captain-player-grid" id="brainCapGrid"></div>
     </div>
@@ -336,10 +340,27 @@
   <h2>&#127942; Draft Complete!</h2>
   <p>May the best donkey brain win. Let's get on the course.</p>
   <div class="complete-teams">
-    <div class="complete-team donkeys"><h3>&#129487; The Donkeys</h3><ul id="completeDonkeys"></ul></div>
-    <div class="complete-team brains"><h3>&#129504; The Brains</h3><ul id="completeBrains"></ul></div>
+    <div class="complete-team donkeys"><h3>Team DiPano</h3><ul id="completeDonkeys"></ul></div>
+    <div class="complete-team brains"><h3>Team Dhand</h3><ul id="completeBrains"></ul></div>
   </div>
   <button class="close-complete" onclick="document.getElementById('draftComplete').classList.remove('show')">Close</button>
+</div>
+<!-- PICK ORDER MODAL -->
+<div class="pick-order-modal" id="pickOrderModal">
+  <div class="pick-order-inner">
+    <h3>Who Picks First?</h3>
+    <p>Select which team gets the first pick &amp; 8 total picks</p>
+    <div class="pick-order-btns">
+      <button class="btn-pick-order dipano" onclick="selectPickOrder('donkeys')">
+        Team DiPano
+        <span class="bpo-sub">8 picks</span>
+      </button>
+      <button class="btn-pick-order dhand" onclick="selectPickOrder('brains')">
+        Team Dhand
+        <span class="bpo-sub">8 picks</span>
+      </button>
+    </div>
+  </div>
 </div>
 <!-- PASSCODE MODAL -->
 <div class="passcode-modal" id="passcodeModal">
@@ -356,7 +377,7 @@
   </div>
 </div>
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxORdJWPgXwIqvTT0cWLqj3dtmLzBkBeO2-_VZPOdGXmpxey8_fR6mRhIFVX-LICIjNpA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
 const COURSES = {
   'Twisted Dunes':        { slope:136, rating:71.2 },
   'Prestwick CC':         { slope:138, rating:72.2 },
@@ -472,6 +493,7 @@ const ANALYST = {
   'Trevor Ross':       '"5 rounds played across 2 trips. Avg 127.4, best 115. Scored 115-123-148 in 2023, 116-135 in 2025. That 148 at Crystal Lake is the highest single-round score in DBGA history. Every year features a round over 120. Projects to 127."',
   'Justin Roberts':    '"0 historical rounds. Handicap index: 15.5. Projection is entirely HCP-derived -- no variance data available."',
   'Corey DaSilva':     '"0 historical rounds. Handicap index: 35 (manually assigned). Projection is HCP-derived. No variance, trend, or course data available."',
+  'David Allen':       '"0 historical rounds. Handicap index: 23. Projection is HCP-derived. No variance, trend, or course data available."',
 };
 
 const ROSTER_DEFS = [
@@ -490,6 +512,7 @@ const ROSTER_DEFS = [
   { name:'Brendan Barry',     hcpOverride:null },
   { name:'Trevor Ross',       hcpOverride:null },
   { name:'Corey DaSilva',     hcpOverride:35   },
+  { name:'David Allen',       hcpOverride:23   },
 ];
 
 const rawPlayers = ROSTER_DEFS.map(def => {
@@ -507,9 +530,9 @@ rawPlayers.forEach(p=>{
 const PLAYERS=rawPlayers;
 const TIER_COLORS={Elite:'var(--tier-elite)',Solid:'var(--tier-solid)',BoomBust:'var(--tier-boom)',WildCard:'var(--tier-wildcard)'};
 
-const TEAM_NAMES={donkeys:'&#129487; The Donkeys',brains:'&#129504; The Brains'};
-const TEAM_NAMES_PLAIN={donkeys:'The Donkeys',brains:'The Brains'};
-function buildDraftOrder(extraTeam){const base=['donkeys','brains','brains','donkeys','donkeys','brains','brains','donkeys','donkeys','brains','brains','donkeys','donkeys','brains','donkeys'];base[14]=extraTeam;return base.map((team,i)=>({pick:i+1,team}));}
+const TEAM_NAMES={donkeys:'Team DiPano',brains:'Team Dhand'};
+const TEAM_NAMES_PLAIN={donkeys:'Team DiPano',brains:'Team Dhand'};
+function buildDraftOrder(firstTeam){const second=firstTeam==='donkeys'?'brains':'donkeys';const order=[firstTeam,second,second,firstTeam,firstTeam,second,second,firstTeam,firstTeam,second,second,firstTeam,firstTeam,second];return order.map((team,i)=>({pick:i+1,team}));}
 
 // ─── CAPTAIN STATE + SESSION ────────────────────────────────────────────
 let captains = { donkeys: null, brains: null };
@@ -530,27 +553,17 @@ try {
     // Restore captains
     captains = saved.captains||{donkeys:null,brains:null};
   } else {
-    coinWinner = Math.random()<0.5?'donkeys':'brains';
+    coinWinner = 'donkeys';
     currentPick = 0; draftLog = []; pendingDraftName = null;
   }
 } catch(e) {
-  coinWinner = Math.random()<0.5?'donkeys':'brains';
+  coinWinner = 'donkeys';
   currentPick = 0; draftLog = []; pendingDraftName = null;
 }
 pendingDraftName = null;
 
-let TEAM_COUNTS={donkeys:coinWinner==='donkeys'?8:7,brains:coinWinner==='brains'?8:7};
+let TEAM_COUNTS={donkeys:8,brains:8};
 DRAFT_ORDER=buildDraftOrder(coinWinner);
-document.getElementById('coinResultBadge').textContent=TEAM_NAMES_PLAIN[coinWinner];
-document.getElementById('coinResultBadge').className='coin-result '+coinWinner;
-document.getElementById('coinResultText').textContent='gets the extra player (8 picks)';
-try{document.getElementById(coinWinner+'ExtraBadge').outerHTML='<span class="team-extra-badge" id="'+coinWinner+'ExtraBadge">+8 picks</span>';}catch(e){}
-
-
-
-// ─── TIMER ────────────────────────────────────────────────────────────────
-const PICK_TIME=60;
-let timerVal=PICK_TIME,timerInterval=null,timerRunning=false;
 // ─── PASSCODE GATE ────────────────────────────────────────────────────────
 const DRAFT_PASSCODE = '1997';
 let draftUnlocked = false;
@@ -588,11 +601,6 @@ document.addEventListener('keydown', function(e) {
   if (document.getElementById('passcodeModal').classList.contains('show') && e.key === 'Escape') closePasscodeModal();
 });
 
-window.startTimer=function(){requirePasscode(function(){if(timerRunning)return;timerRunning=true;document.getElementById('timerStartBtn').style.display='none';document.getElementById('timerPauseBtn').style.display='';timerInterval=setInterval(()=>{timerVal--;updateTimerUI();if(timerVal<=0){clearInterval(timerInterval);timerRunning=false;playAirHorn();document.getElementById('timerDisplay').textContent='&#128168;';document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';}},1000);});};
-window.pauseTimer=function(){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';};
-window.resetTimer=function(){clearInterval(timerInterval);timerRunning=false;timerVal=PICK_TIME;updateTimerUI();document.getElementById('timerStartBtn').style.display='';document.getElementById('timerPauseBtn').style.display='none';};
-function updateTimerUI(){const el=document.getElementById('timerDisplay'),fill=document.getElementById('timerFill'),pct=(timerVal/PICK_TIME)*100;el.textContent=timerVal;fill.style.width=pct+'%';const cls=timerVal<=10?'danger':timerVal<=20?'warning':'';el.className='timer-display'+(cls?' '+cls:'');fill.className='timer-progress-fill'+(cls?' '+cls:'');}
-function playAirHorn(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.setValueAtTime(220,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(110,ctx.currentTime+0.8);gain.gain.setValueAtTime(0.4,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);osc.start();osc.stop(ctx.currentTime+0.8);}catch(e){}}
 function playPickSound(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,0.1,0.2].forEach((t,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=[523,659,784][i];gain.gain.setValueAtTime(0.2,ctx.currentTime+t);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.2);osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+0.2);});}catch(e){}}
 function spawnConfetti(){const colors=['#6EDCC4','#B88FE0','#F4A7C3','#FFE156','#7EC8E3'];for(let i=0;i<40;i++){const el=document.createElement('div');el.className='confetti-piece';const s=Math.random()*10+6;el.style.cssText='left:'+Math.random()*100+'vw;width:'+s+'px;height:'+s+'px;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-duration:'+(Math.random()*1.5+1)+'s;animation-delay:'+(Math.random()*0.4)+'s;';document.body.appendChild(el);setTimeout(()=>el.remove(),2500);}}
 function calcGrade(teamKey){const picks=PLAYERS.filter(p=>p.team===teamKey);if(!picks.length)return'-';const s=picks.reduce((s,p)=>s+p.draftRank,0)/picks.length/PLAYERS.length;if(s<0.35)return'A+';if(s<0.42)return'A';if(s<0.50)return'B+';if(s<0.58)return'B';if(s<0.65)return'C+';return'C';}
@@ -654,6 +662,7 @@ window.flipCard=function(safeId){document.getElementById('card-'+safeId).classLi
 
 // ─── DRAFT ────────────────────────────────────────────────────────────────
 window.draftPlayer=function(name){
+  if(!captains.donkeys||!captains.brains)return;
   requirePasscode(function(){
     if(currentPick>=DRAFT_ORDER.length)return;
     const player=PLAYERS.find(p=>p.name===name);if(!player||player.drafted)return;
@@ -678,7 +687,7 @@ window.confirmDraft=function(){
   document.getElementById('modalPlayerName').textContent=player.name;
   document.getElementById('modalStat').textContent='HCP '+(player.hcp!=null?player.hcp:'?')+'  \u00b7  Projected '+player.proj+'  \u00b7  '+player.tier+' Tier';
   document.getElementById('pickModal').classList.add('show');
-  playPickSound();spawnConfetti();resetTimer();
+  playPickSound();spawnConfetti();
   renderPlayers();renderTeams();renderLog();updatePickIndicator();
   saveDraftToSheet();
   if(currentPick>=DRAFT_ORDER.length)setTimeout(showDraftComplete,1200);
@@ -734,16 +743,31 @@ window.confirmCaptains = function() {
   saveDraftToSheet();
 };
 
-function showCaptainOverlay() {
-  if (captains.donkeys || captains.brains) return;
-  renderCaptainGrid('donkeys');
-  renderCaptainGrid('brains');
-  document.getElementById('captainOverlay').classList.add('show');
-}
 window.beginDraft = function() {
+  draftUnlocked = false;
   requirePasscode(function() {
-    showCaptainOverlay();
+    if (captains.donkeys && captains.brains) return;
+    document.getElementById('pickOrderModal').classList.add('show');
   });
+};
+window.selectPickOrder = function(team) {
+  document.getElementById('pickOrderModal').classList.remove('show');
+  coinWinner = team;
+  DRAFT_ORDER = buildDraftOrder(coinWinner);
+  TEAM_COUNTS.donkeys = 8;
+  TEAM_COUNTS.brains  = 8;
+  captains.donkeys = 'Matt DiPano';
+  captains.brains  = 'Devan Dhand';
+  [['donkeys','Matt DiPano'],['brains','Devan Dhand']].forEach(function(pair) {
+    const p = PLAYERS.find(pl => pl.name===pair[1]);
+    if (!p) return;
+    p.drafted=true; p.team=pair[0]; p.captain=true;
+    draftLog.unshift({ pick: pair[0]==='donkeys'?'C1':'C2', team:pair[0], playerName:pair[1], isCaptain:true });
+  });
+  document.getElementById('startDraftBanner').classList.add('hidden');
+  document.getElementById('timerBar').style.display='';
+  renderPlayers(); renderTeams(); renderLog(); updatePickIndicator();
+  saveDraftToSheet();
 };
 
 // ─── RENDER TEAMS/LOG ─────────────────────────────────────────────────────
@@ -780,25 +804,22 @@ function showDraftComplete(){
   spawnConfetti();spawnConfetti();saveDraftToSheet();
 }
 window.resetDraft=function(){
+  draftUnlocked=false;
   requirePasscode(function(){
     if(!confirm('Reset the entire draft? This cannot be undone.'))return;
-    // Clear localStorage first so a new coin flip fires
     try{localStorage.removeItem('dbga_draft_state');}catch(e){}
-    // Re-run coin flip
-    coinWinner=Math.random()<0.5?'donkeys':'brains';
+    coinWinner='donkeys';
     DRAFT_ORDER=buildDraftOrder(coinWinner);
-    TEAM_COUNTS.donkeys=coinWinner==='donkeys'?8:7;
-    TEAM_COUNTS.brains=coinWinner==='brains'?8:7;
-    document.getElementById('coinResultBadge').textContent=TEAM_NAMES_PLAIN[coinWinner];
-    document.getElementById('coinResultBadge').className='coin-result '+coinWinner;
-    try{document.getElementById(coinWinner+'ExtraBadge').outerHTML='<span class="team-extra-badge" id="'+coinWinner+'ExtraBadge">+8 picks</span>';}catch(e){}
+    TEAM_COUNTS.donkeys=8;
+    TEAM_COUNTS.brains=8;
     PLAYERS.forEach(p=>{p.drafted=false;p.team=null;p.captain=false;});
     currentPick=0;draftLog=[];pendingDraftName=null;
     captains={donkeys:null,brains:null};
-    resetTimer();renderPlayers();renderTeams();renderLog();updatePickIndicator();
+    renderPlayers();renderTeams();renderLog();updatePickIndicator();
     saveDraftToSheet();
     document.getElementById('startDraftBanner').classList.remove('hidden');
     document.getElementById('timerBar').style.display='none';
+    draftUnlocked=false;
   });
 };
 
@@ -818,7 +839,7 @@ async function saveDraftToSheet() {
     .filter(p=>p.drafted&&p.team)
     .sort((a,b)=>{ const aLog=draftLog.find(l=>l.playerName===a.name); const bLog=draftLog.find(l=>l.playerName===b.name); return (aLog&&aLog.pick?parseInt(aLog.pick)||99:99)-(bLog&&bLog.pick?parseInt(bLog.pick)||99:99); })
     .map(p=>{ const logEntry=draftLog.find(l=>l.playerName===p.name); return { name:p.name, team:p.team, pickNumber:logEntry&&logEntry.pick?logEntry.pick:0, captain:p.captain||false }; });
-  fetch(APPS_SCRIPT_URL, { method:'POST', body:JSON.stringify({ type:'draft', picks }) }).catch(e=>console.warn('Draft save failed:',e));
+  fetch(APPS_SCRIPT_URL, { method:'POST', mode:'no-cors', redirect:'manual', body:JSON.stringify({ type:'draft', picks }) }).catch(e=>console.warn('Draft save failed:',e));
 }
 
 renderPlayers();renderTeams();renderLog();updatePickIndicator();
@@ -828,7 +849,7 @@ if (_draftInProgress) {
   document.getElementById('startDraftBanner').classList.add('hidden');
   document.getElementById('timerBar').style.display='';
 }
-if(currentPick>=DRAFT_ORDER.length && PLAYERS.filter(p=>p.drafted).length>=15){
+if(currentPick>=DRAFT_ORDER.length && PLAYERS.filter(p=>p.drafted).length>=16){
   setTimeout(showDraftComplete,200);
 }
 </script>
