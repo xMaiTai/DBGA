@@ -108,6 +108,43 @@ function doGet(e) {
     return jsonResponse(result.ok ? { status: 'ok' } : { status: 'error', error: result.error });
   }
 
+  if (action === 'savePairings') {
+    let rows;
+    try { rows = JSON.parse(e.parameter.data); }
+    catch(err) { return jsonResponse({ status: 'error', error: 'Invalid JSON in data param' }); }
+    const sheet = getOrCreateSheet(ss, 'Pairings');
+    const cfg   = TAB_CONFIG.Pairings;
+    const frozenRows = sheet.getFrozenRows();
+    const lastRow    = sheet.getLastRow();
+    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
+    (rows || []).forEach(row => sheet.appendRow(row));
+    styleDataRows(sheet, cfg.headers.length);
+    return jsonResponse({ status: 'ok' });
+  }
+
+  if (action === 'saveDraft') {
+    let picks;
+    try { picks = JSON.parse(e.parameter.data); }
+    catch(err) { return jsonResponse({ status: 'error', error: 'Invalid JSON in data param' }); }
+    const sheet = getOrCreateSheet(ss, 'Draft');
+    const cfg   = TAB_CONFIG.Draft;
+    const frozenRows = sheet.getFrozenRows();
+    const lastRow    = sheet.getLastRow();
+    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
+    const seen = {};
+    (picks || []).forEach((p, i) => {
+      const key = p.name;
+      if (!seen[key] || (p.pickNumber || i+1) > (seen[key].pickNumber || 0)) {
+        seen[key] = Object.assign({}, p, { pickNumber: p.pickNumber || (i + 1) });
+      }
+    });
+    Object.values(seen)
+      .sort((a, b) => a.pickNumber - b.pickNumber)
+      .forEach(p => sheet.appendRow([p.name, p.team, p.pickNumber, p.captain ? 'YES' : '']));
+    styleDataRows(sheet, cfg.headers.length);
+    return jsonResponse({ status: 'ok' });
+  }
+
   ensureAllTabs(ss); // auto-scaffold missing tabs on every read
   const result = {};
   Object.keys(TAB_CONFIG).forEach(name => {

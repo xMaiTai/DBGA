@@ -1575,7 +1575,10 @@ async function loadAll() {
   if (data) parseSheetData(data);
   initLockedFromPairings();
   draftTeams = loadDraft();
-  switchTab('standings');
+  // Refresh content for whichever tab is active — don't forcibly switch tabs,
+  // as that would interrupt the user if they navigated to Pairings.
+  if (activeTab === 'standings') renderStandings();
+  else if (activeTab === 'pairings') renderPairings();
 }
 
 setInterval(loadAll, 90000); // refresh every 90s during play
