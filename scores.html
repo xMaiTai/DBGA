@@ -212,6 +212,47 @@
       .numpad{gap:8px}
     }
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+
+    /* HOLE TABS */
+    .hole-tabs{display:flex;border-bottom:2px solid rgba(255,255,255,0.08);margin-bottom:14px}
+    .hole-tab{flex:1;padding:9px 6px;text-align:center;font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;cursor:pointer;color:rgba(255,255,255,0.35);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color 0.2s}
+    .hole-tab.active{color:var(--mint);border-bottom-color:var(--mint)}
+    .hole-tab:hover:not(.active){color:rgba(255,255,255,0.6)}
+
+    /* MATCH BANNER */
+    .match-banner{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;text-align:center}
+    .mb-team{font-size:0.72rem;font-weight:900;text-transform:uppercase;letter-spacing:1px}
+    .mb-team.donkey{color:var(--donkey)}
+    .mb-team.brain{color:var(--lavender)}
+    .mb-score{font-family:'Share Tech Mono',monospace;font-size:1.15rem;font-weight:bold;color:var(--mint)}
+    .mb-remain{font-size:0.7rem;font-weight:800;color:rgba(255,255,255,0.4)}
+    .mb-wins{font-size:0.75rem;font-weight:900;color:var(--yellow);text-transform:uppercase;letter-spacing:1px}
+    .mb-as{font-size:0.8rem;font-weight:800;color:rgba(255,255,255,0.45)}
+
+    /* PIP HOVER */
+    .hole-pip:hover:not(.current){transform:scale(1.18);opacity:0.8}
+
+    /* FOURSOME EDIT REVIEW (chip selection) */
+    .hole-fs-item.editable{cursor:pointer;border-color:rgba(255,225,86,0.35);background:rgba(255,225,86,0.05);-webkit-tap-highlight-color:transparent}
+    .hole-fs-item.editable:hover{border-color:rgba(255,225,86,0.7);background:rgba(255,225,86,0.12);transform:translateY(-2px)}
+    .hole-fs-item.editable:active{transform:scale(0.94)}
+    .hole-fs-item.editable .hfi-name{color:rgba(255,225,86,0.75)}
+    .hole-fs-item.editable .hfi-score{color:var(--yellow)}
+
+    /* EDIT MODE — hide numpad/score-display in review state */
+    .hole-card.review-mode .score-display,
+    .hole-card.review-mode .score-rel,
+    .hole-card.review-mode .numpad,
+    .hole-card.review-mode .hole-warning,
+    .hole-card.review-mode #holePlayer{display:none}
+
+    /* LIVE SCORECARD TAB */
+    .live-sc-row{margin-bottom:16px}
+    .live-sc-label{font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);margin-bottom:5px}
+    .live-sc-label.donkey{color:var(--donkey)}
+    .live-sc-label.brain{color:var(--lavender)}
+    .live-sc-half{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin-bottom:2px}
+    .live-sc-sub{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.35);padding:2px 2px 6px;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:6px}
   </style>
 </head>
 <body>
@@ -313,35 +354,52 @@
   <!-- STEP 3: Hole entry -->
   <div id="view-holes" style="display:none">
     <div class="card" style="border-top:3px solid var(--mint);padding:16px">
-      <div class="hole-progress" id="holePips"></div>
-      <div class="hole-card">
-        <div class="hole-course" id="holeCourse"></div>
-        <div id="holeFsRow" class="hole-fs-row" style="display:none"></div>
-        <div id="holePlayer" style="font-family:'Boogaloo',cursive;font-size:1.3rem;color:#fff;margin-bottom:2px"></div>
-        <div class="hole-num" id="holeNum">1</div>
-        <div class="hole-par-hcp" id="holeParHcp"></div>
-        <div class="score-display empty" id="scoreDisplay">—</div>
-        <div class="score-rel" id="scoreRel">&nbsp;</div>
-        <div class="numpad">
-          <button class="np-btn" onclick="numInput('1')">1</button>
-          <button class="np-btn" onclick="numInput('2')">2</button>
-          <button class="np-btn" onclick="numInput('3')">3</button>
-          <button class="np-btn del" onclick="numDel()">&#9003;</button>
-          <button class="np-btn" onclick="numInput('4')">4</button>
-          <button class="np-btn" onclick="numInput('5')">5</button>
-          <button class="np-btn" onclick="numInput('6')">6</button>
-          <button class="np-btn skip" onclick="skipHole()">Skip</button>
-          <button class="np-btn" onclick="numInput('7')">7</button>
-          <button class="np-btn" onclick="numInput('8')">8</button>
-          <button class="np-btn" onclick="numInput('9')">9</button>
-          <button class="np-btn next" id="nextHoleBtn" onclick="confirmHole()">Next</button>
+      <!-- TABS -->
+      <div class="hole-tabs">
+        <div class="hole-tab active" id="holeTab-entry" onclick="switchHoleTab('entry')">Score Entry</div>
+        <div class="hole-tab" id="holeTab-scorecard" onclick="switchHoleTab('scorecard')">Scorecard</div>
+      </div>
+
+      <!-- SCORE ENTRY TAB CONTENT -->
+      <div id="holeTabContent-entry">
+        <div class="hole-progress" id="holePips"></div>
+        <div id="matchBannerEntry" class="match-banner" style="display:none"></div>
+        <div class="hole-card">
+          <div class="hole-course" id="holeCourse"></div>
+          <div id="holeFsRow" class="hole-fs-row" style="display:none"></div>
+          <div id="holePlayer" style="font-family:'Boogaloo',cursive;font-size:1.3rem;color:#fff;margin-bottom:2px"></div>
+          <div class="hole-num" id="holeNum">1</div>
+          <div class="hole-par-hcp" id="holeParHcp"></div>
+          <div id="fsReviewPrompt" style="display:none;padding:14px 0 2px;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,225,86,0.65);text-align:center">&#9998;&nbsp; Tap a player to edit</div>
+          <div class="score-display empty" id="scoreDisplay">—</div>
+          <div class="score-rel" id="scoreRel">&nbsp;</div>
+          <div class="numpad">
+            <button class="np-btn" onclick="numInput('1')">1</button>
+            <button class="np-btn" onclick="numInput('2')">2</button>
+            <button class="np-btn" onclick="numInput('3')">3</button>
+            <button class="np-btn del" onclick="numDel()">&#9003;</button>
+            <button class="np-btn" onclick="numInput('4')">4</button>
+            <button class="np-btn" onclick="numInput('5')">5</button>
+            <button class="np-btn" onclick="numInput('6')">6</button>
+            <button class="np-btn skip" onclick="skipHole()">Skip</button>
+            <button class="np-btn" onclick="numInput('7')">7</button>
+            <button class="np-btn" onclick="numInput('8')">8</button>
+            <button class="np-btn" onclick="numInput('9')">9</button>
+            <button class="np-btn next" id="nextHoleBtn" onclick="confirmHole()">Next</button>
+          </div>
+          <div class="hole-warning" id="holeWarning"></div>
         </div>
-        <div class="hole-warning" id="holeWarning"></div>
+      </div>
+
+      <!-- SCORECARD TAB CONTENT -->
+      <div id="holeTabContent-scorecard" style="display:none">
+        <div id="matchBannerScorecard" class="match-banner" style="display:none"></div>
+        <div id="liveScorecardContent"></div>
       </div>
     </div>
     <div class="nav-btns" style="margin-top:8px">
-      <button class="btn btn-secondary" onclick="goToStep('player')">&larr; Back</button>
-      <button class="btn btn-primary" onclick="goToStep('summary')">View Summary</button>
+      <button class="btn btn-secondary" id="holeBackBtn" onclick="goToStep('player')">&larr; Back</button>
+      <button class="btn btn-primary" id="holeSummaryBtn" onclick="goToStep('summary')">View Summary</button>
     </div>
   </div>
 
@@ -419,6 +477,13 @@ let currentHole    = 0;      // 0-indexed
 let scoreBuffer    = '';
 let sheetData      = {};
 let scramblePairs  = [];
+
+// UI state
+let currentHoleTab   = 'entry';
+let editMode         = false;   // true when user jumped from a pip to edit a past/future hole
+let editReturnHole   = 0;       // hole index to return to when edit finishes
+let editReturnPlayer = 0;       // foursomePlayerIdx to return to when edit finishes
+let fsEditReview     = false;   // foursome edit: true = chip-selection view, false = numpad for specific player
 
 // Foursome scoring state
 let foursomeMode      = false;
@@ -507,6 +572,10 @@ function loadExistingScores() {
 
 // ─── STEP MANAGEMENT ──────────────────────────────────────────────────────
 function goToStep(step) {
+  if (step !== 'holes') {
+    editMode     = false;
+    fsEditReview = false;
+  }
   ['round','player','holes','summary'].forEach(s => {
     document.getElementById(`view-${s}`).style.display = s === step ? 'block' : 'none';
     const el = document.getElementById(`step-${s}`);
@@ -514,7 +583,10 @@ function goToStep(step) {
     const stepIdx = steps.indexOf(step), thisIdx = steps.indexOf(s);
     el.className = 'step' + (s === step ? ' active' : thisIdx < stepIdx ? ' done' : '');
   });
-  if (step === 'holes') renderHoleEntry();
+  if (step === 'holes') {
+    switchHoleTab('entry');
+    renderHoleEntry();
+  }
   if (step === 'summary') renderSummary();
   if (step === 'player') renderPlayerList();
 }
@@ -712,22 +784,26 @@ function selectPair(p1, p2, team, el) {
 function renderHoleEntry() {
   const course = COURSES[selectedRound];
   const h = currentHole;
+  const isReview = foursomeMode && editMode && fsEditReview;
+
   scoreBuffer = holeScores[h] !== null ? String(holeScores[h]) : '';
 
   // Course label
   document.getElementById('holeCourse').textContent = course.name;
-  // Foursome player progress chips
+
+  // Foursome player chips — editable tiles in review mode, normal indicators otherwise
   const fsRowEl = document.getElementById('holeFsRow');
   if (foursomeMode && foursomePlayers.length) {
     fsRowEl.style.display = 'flex';
     fsRowEl.innerHTML = foursomePlayers.map((p, idx) => {
       const score = foursomeScores[p.name][h];
-      const isActive = idx === foursomePlayerIdx;
+      const isActive = !isReview && idx === foursomePlayerIdx;
       const isDone   = !isActive && score !== null;
-      const cls = isActive ? 'active' : isDone ? 'scored' : '';
+      const cls      = isReview ? 'editable' : (isActive ? 'active' : isDone ? 'scored' : '');
+      const onClick  = isReview ? `onclick="fsEditSelectPlayer(${idx})"` : '';
       const firstName = p.isPair ? p.player1.split(' ')[0] + ' & ' + p.player2.split(' ')[0]
                                  : p.name.split(' ')[0];
-      return `<div class="hole-fs-item ${cls}">
+      return `<div class="hole-fs-item ${cls}" ${onClick}>
         <div class="hfi-name">${firstName}</div>
         <div class="hfi-score">${score ?? '·'}</div>
       </div>`;
@@ -735,24 +811,64 @@ function renderHoleEntry() {
   } else {
     fsRowEl.style.display = 'none';
   }
-  // Player / pair name
+
+  // Review mode prompt + hole-card class
+  const holeCard = document.querySelector('#holeTabContent-entry .hole-card');
+  const reviewPrompt = document.getElementById('fsReviewPrompt');
+  if (isReview) {
+    holeCard.classList.add('review-mode');
+    reviewPrompt.style.display = 'block';
+  } else {
+    holeCard.classList.remove('review-mode');
+    reviewPrompt.style.display = 'none';
+  }
+
+  // Player / pair name (hidden in review mode via CSS)
   const playerLabel = selectedRound === 'R2' && selectedPair
     ? `${selectedPair.player1} & ${selectedPair.player2}`
     : selectedPlayer || '';
   document.getElementById('holePlayer').textContent = playerLabel;
+
   // Hole number
   document.getElementById('holeNum').textContent = `Hole ${h+1}`;
+
   // Par / HCP
   document.getElementById('holeParHcp').innerHTML =
     `Par <span>${course.pars[h]}</span> &nbsp;&middot;&nbsp; SI <span>${course.hcps[h]}</span>`;
-  // Next btn label
+
+  // Next/Save button
   const btn = document.getElementById('nextHoleBtn');
-  btn.textContent = h === 17 ? 'Finish' : 'Next';
-  btn.className = `np-btn next${h===17?' finish':''}`;
+  if (editMode && !isReview) {
+    btn.textContent = 'Save';
+    btn.className = 'np-btn next';
+  } else {
+    btn.textContent = h === 17 ? 'Finish' : 'Next';
+    btn.className = `np-btn next${h===17?' finish':''}`;
+  }
+
+  // Skip/Clear button label
+  const skipBtn = document.querySelector('.np-btn.skip');
+  if (skipBtn) skipBtn.textContent = (editMode && !isReview) ? 'Clear' : 'Skip';
+
+  // Nav buttons: Back ↔ Resume, show/hide View Summary
+  const backBtn    = document.getElementById('holeBackBtn');
+  const summaryBtn = document.getElementById('holeSummaryBtn');
+  if (backBtn && summaryBtn) {
+    if (editMode) {
+      backBtn.innerHTML = '&#8629; Resume';
+      backBtn.onclick = exitEditMode;
+      summaryBtn.style.display = 'none';
+    } else {
+      backBtn.innerHTML = '&larr; Back';
+      backBtn.onclick = () => goToStep('player');
+      summaryBtn.style.display = '';
+    }
+  }
 
   updateScoreDisplay();
   renderPips();
   updateHoleWarning();
+  renderMatchBanners();
 }
 
 function renderPips() {
@@ -814,16 +930,24 @@ function confirmHole() {
   if (!scoreBuffer || isNaN(score) || score < 1) return;
 
   if (foursomeMode) {
-    // Write directly by name — never rely on the holeScores alias which the save
-    // loop may have redirected to a different player's array
     foursomeScores[foursomePlayers[foursomePlayerIdx].name][currentHole] = score;
+    if (editMode) {
+      // Save the edit, then return to chip-selection view for this hole
+      autosaveFoursome();
+      fsEditReview = true;
+      renderHoleEntry();
+      return;
+    }
     advanceFoursomeAfterEntry();
   } else {
     holeScores[currentHole] = score;
     autosave();
+    if (editMode) {
+      exitEditMode();
+      return;
+    }
     if (currentHole < 17) {
       currentHole++;
-      scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
       renderHoleEntry();
     } else {
       goToStep('summary');
@@ -834,12 +958,22 @@ function confirmHole() {
 function skipHole() {
   if (foursomeMode) {
     foursomeScores[foursomePlayers[foursomePlayerIdx].name][currentHole] = null;
+    if (editMode) {
+      autosaveFoursome();
+      fsEditReview = true;
+      renderHoleEntry();
+      return;
+    }
     advanceFoursomeAfterEntry();
   } else {
     holeScores[currentHole] = null;
+    if (editMode) {
+      autosave();
+      exitEditMode();
+      return;
+    }
     if (currentHole < 17) {
       currentHole++;
-      scoreBuffer = holeScores[currentHole] !== null ? String(holeScores[currentHole]) : '';
       renderHoleEntry();
     }
   }
@@ -867,9 +1001,35 @@ function advanceFoursomeAfterEntry() {
 }
 
 window.jumpToHole = function(i) {
+  if (i === currentHole && !editMode) return; // already here in normal mode — no-op
+  // Save return position only when first entering edit mode
+  if (!editMode) {
+    editReturnHole   = currentHole;
+    editReturnPlayer = foursomePlayerIdx;
+  }
+  editMode    = true;
   currentHole = i;
-  if (foursomeMode) switchToFoursomePlayer(0);
-  scoreBuffer = holeScores[i] !== null ? String(holeScores[i]) : '';
+  if (foursomeMode) {
+    fsEditReview = true; // show player chip selection first
+  }
+  // scoreBuffer will be set by renderHoleEntry from holeScores[i]
+  renderHoleEntry();
+};
+
+function exitEditMode() {
+  editMode     = false;
+  fsEditReview = false;
+  currentHole  = editReturnHole;
+  if (foursomeMode) {
+    switchToFoursomePlayer(editReturnPlayer);
+  }
+  // scoreBuffer will be set correctly by renderHoleEntry
+  renderHoleEntry();
+}
+
+window.fsEditSelectPlayer = function(idx) {
+  switchToFoursomePlayer(idx);
+  fsEditReview = false;
   renderHoleEntry();
 };
 
@@ -1025,7 +1185,12 @@ function renderSummary() {
     cardsHtml = playerCard(label, holeScores);
   }
 
-  el.innerHTML = `${cardsHtml}
+  const matchResult = computeMatchScore();
+  const matchHtml = (matchResult && matchResult.holesPlayed > 0)
+    ? `<div class="match-banner">${buildMatchBannerHTML(matchResult)}</div>`
+    : '';
+
+  el.innerHTML = `${matchHtml}${cardsHtml}
     <div id="summaryFeedback"></div>
     <div style="text-align:center;padding:8px 0">
       <button class="btn btn-primary" id="saveToLbBtn" onclick="saveToLeaderboard()" style="max-width:260px">
@@ -1072,6 +1237,11 @@ async function saveToLeaderboard() {
 
 // ─── NEW ENTRY ────────────────────────────────────────────────────────────
 function startNew() {
+  currentHoleTab   = 'entry';
+  editMode         = false;
+  editReturnHole   = 0;
+  editReturnPlayer = 0;
+  fsEditReview     = false;
   selectedRound     = null;
   selectedPlayer    = null;
   selectedPair      = null;
@@ -1107,6 +1277,170 @@ function showSaveBar(type, msg) {
 }
 function hideSaveBar() {
   document.getElementById('saveBar').classList.remove('visible');
+}
+
+// ─── HOLE TABS ────────────────────────────────────────────────────────────
+function switchHoleTab(tab) {
+  currentHoleTab = tab;
+  ['entry','scorecard'].forEach(t => {
+    document.getElementById(`holeTab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`holeTabContent-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'scorecard') renderLiveScorecard();
+}
+
+// ─── MATCH SCORE ──────────────────────────────────────────────────────────
+function getMatchContext() {
+  if (foursomeMode && foursomePlayers.length) {
+    return {
+      donkeyScores: foursomePlayers.filter(p => p.team === 'donkeys').map(p => foursomeScores[p.name] || Array(18).fill(null)),
+      brainScores:  foursomePlayers.filter(p => p.team === 'brains' ).map(p => foursomeScores[p.name] || Array(18).fill(null)),
+    };
+  }
+  if (!selectedPlayer) return null;
+
+  const foursomes = getFoursomesForRound(selectedRound);
+  const targetFs = foursomes.find(fs => fs.players.some(p => {
+    if (p.isPair) return p.name === selectedPlayer || `${p.player1} & ${p.player2}` === selectedPlayer;
+    return p.name === selectedPlayer;
+  }));
+  if (!targetFs) return null;
+
+  const tabKey = selectedRound === 'R1' ? 'Scores_R1' : selectedRound === 'R2' ? 'Scores_R2' : 'Scores_R3';
+  const rows = sheetData[tabKey] || [];
+  const getScores = name => {
+    if (name === selectedPlayer) return holeScores;
+    const row = rows.find(r => (r.Name || r.PairID || r.Donkey1 || '') === name);
+    if (!row) return Array(18).fill(null);
+    return Array.from({length:18}, (_,i) => { const v = parseInt(row[`H${i+1}`]); return isNaN(v) ? null : v; });
+  };
+
+  return {
+    donkeyScores: targetFs.players.filter(p => p.team === 'donkeys').map(p => getScores(p.name)),
+    brainScores:  targetFs.players.filter(p => p.team === 'brains' ).map(p => getScores(p.name)),
+  };
+}
+
+function computeMatchScore() {
+  const ctx = getMatchContext();
+  if (!ctx || (!ctx.donkeyScores.length && !ctx.brainScores.length)) return null;
+
+  let upDown = 0, holesPlayed = 0;
+  for (let h = 0; h < 18; h++) {
+    const dArr = ctx.donkeyScores.map(s => s[h]).filter(s => s !== null);
+    const bArr = ctx.brainScores.map(s  => s[h]).filter(s => s !== null);
+    if (!dArr.length || !bArr.length) continue;
+    holesPlayed++;
+    const d = Math.min(...dArr), b = Math.min(...bArr);
+    if (d < b) upDown++;
+    else if (b < d) upDown--;
+  }
+  return { upDown, holesPlayed, holesRemaining: 18 - holesPlayed };
+}
+
+function buildMatchBannerHTML({ upDown, holesPlayed, holesRemaining }) {
+  if (holesPlayed === 0) return `<span class="mb-as">Match not started</span>`;
+
+  const isComplete = holesRemaining === 0;
+  const isAS = upDown === 0;
+
+  if (isAS && isComplete) return `<span class="mb-as">All Square — Match Tied</span>`;
+  if (isAS) return `<span class="mb-as">All Square</span><span class="mb-remain">&middot; ${holesRemaining} to play</span>`;
+
+  const upTeam  = upDown > 0 ? 'donkey' : 'brain';
+  const upLabel = upDown > 0 ? 'Team DiPano' : 'Team Dhand';
+  const upAmt   = Math.abs(upDown);
+  const clinched = upAmt > holesRemaining;
+
+  if (clinched)   return `<span class="mb-team ${upTeam}">${upLabel}</span><span class="mb-wins">wins ${upAmt}&amp;${holesRemaining}</span>`;
+  if (isComplete) return `<span class="mb-team ${upTeam}">${upLabel}</span><span class="mb-wins">wins ${upAmt}UP</span>`;
+
+  return `<span class="mb-team ${upTeam}">${upLabel}</span><span class="mb-score">${upAmt}UP</span><span class="mb-remain">&middot; ${holesRemaining} to play</span>`;
+}
+
+function renderMatchBanners() {
+  const result = computeMatchScore();
+  ['matchBannerEntry','matchBannerScorecard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!result || result.holesPlayed === 0) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.innerHTML = buildMatchBannerHTML(result);
+  });
+}
+
+// ─── LIVE SCORECARD TAB ───────────────────────────────────────────────────
+function renderLiveScorecard() {
+  const el = document.getElementById('liveScorecardContent');
+  if (!el) return;
+
+  const course = COURSES[selectedRound];
+  function cellCls(score, par) {
+    if (score === null) return 'empty';
+    const d = score - par;
+    if (d <= -2) return 'eagle';
+    if (d === -1) return 'birdie';
+    if (d === 0)  return 'par';
+    if (d === 1)  return 'bogey';
+    return 'double';
+  }
+
+  function buildRow(label, scores, teamClass) {
+    let html = `<div class="live-sc-row"><div class="live-sc-label ${teamClass}">${label}</div>`;
+    for (let half = 0; half < 2; half++) {
+      const start = half * 9;
+      const hdrs = Array.from({length:9},(_,i)=>`<div class="sh-cell hdr">${start+i+1}</div>`).join('');
+      const pars = Array.from({length:9},(_,i)=>`<div class="sh-cell hdr">${course.pars[start+i]}</div>`).join('');
+      const scrs = Array.from({length:9},(_,i)=>{
+        const s = scores[start+i];
+        return `<div class="sh-cell ${cellCls(s,course.pars[start+i])}">${s??'·'}</div>`;
+      }).join('');
+      const subtotal = scores.slice(start,start+9).filter(s=>s!==null).reduce((a,b)=>a+b,0);
+      const played   = scores.slice(start,start+9).filter(s=>s!==null).length;
+      html += `<div class="live-sc-half">${hdrs}${pars}${scrs}</div>`;
+      html += `<div class="live-sc-sub"><span>${half===0?'OUT':'IN'} ${played?subtotal:'–'}</span><span>${scores.filter(s=>s!==null).length}/18 holes</span></div>`;
+    }
+    return html + '</div>';
+  }
+
+  let html = '';
+  if (foursomeMode && foursomePlayers.length) {
+    foursomePlayers.forEach(p => {
+      const tc = p.team === 'donkeys' ? 'donkey' : 'brain';
+      const lbl = p.isPair ? `${p.player1} &amp; ${p.player2}` : p.name;
+      html += buildRow(lbl, foursomeScores[p.name], tc);
+    });
+  } else if (selectedPlayer) {
+    const entry = ROSTER.find(r => r.name === selectedPlayer);
+    const tc = entry?.team === 'donkeys' ? 'donkey' : entry?.team === 'brains' ? 'brain' : '';
+    const lbl = (selectedRound === 'R2' && selectedPair)
+      ? `${selectedPair.player1} &amp; ${selectedPair.player2}` : selectedPlayer;
+    html += buildRow(lbl, holeScores, tc);
+
+    // Also show other players in the same foursome if pairings data is available
+    const ctx = getMatchContext();
+    if (ctx) {
+      const foursomes = getFoursomesForRound(selectedRound);
+      const targetFs = foursomes.find(fs => fs.players.some(p => {
+        if (p.isPair) return p.name === selectedPlayer || `${p.player1} & ${p.player2}` === selectedPlayer;
+        return p.name === selectedPlayer;
+      }));
+      if (targetFs) {
+        const tabKey = selectedRound === 'R1' ? 'Scores_R1' : selectedRound === 'R2' ? 'Scores_R2' : 'Scores_R3';
+        const rows = sheetData[tabKey] || [];
+        targetFs.players.filter(p => p.name !== selectedPlayer).forEach(p => {
+          const tc2 = p.team === 'donkeys' ? 'donkey' : 'brain';
+          const lbl2 = p.isPair ? `${p.player1} &amp; ${p.player2}` : p.name;
+          const row = rows.find(r => (r.Name || r.PairID || r.Donkey1 || '') === p.name);
+          const sc = row ? Array.from({length:18},(_,i)=>{ const v=parseInt(row[`H${i+1}`]); return isNaN(v)?null:v; }) : Array(18).fill(null);
+          html += buildRow(lbl2, sc, tc2);
+        });
+      }
+    }
+  }
+
+  el.innerHTML = html || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;font-size:0.82rem;font-weight:700">No scores entered yet</div>`;
+  renderMatchBanners();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────

@@ -70,7 +70,7 @@ const ROSTER = [
   'Jack Lyons', 'Carson Smith', 'Josh McLeman', 'Matt Holm',
   'Ed Weaver', 'Justin Roberts', 'Justin Estrella', 'Devan Dhand',
   'Matt DiPano', 'David Resmini', 'Mitchell Rotondi', 'Jason Sulmonetti',
-  'Brendan Barry', 'Trevor Ross', 'Corey DaSilva',
+  'Brendan Barry', 'Trevor Ross', 'Corey DaSilva', 'David Allen',
 ];
 
 // ─── COLORS ───────────────────────────────────────────────────────────────
@@ -93,10 +93,21 @@ const COLORS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// doGET — return all sheet data as one JSON payload
+// doGET — read all data, OR handle ?action=saveScore writes
+// scores.html saves via GET+params (avoids CORS preflight on Apps Script)
 // ═══════════════════════════════════════════════════════════════════════════
 function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const action = e && e.parameter && e.parameter.action;
+  if (action === 'saveScore') {
+    let data;
+    try { data = JSON.parse(e.parameter.data); }
+    catch(err) { return jsonResponse({ status: 'error', error: 'Invalid JSON in data param' }); }
+    const result = upsertScore(ss, data.round, data.name, data.holes || []);
+    return jsonResponse(result.ok ? { status: 'ok' } : { status: 'error', error: result.error });
+  }
+
   ensureAllTabs(ss); // auto-scaffold missing tabs on every read
   const result = {};
   Object.keys(TAB_CONFIG).forEach(name => {
@@ -123,39 +134,22 @@ function doPost(e) {
   // ── PAIRINGS ────────────────────────────────────────────────────────────
   if (type === 'pairings') {
     const sheet = getOrCreateSheet(ss, 'Pairings');
-    sheet.clearContents();
-    sheet.appendRow(TAB_CONFIG.Pairings.headers);
+    const cfg = TAB_CONFIG.Pairings;
+    // Delete only data rows — keep frozen description+header rows intact so
+    // styleDataRows and getFrozenRows() stay consistent after the rewrite.
+    const frozenRows = sheet.getFrozenRows();
+    const lastRow    = sheet.getLastRow();
+    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
     (data.rows || []).forEach(row => sheet.appendRow(row));
-    styleHeaderRow(sheet, TAB_CONFIG.Pairings.headers.length, COLORS.headerBg, COLORS.headerText);
-    styleDataRows(sheet, TAB_CONFIG.Pairings.headers.length);
+    styleDataRows(sheet, cfg.headers.length);
     return jsonResponse({ status: 'ok' });
   }
 
   // ── SCORE UPSERT ────────────────────────────────────────────────────────
   if (type === 'score') {
     const { round, name, holes } = data;
-    const tabName = `Scores_${round}`;
-    const cfg     = TAB_CONFIG[tabName];
-    if (!cfg) return jsonResponse({ status: 'error', error: `Unknown round: ${round}` });
-
-    const sheet   = getOrCreateSheet(ss, tabName);
-    const rowData = [name, ...holes.map(h => (h === null || h === undefined) ? '' : Number(h))];
-    const existingRowNum = findRowByIdCol(sheet, cfg.idCol, name);
-
-    if (existingRowNum > 0) {
-      sheet.getRange(existingRowNum, 1, 1, rowData.length).setValues([rowData]);
-    } else {
-      sheet.appendRow(rowData);
-      const newRowNum = sheet.getLastRow();
-      styleDataRows(sheet, cfg.headers.length, newRowNum, newRowNum);
-    }
-
-    // Reapply conditional formatting for the affected row
-    if (COURSE_DATA[tabName]) {
-      applyScoreConditionalFormatting(sheet, COURSE_DATA[tabName].pars);
-    }
-
-    return jsonResponse({ status: 'ok' });
+    const result = upsertScore(ss, round, name, holes || []);
+    return jsonResponse(result.ok ? { status: 'ok' } : { status: 'error', error: result.error });
   }
 
   // ── SCRAMBLE PAIR DEFINITION ────────────────────────────────────────────
@@ -176,9 +170,11 @@ function doPost(e) {
   // data.picks: [{name, team, pickNumber, captain}]
   if (type === 'draft') {
     const sheet = getOrCreateSheet(ss, 'Draft');
-    sheet.clearContents();
-    sheet.appendRow(TAB_CONFIG.Draft.headers);
-    styleHeaderRow(sheet, TAB_CONFIG.Draft.headers.length, COLORS.headerBg, COLORS.headerText);
+    const cfg = TAB_CONFIG.Draft;
+    // Delete only data rows — keep frozen description+header rows intact.
+    const frozenRows = sheet.getFrozenRows();
+    const lastRow    = sheet.getLastRow();
+    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
     // Deduplicate by name — keep the highest pickNumber entry per player
     const seen = {};
     (data.picks || []).forEach((p, i) => {
@@ -192,7 +188,7 @@ function doPost(e) {
       .forEach(p => {
         sheet.appendRow([p.name, p.team, p.pickNumber, p.captain ? 'YES' : '']);
       });
-    styleDataRows(sheet, TAB_CONFIG.Draft.headers.length);
+    styleDataRows(sheet, cfg.headers.length);
     return jsonResponse({ status: 'ok' });
   }
 
@@ -203,6 +199,32 @@ function doPost(e) {
   }
 
   return jsonResponse({ status: 'error', error: `Unknown type: ${type}` });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCORE UPSERT — shared by doGet(?action=saveScore) and doPost(type=score)
+// ═══════════════════════════════════════════════════════════════════════════
+function upsertScore(ss, round, name, holes) {
+  const tabName = `Scores_${round}`;
+  const cfg     = TAB_CONFIG[tabName];
+  if (!cfg) return { ok: false, error: `Unknown round: ${round}` };
+
+  const sheet   = getOrCreateSheet(ss, tabName);
+  const rowData = [name, ...holes.map(h => (h === null || h === undefined) ? '' : Number(h))];
+  const existingRowNum = findRowByIdCol(sheet, cfg.idCol, name);
+
+  if (existingRowNum > 0) {
+    sheet.getRange(existingRowNum, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+    styleDataRows(sheet, cfg.headers.length, sheet.getLastRow(), sheet.getLastRow());
+  }
+
+  if (COURSE_DATA[tabName]) {
+    applyScoreConditionalFormatting(sheet, COURSE_DATA[tabName].pars);
+  }
+
+  return { ok: true };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -318,14 +340,15 @@ function applyScoreConditionalFormatting(sheet, pars) {
     const colLetter = columnToLetter(col);
     const range     = sheet.getRange(`${colLetter}${frozenRows + 1}:${colLetter}${lastRow}`);
 
+    // ConditionalFormatRuleBuilder uses .setBold(bool), NOT .setFontWeight()
     rules.push(SpreadsheetApp.newConditionalFormatRule()
       .whenNumberLessThanOrEqualTo(par - 2)
-      .setBackground(COLORS.eagle.bg).setFontColor(COLORS.eagle.text).setFontWeight('bold')
+      .setBackground(COLORS.eagle.bg).setFontColor(COLORS.eagle.text).setBold(true)
       .setRanges([range]).build());
 
     rules.push(SpreadsheetApp.newConditionalFormatRule()
       .whenNumberEqualTo(par - 1)
-      .setBackground(COLORS.birdie.bg).setFontColor(COLORS.birdie.text).setFontWeight('bold')
+      .setBackground(COLORS.birdie.bg).setFontColor(COLORS.birdie.text).setBold(true)
       .setRanges([range]).build());
 
     rules.push(SpreadsheetApp.newConditionalFormatRule()
@@ -340,12 +363,12 @@ function applyScoreConditionalFormatting(sheet, pars) {
 
     rules.push(SpreadsheetApp.newConditionalFormatRule()
       .whenNumberEqualTo(par + 2)
-      .setBackground(COLORS.double.bg).setFontColor(COLORS.double.text).setFontWeight('bold')
+      .setBackground(COLORS.double.bg).setFontColor(COLORS.double.text).setBold(true)
       .setRanges([range]).build());
 
     rules.push(SpreadsheetApp.newConditionalFormatRule()
       .whenNumberGreaterThanOrEqualTo(par + 3)
-      .setBackground(COLORS.worse.bg).setFontColor(COLORS.worse.text).setFontWeight('bold')
+      .setBackground(COLORS.worse.bg).setFontColor(COLORS.worse.text).setBold(true)
       .setRanges([range]).build());
   }
 
