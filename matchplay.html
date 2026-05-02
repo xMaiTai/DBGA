@@ -460,6 +460,7 @@ let scores     = { R1:{}, R2:{}, R3:{} };  // name/pair -> array of 18
 let activeTab  = 'standings';
 let saveStatus = '';
 let pairingsLocked = { 1:false, 2:false, 3:false };
+let savedRoundsThisSession = new Set(); // rounds saved since page load — protected from poll overwrites
 
 // ─── LOAD DRAFT ───────────────────────────────────────────────────────────
 function loadDraft() {
@@ -554,7 +555,7 @@ function parseSheetData(data) {
 
   // Pairings: Round, Match, Donkey1, Donkey2, Brain1, Brain2, TeeTime, MatchType
   if (data.Pairings) {
-    pairings = data.Pairings.map(r => ({
+    const fromSheet = data.Pairings.map(r => ({
       round:     parseInt(r.Round)||0,
       match:     parseInt(r.Match)||0,
       donkey1:   r.Donkey1||'',
@@ -562,8 +563,16 @@ function parseSheetData(data) {
       brain1:    r.Brain1||'',
       brain2:    r.Brain2||'',
       teeTime:   r.TeeTime||'',
-      matchType: r.MatchType||'standard', // 'standard' | 'solo' (1v2 special)
+      matchType: r.MatchType||'standard',
     }));
+    // Don't overwrite rounds saved in this session — the sheet fetch may be stale
+    // (race condition: page-load fetch still in-flight when user saves R1, then
+    // the fetch resolves and would erase the in-memory R1 before R2 is saved).
+    const preserved = pairings.filter(p => savedRoundsThisSession.has(p.round));
+    pairings = [
+      ...fromSheet.filter(p => !savedRoundsThisSession.has(p.round)),
+      ...preserved,
+    ];
   }
 
   // Scores_R1, R2, R3 — Name/PairID, H1..H18
@@ -1508,26 +1517,20 @@ window.saveRoundPairings = async function(rnd) {
   saveStatus = { type:'saving', msg:`Saving R${rnd}...` };
   renderPairings();
 
-  // Build rows: replace rnd's pairings with builder state, keep other rounds from pairings
+  // Only send this round's pairings — the backend does per-round delete+rewrite
+  // so other rounds are never touched, eliminating cross-round overwrite bugs.
   const rows = [];
-  [1,2,3].forEach(r => {
-    if (r === rnd) {
-      (builderFoursomes[r]||[]).forEach((f,i) => {
-        const isSolo = (!f.donkey2 && (f.brain1||f.brain2)) || (!f.brain2 && (f.donkey1||f.donkey2));
-        const matchType = isSolo ? 'solo' : (r===3 ? (f.singlesOrder||'standard') : 'standard');
-        rows.push([r, i+1, f.donkey1||'', f.donkey2||'', f.brain1||'', f.brain2||'', f.teeTime||'', matchType]);
-      });
-    } else {
-      pairings.filter(p => p.round === r).forEach((p,i) => {
-        rows.push([r, i+1, p.donkey1, p.donkey2, p.brain1, p.brain2, p.teeTime, p.matchType]);
-      });
-    }
+  (builderFoursomes[rnd]||[]).forEach((f,i) => {
+    const isSolo = (!f.donkey2 && (f.brain1||f.brain2)) || (!f.brain2 && (f.donkey1||f.donkey2));
+    const matchType = isSolo ? 'solo' : (rnd===3 ? (f.singlesOrder||'standard') : 'standard');
+    rows.push([rnd, i+1, f.donkey1||'', f.donkey2||'', f.brain1||'', f.brain2||'', f.teeTime||'', matchType]);
   });
 
   const result = await saveToSheet({ type:'pairings', rows });
   if (result?.ok) {
     pairingsLocked[rnd] = true;
     savePairingsLocked();
+    savedRoundsThisSession.add(rnd); // protect this round from poll overwrites
     saveStatus = { type:'saved', msg:`R${rnd} saved &amp; locked!` };
 
     // Update pairings in memory immediately — don't re-fetch right after save
@@ -1580,6 +1583,22 @@ async function loadAll() {
   if (activeTab === 'standings') renderStandings();
   else if (activeTab === 'pairings') renderPairings();
 }
+
+// Deep-link: ?round=1|2|3 opens the pairings builder at that round directly.
+// Set state before loadAll() so renderPairings() uses the right round/tab when
+// the async fetch resolves.
+(function() {
+  const dlRound = parseInt(new URLSearchParams(window.location.search).get('round'));
+  if (dlRound >= 1 && dlRound <= 3) {
+    activeBuilderRound = dlRound;
+    activeTab = 'pairings';
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-pairings').classList.add('active');
+    const pBtn = [...document.querySelectorAll('.tab-btn')].find(b => b.onclick?.toString().includes("'pairings'"));
+    if (pBtn) pBtn.classList.add('active');
+  }
+})();
 
 setInterval(loadAll, 90000); // refresh every 90s during play
 loadAll();

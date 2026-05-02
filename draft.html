@@ -839,7 +839,12 @@ async function saveDraftToSheet() {
     .filter(p=>p.drafted&&p.team)
     .sort((a,b)=>{ const aLog=draftLog.find(l=>l.playerName===a.name); const bLog=draftLog.find(l=>l.playerName===b.name); return (aLog&&aLog.pick?parseInt(aLog.pick)||99:99)-(bLog&&bLog.pick?parseInt(bLog.pick)||99:99); })
     .map(p=>{ const logEntry=draftLog.find(l=>l.playerName===p.name); return { name:p.name, team:p.team, pickNumber:logEntry&&logEntry.pick?logEntry.pick:0, captain:p.captain||false }; });
-  fetch(APPS_SCRIPT_URL, { method:'POST', mode:'no-cors', redirect:'manual', body:JSON.stringify({ type:'draft', picks }) }).catch(e=>console.warn('Draft save failed:',e));
+  try {
+    const url = new URL(APPS_SCRIPT_URL);
+    url.searchParams.set('action', 'saveDraft');
+    url.searchParams.set('data', JSON.stringify(picks));
+    fetch(url.toString()).catch(e => console.warn('Draft save failed:', e));
+  } catch(e) { console.warn('Draft save failed:', e); }
 }
 
 renderPlayers();renderTeams();renderLog();updatePickIndicator();

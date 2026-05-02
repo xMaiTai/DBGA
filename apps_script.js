@@ -112,13 +112,25 @@ function doGet(e) {
     let rows;
     try { rows = JSON.parse(e.parameter.data); }
     catch(err) { return jsonResponse({ status: 'error', error: 'Invalid JSON in data param' }); }
+    rows = rows || [];
     const sheet = getOrCreateSheet(ss, 'Pairings');
-    const cfg   = TAB_CONFIG.Pairings;
     const frozenRows = sheet.getFrozenRows();
-    const lastRow    = sheet.getLastRow();
-    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
-    (rows || []).forEach(row => sheet.appendRow(row));
-    styleDataRows(sheet, cfg.headers.length);
+    // Determine which rounds are in this payload
+    const rounds = [...new Set(rows.map(r => Number(r[0])).filter(n => n > 0))];
+    if (rounds.length > 0) {
+      // Delete only rows belonging to the rounds being saved (bottom-to-top to avoid row-index shifting)
+      const allData = sheet.getDataRange().getValues();
+      const toDelete = [];
+      for (let i = allData.length - 1; i >= frozenRows; i--) {
+        if (rounds.includes(Number(allData[i][0]))) toDelete.push(i + 1);
+      }
+      toDelete.forEach(rowNum => sheet.deleteRow(rowNum));
+    } else {
+      // Empty payload — clear all data rows (reset)
+      const lastRow = sheet.getLastRow();
+      if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
+    }
+    rows.forEach(row => sheet.appendRow(row));
     return jsonResponse({ status: 'ok' });
   }
 
@@ -127,7 +139,6 @@ function doGet(e) {
     try { picks = JSON.parse(e.parameter.data); }
     catch(err) { return jsonResponse({ status: 'error', error: 'Invalid JSON in data param' }); }
     const sheet = getOrCreateSheet(ss, 'Draft');
-    const cfg   = TAB_CONFIG.Draft;
     const frozenRows = sheet.getFrozenRows();
     const lastRow    = sheet.getLastRow();
     if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
@@ -141,7 +152,6 @@ function doGet(e) {
     Object.values(seen)
       .sort((a, b) => a.pickNumber - b.pickNumber)
       .forEach(p => sheet.appendRow([p.name, p.team, p.pickNumber, p.captain ? 'YES' : '']));
-    styleDataRows(sheet, cfg.headers.length);
     return jsonResponse({ status: 'ok' });
   }
 
@@ -149,7 +159,7 @@ function doGet(e) {
   const result = {};
   Object.keys(TAB_CONFIG).forEach(name => {
     const sheet = ss.getSheetByName(name);
-    result[name] = sheet ? sheetToObjects(sheet) : [];
+    result[name] = sheet ? sheetToObjects(sheet, TAB_CONFIG[name].headers) : [];
   });
   return jsonResponse(result);
 }
@@ -170,15 +180,22 @@ function doPost(e) {
 
   // ── PAIRINGS ────────────────────────────────────────────────────────────
   if (type === 'pairings') {
+    const rows = data.rows || [];
     const sheet = getOrCreateSheet(ss, 'Pairings');
-    const cfg = TAB_CONFIG.Pairings;
-    // Delete only data rows — keep frozen description+header rows intact so
-    // styleDataRows and getFrozenRows() stay consistent after the rewrite.
     const frozenRows = sheet.getFrozenRows();
-    const lastRow    = sheet.getLastRow();
-    if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
-    (data.rows || []).forEach(row => sheet.appendRow(row));
-    styleDataRows(sheet, cfg.headers.length);
+    const rounds = [...new Set(rows.map(r => Number(r[0])).filter(n => n > 0))];
+    if (rounds.length > 0) {
+      const allData = sheet.getDataRange().getValues();
+      const toDelete = [];
+      for (let i = allData.length - 1; i >= frozenRows; i--) {
+        if (rounds.includes(Number(allData[i][0]))) toDelete.push(i + 1);
+      }
+      toDelete.forEach(rowNum => sheet.deleteRow(rowNum));
+    } else {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
+    }
+    rows.forEach(row => sheet.appendRow(row));
     return jsonResponse({ status: 'ok' });
   }
 
@@ -198,7 +215,6 @@ function doPost(e) {
       sheet.getRange(existingRowNum, 1, 1, 3).setValues([[team, player1, player2]]);
     } else {
       sheet.appendRow([team, player1, player2]);
-      styleDataRows(sheet, 3, sheet.getLastRow(), sheet.getLastRow());
     }
     return jsonResponse({ status: 'ok' });
   }
@@ -207,12 +223,9 @@ function doPost(e) {
   // data.picks: [{name, team, pickNumber, captain}]
   if (type === 'draft') {
     const sheet = getOrCreateSheet(ss, 'Draft');
-    const cfg = TAB_CONFIG.Draft;
-    // Delete only data rows — keep frozen description+header rows intact.
     const frozenRows = sheet.getFrozenRows();
     const lastRow    = sheet.getLastRow();
     if (lastRow > frozenRows) sheet.deleteRows(frozenRows + 1, lastRow - frozenRows);
-    // Deduplicate by name — keep the highest pickNumber entry per player
     const seen = {};
     (data.picks || []).forEach((p, i) => {
       const key = p.name;
@@ -225,7 +238,6 @@ function doPost(e) {
       .forEach(p => {
         sheet.appendRow([p.name, p.team, p.pickNumber, p.captain ? 'YES' : '']);
       });
-    styleDataRows(sheet, cfg.headers.length);
     return jsonResponse({ status: 'ok' });
   }
 
@@ -254,11 +266,6 @@ function upsertScore(ss, round, name, holes) {
     sheet.getRange(existingRowNum, 1, 1, rowData.length).setValues([rowData]);
   } else {
     sheet.appendRow(rowData);
-    styleDataRows(sheet, cfg.headers.length, sheet.getLastRow(), sheet.getLastRow());
-  }
-
-  if (COURSE_DATA[tabName]) {
-    applyScoreConditionalFormatting(sheet, COURSE_DATA[tabName].pars);
   }
 
   return { ok: true };
@@ -509,9 +516,9 @@ function applyProtection(ss, sheet, name) {
 // UTILITY FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-function sheetToObjects(sheet) {
+function sheetToObjects(sheet, defaultHeaders) {
   const data = sheet.getDataRange().getValues();
-  let headerRowIdx = 0;
+  let headerRowIdx = -1;
   for (let i = 0; i < Math.min(data.length, 4); i++) {
     const firstCell = String(data[i][0]).trim();
     if (['Name','Donkey1','Round','Team','Player1'].includes(firstCell)) {
@@ -519,10 +526,17 @@ function sheetToObjects(sheet) {
       break;
     }
   }
-  if (headerRowIdx >= data.length) return [];
-  const headers = data[headerRowIdx].map(h => String(h).trim());
-
-  return data.slice(headerRowIdx + 1)
+  let headers, dataStart;
+  if (headerRowIdx >= 0) {
+    headers = data[headerRowIdx].map(h => String(h).trim());
+    dataStart = headerRowIdx + 1;
+  } else if (defaultHeaders) {
+    headers = defaultHeaders;
+    dataStart = 0;
+  } else {
+    return [];
+  }
+  return data.slice(dataStart)
     .filter(row => {
       const firstCell = String(row[0]).trim();
       return firstCell !== '' && firstCell !== 'PAR' && !firstCell.startsWith('PAR (');
