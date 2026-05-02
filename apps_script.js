@@ -259,6 +259,20 @@ function upsertScore(ss, round, name, holes) {
   if (!cfg) return { ok: false, error: `Unknown round: ${round}` };
 
   const sheet   = getOrCreateSheet(ss, tabName);
+
+  // If the sheet exists but was never properly scaffolded (no recognisable header row),
+  // prepend a header row so findRowByIdCol can upsert instead of blindly appendRow-ing.
+  const knownKeywords = ['Name','Donkey1','Round','Team','Player1'];
+  const topRows = sheet.getLastRow() > 0
+    ? sheet.getRange(1, 1, Math.min(sheet.getLastRow(), 4), 1).getValues().flat()
+    : [];
+  const hasHeader = topRows.some(v => knownKeywords.includes(String(v).trim()));
+  if (!hasHeader && sheet.getLastRow() > 0) {
+    sheet.insertRowBefore(1);
+    sheet.getRange(1, 1, 1, cfg.headers.length).setValues([cfg.headers]);
+    sheet.setFrozenRows(Math.max(sheet.getFrozenRows(), 1));
+  }
+
   const rowData = [name, ...holes.map(h => (h === null || h === undefined) ? '' : Number(h))];
   const existingRowNum = findRowByIdCol(sheet, cfg.idCol, name);
 
@@ -553,12 +567,17 @@ function findRowByIdCol(sheet, idCol, idVal) {
       break;
     }
   }
-  if (headerRowIdx < 0) return -1;
-  const headers  = data[headerRowIdx];
-  const colIdx   = headers.indexOf(idCol);
-  if (colIdx < 0) return -1;
-
-  for (let i = headerRowIdx + 1; i < data.length; i++) {
+  let colIdx, startIdx;
+  if (headerRowIdx >= 0) {
+    colIdx   = data[headerRowIdx].indexOf(idCol);
+    if (colIdx < 0) return -1;
+    startIdx = headerRowIdx + 1;
+  } else {
+    // No recognisable header row — the id column is always first (col 0) on all score tabs.
+    colIdx   = 0;
+    startIdx = 0;
+  }
+  for (let i = startIdx; i < data.length; i++) {
     const cellVal = String(data[i][colIdx]).trim();
     if (cellVal === String(idVal).trim()) return i + 1;
   }
