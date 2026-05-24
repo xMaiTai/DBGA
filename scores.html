@@ -1132,7 +1132,7 @@ function updateHoleWarning() {
     const holeList = unsaved.length === 1
       ? `Hole ${unsaved[0]} has`
       : `Holes ${unsaved.join(', ')} have`;
-    el.textContent = `WARNING: ${holeList} not been saved to the leaderboard. Please correct.`;
+    el.textContent = `WARNING: ${holeList} not been saved to the leaderboard or are still saving. Please correct if this warning persists.`;
     el.style.display = 'block';
   }
 }

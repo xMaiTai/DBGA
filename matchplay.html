@@ -858,7 +858,13 @@ function renderRoundMatchTable(rndData) {
       ? (calc.winner==='A'?`<span class="result-donkey">${donkeys[0]}${donkeys[1]?' &amp; '+donkeys[1]:''}</span> wins`
         :calc.winner==='B'?`<span class="result-brain">${brains[0]}${brains[1]?' &amp; '+brains[1]:''}</span> wins`
         :`<span class="result-half">All Square</span>`)
-      : calc.holesPlayed > 0 ? `<span class="${statusClass}">${calc.status}</span>` : '<span class="result-pending">Not started</span>';
+      : calc.holesPlayed > 0
+        ? m.format === 'Singles'
+          ? calc.holesUp > 0 ? `<span class="status-up">${donkeys[0]} - ${calc.holesUp} UP</span>`
+            : calc.holesUp < 0 ? `<span class="status-up">${brains[0]} - ${Math.abs(calc.holesUp)} UP</span>`
+            : `<span class="status-as">AS</span>`
+          : `<span class="${statusClass}">${calc.status}</span>`
+        : '<span class="result-pending">Not started</span>';
     const ptsTxt = (pts.donkeys||pts.brains)
       ? `<span style="color:var(--donkey)">${ptsFmts(pts.donkeys)}</span> – <span style="color:var(--lavender)">${ptsFmts(pts.brains)}</span>`
       : '—';
@@ -992,7 +998,12 @@ function renderRoundDetail(rnd) {
       ? (m.calc.winner==='A'?`${m.donkeys.join(' &amp; ')} wins ${m.calc.result}`
         :m.calc.winner==='B'?`${m.brains.join(' &amp; ')} wins ${m.calc.result}`
         :`All Square after 18`)
-      : m.calc.holesPlayed > 0 ? `${m.calc.status} after ${m.calc.holesPlayed} holes`
+      : m.calc.holesPlayed > 0
+        ? m.format === 'Singles'
+          ? m.calc.holesUp > 0 ? `${m.donkeys[0]} - ${m.calc.holesUp} UP after ${m.calc.holesPlayed} holes`
+            : m.calc.holesUp < 0 ? `${m.brains[0]} - ${Math.abs(m.calc.holesUp)} UP after ${m.calc.holesPlayed} holes`
+            : `All Square after ${m.calc.holesPlayed} holes`
+          : `${m.calc.status} after ${m.calc.holesPlayed} holes`
       : 'Not yet started';
 
     return `<div class="match-detail-card">

@@ -793,7 +793,7 @@ function renderLog(){
   el.innerHTML=[...draftLog].reverse().map(e=>'<div class="log-entry"><span class="pick-label">Pick #'+e.pick+'</span> &middot; <span class="team-label-'+e.team+'">'+TEAM_NAMES[e.team]+'</span> selects <strong>'+e.playerName+'</strong></div>').join('');
 }
 function updatePickIndicator(){
-  if(currentPick>=DRAFT_ORDER.length){document.getElementById('currentPickNum').textContent='\u2014';document.getElementById('onTheClockTeam').textContent='&#10003; Draft Complete!';return;}
+  if(currentPick>=DRAFT_ORDER.length){document.getElementById('currentPickNum').textContent='\u2014';document.getElementById('onTheClockTeam').textContent='Draft Complete!';return;}
   const next=DRAFT_ORDER[currentPick];document.getElementById('currentPickNum').textContent=next.pick;document.getElementById('onTheClockTeam').innerHTML=TEAM_NAMES[next.team];
 }
 function showDraftComplete(){
