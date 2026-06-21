@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBGA – Sportsbook</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+      --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+      --card-bg:rgba(255,255,255,0.07); --radius:18px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Nunito',sans-serif;background:var(--dark);color:#fff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px),radial-gradient(circle,var(--sky) 1px,transparent 1px);background-size:60px 60px,90px 90px,45px 45px;background-position:0 0,30px 30px,15px 15px;opacity:0.05;pointer-events:none;z-index:0}
+
+    /* ── NAV ── */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 40px;background:rgba(26,26,46,0.88);backdrop-filter:blur(14px);border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+    .nav-logo img{height:48px;width:48px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(110,220,196,0.5))}
+    .nav-logo span{font-family:'Boogaloo',cursive;font-size:2rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:8px;list-style:none}
+    .nav-links a{text-decoration:none;color:rgba(255,255,255,0.7);font-weight:700;font-size:0.85rem;letter-spacing:0.5px;text-transform:uppercase;padding:8px 16px;border-radius:50px;transition:all 0.2s}
+    .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+    .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:201;flex-shrink:0}
+    .hamburger span{display:block;width:24px;height:2px;background:#fff;border-radius:2px;transition:all 0.25s}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    @media(max-width:768px){
+      .hamburger{display:flex}
+      .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(18,18,31,0.98);backdrop-filter:blur(16px);flex-direction:column;padding:12px 24px 20px;gap:2px;border-bottom:2px solid rgba(110,220,196,0.2)}
+      .nav-links.open{display:flex}
+      .nav-links li a{display:block;padding:12px 16px;font-size:0.9rem;border-radius:10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+      .nav-links li:last-child a{border-bottom:none}
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header{position:relative;z-index:1;text-align:center;padding:46px 20px 10px}
+    .page-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2.5rem,7vw,5rem);letter-spacing:4px;background:linear-gradient(135deg,var(--yellow),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .page-header p{font-size:0.9rem;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-top:6px}
+    .disclaimer{font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.3);margin-top:8px;font-style:italic}
+
+    /* ── STATUS BAR ── */
+    .status-bar{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;padding:14px 20px}
+    .status-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:50px;font-size:0.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+    .status-live{background:rgba(110,220,196,0.12);color:var(--mint);border:1px solid rgba(110,220,196,0.3)}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+    .updated-note{font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace}
+
+    /* ── TABS ── */
+    .tabs{position:relative;z-index:1;display:flex;gap:4px;max-width:1160px;margin:10px auto 0;padding:0 24px}
+    .tab-btn{font-family:'Boogaloo',cursive;font-size:1.1rem;letter-spacing:1px;padding:10px 24px;border-radius:12px 12px 0 0;border:1px solid rgba(255,255,255,0.08);border-bottom:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s}
+    .tab-btn.active{background:rgba(255,255,255,0.07);color:#fff;border-color:rgba(255,255,255,0.12)}
+    .tab-btn.outright.active{color:var(--mint);border-color:rgba(110,220,196,0.3)}
+    .tab-btn.matches.active{color:var(--pink);border-color:rgba(244,167,195,0.3)}
+
+    /* ── PANELS ── */
+    .wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:0 24px 70px}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .panel-inner{background:var(--card-bg);border-radius:0 var(--radius) var(--radius) var(--radius);border:1px solid rgba(255,255,255,0.08);padding:28px}
+
+    /* ── PLACEHOLDER / EMPTY STATES ── */
+    .waiting-state{text-align:center;padding:48px 20px;color:rgba(255,255,255,0.4)}
+    .waiting-state h3{font-family:'Boogaloo',cursive;font-size:1.5rem;color:rgba(255,255,255,0.6);margin-bottom:8px;letter-spacing:1px}
+    .waiting-state p{font-size:0.85rem;font-weight:700;max-width:420px;margin:0 auto;line-height:1.6}
+
+    /* ── OUTRIGHT MARKETS ── */
+    .subtoggle{display:flex;gap:8px;margin-bottom:20px}
+    .subtoggle button{font-family:'Nunito',sans-serif;font-weight:800;font-size:0.78rem;letter-spacing:1px;text-transform:uppercase;padding:8px 20px;border-radius:50px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s}
+    .subtoggle button.active.gross{background:rgba(110,220,196,0.12);color:var(--mint);border-color:rgba(110,220,196,0.3)}
+    .subtoggle button.active.net{background:rgba(184,143,224,0.12);color:var(--lavender);border-color:rgba(184,143,224,0.3)}
+    .market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+    .market-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);overflow:hidden}
+    .market-head{display:flex;align-items:baseline;justify-content:space-between;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03)}
+    .market-title{font-family:'Boogaloo',cursive;font-size:1.12rem;letter-spacing:1px}
+    .market-sub{font-size:0.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+    .odds-row{display:flex;align-items:center;gap:9px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .odds-row:last-child{border-bottom:none}
+    .odds-row.fav{background:rgba(255,225,86,0.05)}
+    .odds-rank{width:16px;font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.3);text-align:right}
+    .team-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .odds-name{flex:1;font-weight:800;font-size:0.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .odds-pct{font-family:'Share Tech Mono',monospace;font-size:0.64rem;color:rgba(255,255,255,0.28);min-width:38px;text-align:right}
+    .odds-chip{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:0.82rem;padding:4px 9px;border-radius:8px;min-width:64px;text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)}
+    .odds-chip.neg{color:var(--mint);border-color:rgba(110,220,196,0.25)}
+    .odds-chip.pos{color:rgba(255,255,255,0.75)}
+    .market-note{font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.3);margin-top:18px;line-height:1.5;font-style:italic}
+
+    /* ── MATCH MARKETS ── */
+    .mp-round{margin-bottom:26px}
+    .mp-round-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+    .round-chip{font-family:'Boogaloo',cursive;font-size:0.95rem;letter-spacing:1px;padding:3px 13px;border-radius:50px}
+    .round-chip.r1{background:rgba(126,200,227,0.15);color:var(--sky);border:1px solid rgba(126,200,227,0.3)}
+    .round-chip.r2{background:rgba(244,167,195,0.15);color:var(--pink);border:1px solid rgba(244,167,195,0.3)}
+    .round-chip.r3{background:rgba(184,143,224,0.15);color:var(--lavender);border:1px solid rgba(184,143,224,0.3)}
+    .mp-round-course{font-size:0.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+    .mp-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+    .mp-card-head{font-size:0.62rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px}
+    .mp-teams{display:flex;align-items:center;gap:8px;font-weight:800;font-size:0.92rem;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .mp-team{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+    .mp-team.b{justify-content:flex-end;text-align:right}
+    .mp-team .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mp-vs{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.3);flex-shrink:0}
+    .mp-mkt{display:grid;grid-template-columns:64px 1fr 1fr;gap:7px;align-items:center;margin-top:7px}
+    .mp-mkt-label{font-size:0.6rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+    .mp-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px}
+    .mp-pick .sel{font-size:0.72rem;font-weight:800;color:rgba(255,255,255,0.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mp-pick .od{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:0.8rem;flex-shrink:0;color:var(--mint)}
+    .mp-pending{padding:10px 14px;font-size:0.74rem;font-weight:700;color:rgba(255,255,255,0.35);font-style:italic;background:rgba(255,255,255,0.03);border-radius:9px}
+    .round-chip.cup{background:rgba(255,225,86,0.14);color:var(--yellow);border:1px solid rgba(255,225,86,0.35)}
+    .mp-card-team{border-color:rgba(255,225,86,0.18);background:rgba(255,225,86,0.03)}
+    .mp-mkt3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><img src="assets/logo.png" alt="DBGA Logo" /><span>DBGA</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
+    <li><a href="odds.html" class="active">Sportsbook</a></li>
+    <li><a href="draft.html">Draft Board</a></li>
+    <li><a href="courses.html">Courses</a></li>
+    <li><a href="airbnb.html">The House</a></li>
+  </ul>
+  <button class="hamburger" onclick="toggleNav(this)" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="page-header">
+  <h1>The Book</h1>
+  <p>DBGA Ryder Cup &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Live Odds</p>
+  <div class="disclaimer">Simulated fair odds (no vig) · for entertainment only · not real wagering</div>
+</div>
+
+<div class="status-bar">
+  <span class="status-pill status-live"><span class="status-dot"></span><span id="statusText">Loading…</span></span>
+  <span class="updated-note" id="updatedNote"></span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn outright active" onclick="switchTab('outright')">Outright</button>
+  <button class="tab-btn matches"         onclick="switchTab('matches')">Match Odds</button>
+</div>
+
+<div class="wrap">
+  <div class="tab-panel active panel-inner" id="panel-outright">
+    <div id="outrightContent">
+      <div class="waiting-state"><h3>Crunching the numbers…</h3><p>Outright markets (Win Gross, Win Net, Top 3 / 5 / 10) arrive in the next phase.</p></div>
+    </div>
+  </div>
+  <div class="tab-panel panel-inner" id="panel-matches">
+    <div id="matchesContent">
+      <div class="waiting-state"><h3>Match odds</h3><p>Moneyline, spread, and over/under by match will populate here once the engine is wired to the pairings.</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+//  DBGA ODDS  —  Phase 0 (scaffold) + Phase 1 (math core + self-test)
+//  Single Monte-Carlo engine is the source of truth. Outright + match markets
+//  are read off the same simulated tournaments. Odds are FAIR (no vig).
+// ════════════════════════════════════════════════════════════════════════════
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
+const DRAFT_KEY = 'dbga_draft_state';
+const POLL_MS   = 90000;
+const TOTAL_POINTS  = 16;        // full event (mirrors matchplay.html)
+const WIN_THRESHOLD = 8.5;       // points to clinch the Cup; 8–8 is a tie
+
+// ─── COURSE DATA (mirrors matchplay.html) ──────────────────────────────────
+const COURSES = {
+  'The Jack':   { slope:117, rating:68.6, par:70,
+    pars: [4,4,4,4,3,4,4,3,4, 4,4,3,5,4,4,3,4,5],
+    hcps: [10,12,1,5,17,4,16,14,8, 13,3,11,9,6,15,18,2,7] },
+  "Owl's Nest": { slope:133, rating:73.0, par:72,
+    pars: [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
+    hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14] },
+};
+
+// ─── ROUND / FORMAT META ───────────────────────────────────────────────────
+const ROUND_META = {
+  1: { label:'R1', format:'bestball', formatLabel:'Best Ball', course:'The Jack',   day:'Friday',   color:'var(--sky)'      },
+  2: { label:'R2', format:'scramble', formatLabel:'Scramble',  course:"Owl's Nest", day:'Saturday', color:'var(--pink)'     },
+  3: { label:'R3', format:'singles',  formatLabel:'Singles',   course:"Owl's Nest", day:'Sunday',   color:'var(--lavender)' },
+};
+
+// ─── ROSTER WITH HCP INDEX (mirrors matchplay.html) ────────────────────────
+const ROSTER_BASE = [
+  { name:'Jack Lyons',       hcp:15.4 },
+  { name:'Carson Smith',     hcp:12.6 },
+  { name:'Josh McLeman',     hcp:17.3 },
+  { name:'Matt Holm',        hcp:15.4 },
+  { name:'Ed Weaver',        hcp:24.7 },
+  { name:'Justin Roberts',   hcp:15.0 },
+  { name:'Justin Estrella',  hcp:20.8 },
+  { name:'Devan Dhand',      hcp:21.6 },
+  { name:'Matt DiPano',      hcp:22.4 },
+  { name:'David Resmini',    hcp:28.5 },
+  { name:'Mitchell Rotondi', hcp:25.7 },
+  { name:'Jason Sulmonetti', hcp:30.3 },
+  { name:'Brendan Barry',    hcp:28.3 },
+  { name:'Trevor Ross',      hcp:37.3 },
+  { name:'Corey DaSilva',    hcp:35.0 },
+  { name:'David Allen',      hcp:23.0 },
+];
+const TEAM_INFO = {
+  donkeys:{ name:'Team DiPano', color:'var(--donkey)', dot:'#C8A97E', short:'Team DiPano' },
+  brains: { name:'Team Dhand',  color:'var(--lavender)', dot:'#B88FE0', short:'Team Dhand' },
+};
+function getPlayerHcp(name){ return ROSTER_BASE.find(p=>p.name===name)?.hcp ?? 20; }
+
+// ─── HCP HELPER (course handicap — used only for the NET outright market) ───
+// Match play is scratch (gross), so no stroke-allocation helpers are needed.
+function courseHcp(index, courseName){
+  const c = COURSES[courseName];
+  return c ? Math.round(index * (c.slope / 113)) : Math.round(index);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PHASE 1 — ODDS MATH CORE  (pure functions; see runOddsSelfTest at bottom)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── Seedable RNG (mulberry32) — deterministic for self-tests ──────────────
+function makeRng(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// Standard normal via Box–Muller, driven by an rng()
+function randNorm(rng){
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// ─── Probability → American odds (FAIR, no vig) ────────────────────────────
+function probToAmerican(p){
+  if (!(p > 0) || p >= 1) return null;          // 0 or 1 → no meaningful line
+  return p >= 0.5
+    ? Math.round(-100 * p / (1 - p))            // favorite (negative)
+    : Math.round( 100 * (1 - p) / p);           // underdog (positive)
+}
+function fmtAmerican(p){
+  if (p >= 1)   return '—';                      // locked in
+  if (!(p > 0)) return '+99999';                 // effectively impossible
+  const a = probToAmerican(p);
+  return a > 0 ? `+${a}` : `${a}`;
+}
+
+// ─── Per-player scoring model (GROSS anchored to history; hcp → NET only) ───
+// A player's GROSS is projected from their ACTUAL past scoring — their average
+// course-handicap differential (avgDiff) and round-to-round SD — NOT from their
+// handicap index. So the manually-set handicaps affect ONLY the NET outright
+// market (net = gross − course handicap) and the scratch match odds stay anchored
+// to real scoring (e.g. Jack Lyons, who averages ~9 strokes better than Carson,
+// stays the gross favorite). Players with no history fall back to a handicap-based
+// regression fit to the rest of the field.
+//   no-history avgDiff ≈ index + (1.69 + 0.216·index)   (gap-over-potential, from history)
+//   no-history diff SD ≈ −1.13 + 0.305·index
+const PLAYER_CALIB = {
+  'Jack Lyons':{avgDiff:19.9,sd:3.2,n:7},       'Carson Smith':{avgDiff:19.9,sd:6.7,n:7},
+  'Josh McLeman':{avgDiff:22.3,sd:4.2,n:7},     'Matt Holm':{avgDiff:19.5,sd:3.8,n:7},
+  'Ed Weaver':{avgDiff:25.3,sd:0.7,n:5},        'Justin Estrella':{avgDiff:27.2,sd:5.1,n:7},
+  'Devan Dhand':{avgDiff:29.9,sd:6.1,n:7},      'Matt DiPano':{avgDiff:31.9,sd:7.5,n:7},
+  'Mitchell Rotondi':{avgDiff:31.5,sd:4.6,n:7}, 'Jason Sulmonetti':{avgDiff:38.4,sd:7.9,n:5},
+  'Brendan Barry':{avgDiff:32.9,sd:3.9,n:7},    'Trevor Ross':{avgDiff:51.0,sd:15.3,n:5},
+};
+const MIN_DIFF_SD = 2.0;         // floor so nobody is implausibly robotic
+const MAX_DIFF_SD = 8.0;         // ceiling — a round-to-round SD above this is outlier-driven, not real
+const HOLE_SD_BASE  = 0.40;      // small independent per-hole noise (round shock carries the rest)
+const HOLE_SD_SLOPE = 0.008;
+const ROUNDING_VAR  = 18 / 12;   // variance from per-hole integer rounding (~1.5)
+
+// No-history fallbacks (handicap-based), fit to the players who DO have history.
+function gapReg(index){ return 1.69 + 0.216 * index; }              // avg − potential
+function sdReg(index){  return Math.max(MIN_DIFF_SD, -1.13 + 0.305 * index); }
+
+// Expected scoring DIFFERENTIAL (course-independent) — from history if available.
+function playerExpDiff(name, index){
+  const c = PLAYER_CALIB[name];
+  return c ? c.avgDiff : index + gapReg(index);
+}
+function playerDiffSd(name, index){
+  const c = PLAYER_CALIB[name];
+  const v = c ? c.sd : sdReg(index);
+  return Math.min(MAX_DIFF_SD, Math.max(MIN_DIFF_SD, v));
+}
+
+// Expected ROUND gross = rating + differential, scaled into strokes by slope.
+function expectedRoundGross(index, courseName, name){
+  const c = COURSES[courseName];
+  if (!c) return 90;
+  return c.rating + playerExpDiff(name, index) * (c.slope / 113);
+}
+// Per-hole expected gross, distributing the over-par budget by hole difficulty.
+function holeMeans(index, courseName, name){
+  const c = COURSES[courseName];
+  const overParBudget = expectedRoundGross(index, courseName, name) - c.par;
+  const weights = c.hcps.map(si => 19 - si);    // SI 1 (hardest) → weight 18
+  const wSum = weights.reduce((s,w)=>s+w, 0);
+  return c.pars.map((par,i) => par + overParBudget * weights[i] / wSum);
+}
+function holeSd(index){ return HOLE_SD_BASE + HOLE_SD_SLOPE * index; }
+// Round SD on a course = the player's differential SD scaled by course slope.
+function targetRoundSd(index, courseName, name){
+  const c = COURSES[courseName];
+  return playerDiffSd(name, index) * (c.slope / 113);
+}
+
+// Per-hole coefficient for the shared round "form" shock. A single z is drawn per
+// round and added to EVERY hole (= correlated variance — captures good/bad days).
+// Sized so total round variance = independent + rounding + shock ≈ targetRoundSd².
+function roundShockPerHole(index, courseName, name){
+  const hsd = holeSd(index);
+  const indepVar = 18 * hsd * hsd;
+  const target   = targetRoundSd(index, courseName, name) ** 2;
+  const shockVar = Math.max(0, target - indepVar - ROUNDING_VAR);
+  return Math.sqrt(shockVar) / 18;
+}
+
+// Simulate one hole's gross score (integer, clamped to a sane band).
+// Cap scales with handicap so weaker players can post realistic blow-up holes.
+function simHoleScore(rng, mean, sd, par, maxOver){
+  let s = Math.round(mean + sd * randNorm(rng));
+  if (s < par - 2) s = par - 2;           // no better than ~eagle
+  if (s < 1) s = 1;
+  if (s > par + maxOver) s = par + maxOver;
+  return s;
+}
+// Simulate one full round of 18 gross scores for a player.
+function simRoundGross(rng, index, courseName, name){
+  const means   = holeMeans(index, courseName, name);
+  const sd      = holeSd(index);
+  const c       = COURSES[courseName];
+  const offset  = roundShockPerHole(index, courseName, name) * randNorm(rng);  // shared round form shock
+  const maxOver = 6 + Math.floor(index / 12);                                  // higher hcp → bigger blow-ups
+  const out = new Array(18);
+  for (let i = 0; i < 18; i++) out[i] = simHoleScore(rng, means[i] + offset, sd, c.pars[i], maxOver);
+  return out;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PHASE 2 — OUTRIGHT SIM
+//  Mirrors leaderboard.html's individual stroke-play model: the individual
+//  total is R1 (Best Ball @ The Jack) + R3 (Singles @ Owl's Nest). R2 scramble
+//  is a pair event and does NOT count toward individual gross/net.
+//    gross total = R1 gross + R3 gross
+//    net total   = (R1 gross − courseHcp@TheJack) + (R3 gross − courseHcp@Owl's)
+//  Simulate many tournaments, count finishing positions → fair American odds.
+// ════════════════════════════════════════════════════════════════════════════
+const OUTRIGHT_SIMS = 20000;
+const OUTRIGHT_SEED = 20260620;   // fixed → odds are stable between renders
+
+function sumArr(a){ let s = 0; for (let i = 0; i < a.length; i++) s += a[i]; return s; }
+
+// Tally finishing positions for one simulated tournament (lower score = better).
+// Ties share the win credit (1/k); top-N counts anyone whose finishing rank ≤ N.
+function tallyInto(acc, sideKey, scores, M){
+  let best = Infinity;
+  for (let i = 0; i < M; i++) if (scores[i] < best) best = scores[i];
+  let kBest = 0;
+  for (let i = 0; i < M; i++) if (scores[i] === best) kBest++;
+  for (let i = 0; i < M; i++){
+    let better = 0;
+    for (let j = 0; j < M; j++) if (scores[j] < scores[i]) better++;
+    const rank = better + 1;
+    const a = acc[i][sideKey];
+    if (scores[i] === best) a.win += 1 / kBest;
+    if (rank <= 3)  a.t3++;
+    if (rank <= 5)  a.t5++;
+    if (rank <= 10) a.t10++;
+  }
+}
+
+function simOutright(nSims){
+  const rng = makeRng(OUTRIGHT_SEED);
+  const ps = ROSTER_BASE.map(p => ({
+    name: p.name, hcp: p.hcp,
+    r1phcp: courseHcp(p.hcp, 'The Jack'),
+    r3phcp: courseHcp(p.hcp, "Owl's Nest"),
+  }));
+  const M = ps.length;
+  const acc = ps.map(() => ({
+    gross: { win:0, t3:0, t5:0, t10:0 },
+    net:   { win:0, t3:0, t5:0, t10:0 },
+  }));
+  const gross = new Array(M), net = new Array(M);
+
+  for (let s = 0; s < nSims; s++){
+    for (let i = 0; i < M; i++){
+      const g1 = sumArr(simRoundGross(rng, ps[i].hcp, 'The Jack', ps[i].name));
+      const g3 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest", ps[i].name));
+      gross[i] = g1 + g3;
+      net[i]   = (g1 - ps[i].r1phcp) + (g3 - ps[i].r3phcp);
+    }
+    tallyInto(acc, 'gross', gross, M);
+    tallyInto(acc, 'net',   net,   M);
+  }
+
+  const toProb = o => ({
+    win: o.win / nSims, t3: o.t3 / nSims, t5: o.t5 / nSims, t10: o.t10 / nSims,
+  });
+  return {
+    nSims,
+    players: ps.map((p, i) => ({
+      name: p.name, hcp: p.hcp,
+      gross: toProb(acc[i].gross),
+      net:   toProb(acc[i].net),
+    })),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PHASE 3 — MATCH MARKETS (SCRATCH / gross match play — NO handicaps)
+//  DBGA match play is scratch: matches are decided on raw GROSS scores, exactly
+//  like matchplay.html. We simulate each match hole-by-hole on gross, then price:
+//    • Moneyline — 2-way, halved match PUSHES → p = winA / (winA + winB)
+//    • Spread    — holes line, auto-set near the fair (≈50/50) margin
+//    • Total     — O/U on MARGIN OF VICTORY (holes), auto-set near fair
+//  Best Ball (R1), Scramble (R2, best-of-pair), and Singles (R3) all priced here.
+// ════════════════════════════════════════════════════════════════════════════
+const MATCH_SIMS = 8000;
+
+function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+// Build sim-ready sub-matches from a pairing (mirrors matchplay.html
+// buildMatchesFromPairing). Scratch format, so players carry index only.
+function buildOddsMatches(p, rnd, courseName){
+  const out = [];
+  const idx = getPlayerHcp;
+  const mk = (format, worth, A, B, fmtLabel) => ({
+    format, courseName, round: rnd, worth,
+    formatLabel: fmtLabel || (format === 'singles' ? 'Singles' : 'Best Ball'),
+    sideA: { label: A.map(x=>x.name).join(' & '), players: A },
+    sideB: { label: B.map(x=>x.name).join(' & '), players: B },
+  });
+  const single = (d, b, worth, fmtLabel) =>
+    mk('singles', worth, [{ name:d, index:idx(d) }], [{ name:b, index:idx(b) }], fmtLabel);
+  const isSolo = p.matchType === 'solo' || (!p.donkey2 && p.brain1 && p.brain2);
+
+  if (rnd === 3){
+    const isCross = p.matchType === 'cross';
+    [ { d:p.donkey1, b:isCross?p.brain2:p.brain1 },
+      { d:p.donkey2, b:isCross?p.brain1:p.brain2 } ]
+      .filter(x => x.d && x.b)
+      .forEach(({d,b}) => out.push(single(d, b, isSolo?0.5:1)));
+    return out;
+  }
+  if (rnd === 2){
+    // Scramble (scratch, pair vs pair). Modeled as best-of-pair per hole — the
+    // "best of every shot" synergy of a true scramble lifts BOTH pairs about
+    // equally, so it nets out in head-to-head odds; what's left is relative
+    // pair strength, which best-of-pair captures.
+    const A = [p.donkey1, p.donkey2].filter(Boolean).map(n => ({ name:n, index:idx(n) }));
+    const B = [p.brain1,  p.brain2 ].filter(Boolean).map(n => ({ name:n, index:idx(n) }));
+    if (A.length && B.length) out.push(mk('scramble', 1, A, B, 'Scramble'));
+    return out;
+  }
+  // R1 best ball
+  if (isSolo){
+    [p.brain1, p.brain2].filter(Boolean)
+      .forEach(b => out.push(single(p.donkey1, b, 0.5, 'Best Ball (Solo)')));
+    return out;
+  }
+  const players = [
+    { name:p.donkey1, side:'a' }, { name:p.donkey2, side:'a' },
+    { name:p.brain1,  side:'b' }, { name:p.brain2,  side:'b' },
+  ].filter(x => x.name);
+  const A = [], B = [];
+  players.forEach(pl => (pl.side==='a'?A:B).push({ name:pl.name, index:idx(pl.name) }));
+  out.push(mk('bestball', 1, A, B, 'Best Ball'));
+  return out;
+}
+
+// Simulate a best-ball / singles match on GROSS scores (scratch — no handicaps)
+// → moneyline split + signed-margin distribution. Best gross per side wins the hole.
+function simMatchOdds(m, nSims){
+  const rng = makeRng(hashStr(`${m.round}|${m.sideA.label}|${m.sideB.label}`));
+  let winA = 0, winB = 0, tie = 0;
+  const signed = new Int16Array(nSims);   // final holes-up from side A's view (+A / −B)
+  for (let s = 0; s < nSims; s++){
+    const aG = m.sideA.players.map(pl => simRoundGross(rng, pl.index, m.courseName, pl.name));
+    const bG = m.sideB.players.map(pl => simRoundGross(rng, pl.index, m.courseName, pl.name));
+    let up = 0;
+    for (let i = 0; i < 18; i++){
+      let bestA = Infinity, bestB = Infinity;
+      for (const a of aG) if (a[i] < bestA) bestA = a[i];
+      for (const b of bG) if (b[i] < bestB) bestB = b[i];
+      if (bestA < bestB) up++; else if (bestB < bestA) up--;
+      if (Math.abs(up) > 17 - i) break;   // mathematically closed out (17−i holes remain)
+    }
+    signed[s] = up;
+    if (up > 0) winA++; else if (up < 0) winB++; else tie++;
+  }
+  return { nSims, winA, winB, tie, signed };
+}
+
+// Choose a half-integer line whose cover probability is closest to 50%.
+function pickLine(sim, lo, hi, probAtLine){
+  let best = lo + 0.5, bestGap = Infinity;
+  for (let h = lo + 0.5; h <= hi; h += 1){
+    const gap = Math.abs(probAtLine(h) - 0.5);
+    if (gap < bestGap){ bestGap = gap; best = h; }
+  }
+  return best;
+}
+function priceMatch(sim){
+  const { nSims, winA, winB, signed } = sim;
+  const decided = winA + winB;
+  const ml = { a: decided ? winA/decided : 0.5, b: decided ? winB/decided : 0.5 };
+
+  // Spread (side A perspective): A is "−h" (must win by > h). Fair line ≈ 50/50.
+  // Range covers the full match-play span (max margin is 10, i.e. 10&8).
+  const pGT = h => { let c = 0; for (let i=0;i<nSims;i++) if (signed[i] > h) c++; return c/nSims; };
+  const h = pickLine(sim, -10, 10, pGT);
+  const aCover = pGT(h);
+  const spread = { line: h, aLabel: fmtSigned(-h), bLabel: fmtSigned(h), aProb: aCover, bProb: 1 - aCover };
+
+  // Total = margin of victory (holes); ties count as 0. Fair O/U line ≈ 50/50.
+  const pAbsGT = m => { let c = 0; for (let i=0;i<nSims;i++) if (Math.abs(signed[i]) > m) c++; return c/nSims; };
+  const m = pickLine(sim, 0, 10, pAbsGT);
+  const over = pAbsGT(m);
+  const total = { line: m, overProb: over, underProb: 1 - over };
+
+  return { ml, spread, total, pTie: sim.tie/nSims,
+    pWin: { a: winA/nSims, b: winB/nSims, tie: sim.tie/nSims } };  // raw — for team/Cup convolution
+}
+function fmtSigned(n){ return n > 0 ? `+${n}` : `${n}`; }
+
+// ─── TEAM / CUP AGGREGATES ──────────────────────────────────────────────────
+// Matches are independent under the model (disjoint players; fresh round-form
+// each round), so a team's points distribution is the EXACT convolution of each
+// match's win/tie/loss probabilities — no extra simulation needed.
+// Work in quarter-points so 0.5-pt ties and 0.5-worth solo matches stay integers.
+function convPoints(matches){
+  let dist = [1];          // P(donkeys have i quarter-points) starting at 0
+  let totalQ = 0;
+  matches.forEach(m => {
+    const wq = Math.round(m.worth * 4);   // donkey win → full worth
+    const tq = Math.round(m.worth * 2);   // tie → half worth
+    totalQ += wq;
+    const next = new Array(dist.length + wq).fill(0);
+    for (let i = 0; i < dist.length; i++){
+      const p = dist[i]; if (!p) continue;
+      next[i + wq] += p * m.pA;
+      next[i + tq] += p * m.pTie;
+      next[i]      += p * m.pB;
+    }
+    dist = next;
+  });
+  return { dist, totalQ };
+}
+// Round winner: more points than the other team (exact half = tie).
+function roundOutcome(matches){
+  const { dist, totalQ } = convPoints(matches);
+  const half = totalQ / 2;
+  let d = 0, t = 0, b = 0;
+  for (let i = 0; i < dist.length; i++){ const p = dist[i]||0; if (i > half) d += p; else if (i < half) b += p; else t += p; }
+  return { d, t, b };
+}
+// Cup winner: reach WIN_THRESHOLD (8.5) to clinch; 8–8 is a tie (Cup retained).
+function cupOutcome(matches){
+  const { dist, totalQ } = convPoints(matches);
+  const winQ = Math.round(WIN_THRESHOLD * 4);
+  let d = 0, t = 0, b = 0;
+  for (let i = 0; i < dist.length; i++){
+    const p = dist[i]||0;
+    if (i >= winQ) d += p;
+    else if (totalQ - i >= winQ) b += p;
+    else t += p;
+  }
+  return { d, t, b };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SELF-TEST — proves the math before any UI is built on top of it.
+//  Run in console:  runOddsSelfTest()   (also auto-runs once on load, see init)
+// ════════════════════════════════════════════════════════════════════════════
+function runOddsSelfTest(){
+  const log = [];
+  const ok  = (cond, msg) => log.push(`${cond ? 'PASS' : 'FAIL'}  ${msg}`);
+
+  // 1) probToAmerican / fmtAmerican
+  ok(probToAmerican(0.5)  === -100, `p=0.50 → -100 (got ${probToAmerican(0.5)})`);
+  ok(probToAmerican(0.8)  === -400, `p=0.80 → -400 (got ${probToAmerican(0.8)})`);
+  ok(probToAmerican(0.2)  ===  400, `p=0.20 → +400 (got ${probToAmerican(0.2)})`);
+  ok(probToAmerican(0.25) ===  300, `p=0.25 → +300 (got ${probToAmerican(0.25)})`);
+  ok(fmtAmerican(0.2) === '+400',   `fmt p=0.20 → +400 (got ${fmtAmerican(0.2)})`);
+  ok(fmtAmerican(1)   === '—',      `fmt p=1 → — (got ${fmtAmerican(1)})`);
+
+  // 2) scoring model — simulate many rounds, check mean ≈ expected & SD realistic
+  const rng = makeRng(12345);
+  const checks = [
+    { name:'Jack Lyons',   index:11.4, course:'The Jack'   },
+    { name:'Matt Holm',    index:15.4, course:"Owl's Nest" },
+    { name:'Trevor Ross',  index:37.3, course:"Owl's Nest" },
+  ];
+  const N = 4000;
+  checks.forEach(p => {
+    let sum = 0, sumSq = 0;
+    for (let k = 0; k < N; k++){
+      const tot = simRoundGross(rng, p.index, p.course, p.name).reduce((a,b)=>a+b, 0);
+      sum += tot; sumSq += tot*tot;
+    }
+    const mean = sum / N;
+    const sd   = Math.sqrt(sumSq/N - mean*mean);
+    const exp  = expectedRoundGross(p.index, p.course, p.name);
+    const tgt  = targetRoundSd(p.index, p.course, p.name);
+    log.push(`     ${p.name} @ ${p.course}: simMean=${mean.toFixed(1)} (expected≈${exp.toFixed(1)}) roundSD=${sd.toFixed(1)} (target≈${tgt.toFixed(1)})`);
+    ok(Math.abs(mean - exp) < 3.0, `  mean within 3.0 of expected for ${p.name} (got ${mean.toFixed(1)} vs ${exp.toFixed(1)})`);
+    ok(Math.abs(sd - tgt) < 1.2,   `  round SD near history-calibrated target for ${p.name} (got ${sd.toFixed(1)}, target ${tgt.toFixed(1)})`);
+  });
+
+  // 3) outright sim — win probs must sum to ~1, top-N to ~N
+  const r = simOutright(2000);
+  const sum = key => side => r.players.reduce((s,p)=>s+p[side][key], 0);
+  ok(Math.abs(sum('win')('gross') - 1) < 0.02, `  gross win probs sum ≈ 1 (got ${sum('win')('gross').toFixed(3)})`);
+  ok(Math.abs(sum('win')('net')   - 1) < 0.02, `  net win probs sum ≈ 1 (got ${sum('win')('net').toFixed(3)})`);
+  // Top-N sums land slightly above N because ties legitimately put >N players in a
+  // "no worse than Nth" finish — so we assert [N, N+0.5], not exact N.
+  const t3g = sum('t3')('gross'), t10g = sum('t10')('gross');
+  ok(t3g  >= 2.95 && t3g  <= 3.5,  `  gross top-3 probs sum in [3,3.5] (got ${t3g.toFixed(2)})`);
+  ok(t10g >= 9.95 && t10g <= 10.5, `  gross top-10 probs sum in [10,10.5] (got ${t10g.toFixed(2)})`);
+  const favG = [...r.players].sort((a,b)=>b.gross.win-a.gross.win)[0];
+  const favN = [...r.players].sort((a,b)=>b.net.win-a.net.win)[0];
+  log.push(`     Gross favorite: ${favG.name} ${(favG.gross.win*100).toFixed(0)}% (${fmtAmerican(favG.gross.win)})`);
+  log.push(`     Net favorite:   ${favN.name} ${(favN.net.win*100).toFixed(0)}% (${fmtAmerican(favN.net.win)})`);
+
+  // 4) match sim — singles, big mismatch should favor the better player heavily
+  const m = buildOddsMatches(
+    { round:3, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Corey DaSilva', matchType:'standard' },
+    3, "Owl's Nest")[0];
+  const sim = simMatchOdds(m, 6000);
+  const pr  = priceMatch(sim);
+  const total = (sim.winA + sim.winB + sim.tie) / sim.nSims;
+  ok(Math.abs(total - 1) < 1e-9, `  match outcomes partition (A+B+tie=${total.toFixed(3)})`);
+  ok(Math.abs(pr.ml.a + pr.ml.b - 1) < 1e-9, `  moneyline (push) splits sum to 1`);
+  ok(pr.ml.a > 0.75, `  Jack Lyons heavy favorite vs Trevor in gross singles (got ${(pr.ml.a*100).toFixed(0)}%)`);
+  ok(Math.abs(pr.spread.aProb + pr.spread.bProb - 1) < 1e-9, `  spread sides sum to 1`);
+  ok(Math.abs(pr.total.overProb + pr.total.underProb - 1) < 1e-9, `  total over+under sum to 1`);
+  log.push(`     Singles J.Lyons vs T.Ross: ML ${fmtAmerican(pr.ml.a)}/${fmtAmerican(pr.ml.b)} · Spread A ${pr.spread.aLabel} (${fmtAmerican(pr.spread.aProb)}) · O/U ${pr.total.line}`);
+
+  // 4b) fair lines should sit near 50/50 — test on a CLOSE matchup (a blowout has
+  // no fair ~50/50 line, which is correct, so it can't be used for this check).
+  const mc = buildOddsMatches(
+    { round:3, donkey1:'Jack Lyons', donkey2:'', brain1:'Matt Holm', brain2:'', matchType:'standard' },
+    3, "Owl's Nest")[0];
+  const prc = priceMatch(simMatchOdds(mc, 8000));
+  ok(Math.abs(prc.spread.aProb - 0.5) < 0.12, `  fair spread near 50/50 (got ${(prc.spread.aProb*100).toFixed(0)}% at A ${prc.spread.aLabel})`);
+  ok(Math.abs(prc.total.overProb - 0.5) < 0.12, `  fair total near 50/50 (got ${(prc.total.overProb*100).toFixed(0)}% over ${prc.total.line})`);
+
+  // 4c) scramble (R2) — builds a 2v2 best-of-pair match and prices cleanly
+  const ms = buildOddsMatches(
+    { round:2, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Jason Sulmonetti', matchType:'standard' },
+    2, "Owl's Nest");
+  ok(ms.length === 1 && ms[0].format === 'scramble' && !ms[0].pending, `  scramble builds one priced match`);
+  const prs = priceMatch(simMatchOdds(ms[0], 6000));
+  ok(Math.abs(prs.ml.a + prs.ml.b - 1) < 1e-9, `  scramble moneyline splits sum to 1`);
+  ok(prs.ml.a > 0.6, `  stronger scramble pair favored (Lyons/Holm vs Ross/Sulmonetti got ${(prs.ml.a*100).toFixed(0)}%)`);
+  log.push(`     Scramble Lyons/Holm vs Ross/Sulmonetti: ML ${fmtAmerican(prs.ml.a)}/${fmtAmerican(prs.ml.b)} · Spread A ${prs.spread.aLabel} · O/U ${prs.total.line}`);
+
+  // 4d) team aggregates — convolution outcomes must partition (d+t+b=1)
+  const conv = [
+    { pA:0.5, pB:0.4, pTie:0.1, worth:1 },
+    { pA:0.6, pB:0.3, pTie:0.1, worth:1 },
+    { pA:0.45,pB:0.45,pTie:0.1, worth:1 },
+  ];
+  const ro = roundOutcome(conv);
+  ok(Math.abs(ro.d + ro.t + ro.b - 1) < 1e-9, `  round outcome partitions (d+t+b=${(ro.d+ro.t+ro.b).toFixed(3)})`);
+  // A full 16-pt slate of pick'em matches → Cup ≈ 50/50 with a small tie chance.
+  const fullSlate = Array.from({length:16}, () => ({ pA:0.45, pB:0.45, pTie:0.10, worth:1 }));
+  const co = cupOutcome(fullSlate);
+  ok(Math.abs(co.d + co.t + co.b - 1) < 1e-9, `  cup outcome partitions (d+t+b=${(co.d+co.t+co.b).toFixed(3)})`);
+  ok(Math.abs(co.d - co.b) < 0.03, `  symmetric slate → even Cup (D ${(co.d*100).toFixed(0)}% / B ${(co.b*100).toFixed(0)}%)`);
+  ok(co.t > 0.05, `  8–8 Cup tie has real probability (got ${(co.t*100).toFixed(0)}%)`);
+  log.push(`     Cup (symmetric 16-match slate): D ${fmtAmerican(co.d)} / Tie ${fmtAmerican(co.t)} / B ${fmtAmerican(co.b)}`);
+
+  const out = log.join('\n');
+  console.log('%c── DBGA Odds self-test ──', 'color:#6EDCC4;font-weight:bold');
+  console.log(out);
+  return out;
+}
+// Expose for node-based testing / manual console runs.
+if (typeof window !== 'undefined') window.runOddsSelfTest = runOddsSelfTest;
+if (typeof module !== 'undefined') module.exports = {
+  probToAmerican, fmtAmerican, makeRng, simRoundGross, expectedRoundGross,
+  holeMeans, holeSd, courseHcp, simOutright,
+  buildOddsMatches, simMatchOdds, priceMatch, runOddsSelfTest,
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  DATA LAYER — fetch sheet, parse pairings/scores, detect pairing changes.
+// ════════════════════════════════════════════════════════════════════════════
+let pairings = [];                          // [{round,match,donkey1,donkey2,brain1,brain2,teeTime,matchType}]
+let scores   = { R1:{}, R2:{}, R3:{} };
+let playerTeams = {};                        // name -> 'donkeys' | 'brains'
+let lastPairingsHash = '';
+let lastUpdated = null;
+
+async function fetchSheetData(){
+  if (!APPS_SCRIPT_URL) return null;
+  try { const res = await fetch(APPS_SCRIPT_URL); return await res.json(); }
+  catch(e){ return null; }
+}
+function parseSheetData(data){
+  if (!data) return;
+  if (data.Draft){
+    data.Draft.forEach(r => { if (r.Name) playerTeams[r.Name] = (r.Team||'').toLowerCase(); });
+  }
+  if (data.Pairings){
+    pairings = data.Pairings.map(r => ({
+      round:     parseInt(r.Round)||0,
+      match:     parseInt(r.Match)||0,
+      donkey1:   r.Donkey1||'', donkey2: r.Donkey2||'',
+      brain1:    r.Brain1||'',  brain2:  r.Brain2||'',
+      teeTime:   r.TeeTime||'',
+      matchType: r.MatchType||'standard',
+    }));
+  }
+  ['R1','R2','R3'].forEach(rnd => {
+    const key = `Scores_${rnd}`;
+    if (!data[key]) return;
+    scores[rnd] = {};
+    data[key].forEach(row => {
+      const id = row.Name || row.PairID || row.Donkey1 || '';
+      if (!id) return;
+      scores[rnd][id] = Array.from({length:18}, (_,i) => {
+        const v = parseInt(row[`H${i+1}`]); return isNaN(v) ? null : v;
+      });
+    });
+  });
+}
+// Stable hash of pairings so we only recompute odds when they actually change.
+function pairingsHash(){
+  return pairings
+    .filter(p => p.donkey1 || p.donkey2 || p.brain1 || p.brain2)
+    .map(p => `${p.round}:${p.match}:${p.donkey1}/${p.donkey2}|${p.brain1}/${p.brain2}:${p.matchType}`)
+    .sort().join(';');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  RENDER (placeholders for now — Phases 2–4 fill these in)
+// ════════════════════════════════════════════════════════════════════════════
+let activeTab = 'outright';
+let outrightSide = 'gross';
+let outrightResults = null;   // cached — sim runs once (doesn't depend on live scores)
+
+function ensureOutright(){
+  if (!outrightResults) outrightResults = simOutright(OUTRIGHT_SIMS);
+  return outrightResults;
+}
+function teamDot(name){
+  const t = playerTeams[name];
+  const color = (t && TEAM_INFO[t]) ? TEAM_INFO[t].dot : 'rgba(255,255,255,0.18)';
+  return `<span class="team-dot" style="background:${color}"></span>`;
+}
+function fmtPct(p){
+  if (p <= 0)   return '<0.1%';
+  if (p >= 0.995) return '99%+';
+  const v = p * 100;
+  return v >= 9.95 ? `${v.toFixed(0)}%` : `${v.toFixed(1)}%`;
+}
+function oddsRow(row, i){
+  return `<div class="odds-row ${i===0?'fav':''}">
+    <span class="odds-rank">${i+1}</span>
+    ${teamDot(row.name)}
+    <span class="odds-name">${row.name}</span>
+    <span class="odds-pct">${fmtPct(row.prob)}</span>
+    <span class="odds-chip ${row.prob>=0.5?'neg':'pos'}">${fmtAmerican(row.prob)}</span>
+  </div>`;
+}
+function marketCard(market, results, side){
+  const rows = results.players
+    .map(p => ({ name:p.name, prob:p[side][market.key] }))
+    .sort((a,b) => b.prob - a.prob);
+  return `<div class="market-card">
+    <div class="market-head"><span class="market-title">${market.label}</span><span class="market-sub">${market.sub}</span></div>
+    ${rows.map(oddsRow).join('')}
+  </div>`;
+}
+function renderOutright(){
+  const r = ensureOutright();
+  const side = outrightSide;
+  const markets = [
+    { key:'win', label:'Outright Winner', sub:`Lowest ${side} total` },
+    { key:'t3',  label:'Top 3',  sub:`Finish top 3 · ${side}` },
+    { key:'t5',  label:'Top 5',  sub:`Finish top 5 · ${side}` },
+    { key:'t10', label:'Top 10', sub:`Finish top 10 · ${side}` },
+  ];
+  document.getElementById('outrightContent').innerHTML = `
+    <div class="subtoggle">
+      <button class="${side==='gross'?'active gross':''}" onclick="setOutrightSide('gross')">Gross</button>
+      <button class="${side==='net'?'active net':''}" onclick="setOutrightSide('net')">Net</button>
+    </div>
+    <div class="market-grid">${markets.map(m => marketCard(m, r, side)).join('')}</div>
+    <div class="market-note">Fair odds (no vig) from ${r.nSims.toLocaleString()} simulated tournaments ·
+      individual total = R1 (The Jack) + R3 (Owl's Nest) · net = each round's gross minus course handicap ·
+      R2 scramble is a team event and is excluded from individual standings.</div>`;
+}
+window.setOutrightSide = function(side){
+  outrightSide = side;
+  renderOutright();
+};
+// Heavy match sims run only when the pairings hash changes (keyed cache).
+let matchMarkets = null;   // { hash, byRound:{1:[],2:[],3:[]} }
+function computeMatchMarkets(){
+  const byRound = { 1:[], 2:[], 3:[] };
+  [1,2,3].forEach(rnd => {
+    const courseName = rnd === 1 ? 'The Jack' : "Owl's Nest";
+    pairings
+      .filter(p => p.round === rnd && (p.donkey1 || p.donkey2 || p.brain1 || p.brain2))
+      .forEach(p => buildOddsMatches(p, rnd, courseName).forEach(m => {
+        byRound[rnd].push(m.pending ? m : { ...m, priced: priceMatch(simMatchOdds(m, MATCH_SIMS)) });
+      }));
+  });
+
+  // Aggregate (team) markets via exact convolution of each match's raw probs.
+  const toConv = m => ({ pA:m.priced.pWin.a, pB:m.priced.pWin.b, pTie:m.priced.pWin.tie, worth:m.worth });
+  const allPriced = [];
+  const rounds = {};
+  [1,2,3].forEach(rnd => {
+    const priced = byRound[rnd].filter(m => m.priced);
+    if (priced.length){ rounds[rnd] = roundOutcome(priced.map(toConv)); allPriced.push(...priced); }
+  });
+  const totalWorth = allPriced.reduce((s,m) => s + m.worth, 0);
+  // Cup only when the full slate is set (all 16 points accounted for).
+  const cup = totalWorth >= TOTAL_POINTS - 1e-6 ? cupOutcome(allPriced.map(toConv)) : null;
+
+  matchMarkets = { hash: lastPairingsHash, byRound, rounds, cup, totalWorth };
+}
+
+function lastName(n){ const parts = n.trim().split(' '); return parts[parts.length-1]; }
+function shortSide(label){ return label.split(' & ').map(lastName).join('/'); }
+
+function matchCard(m){
+  const head = `${m.formatLabel}${m.worth !== 1 ? ` · ${m.worth} pt` : ''}`;
+  const teams = `
+    <div class="mp-teams">
+      <span class="mp-team"><span class="team-dot" style="background:${TEAM_INFO.donkeys.dot}"></span><span class="nm">${m.sideA.label}</span></span>
+      <span class="mp-vs">vs</span>
+      <span class="mp-team b"><span class="nm">${m.sideB.label}</span><span class="team-dot" style="background:${TEAM_INFO.brains.dot}"></span></span>
+    </div>`;
+  if (m.pending){
+    return `<div class="mp-card"><div class="mp-card-head">${head}</div>${teams}
+      <div class="mp-pending">Odds pending — pairing incomplete.</div></div>`;
+  }
+  const pr = m.priced, A = shortSide(m.sideA.label), B = shortSide(m.sideB.label);
+  const mkt = (label, aSel, aProb, bSel, bProb) => `
+    <div class="mp-mkt"><span class="mp-mkt-label">${label}</span>
+      <span class="mp-pick"><span class="sel">${aSel}</span><span class="od">${fmtAmerican(aProb)}</span></span>
+      <span class="mp-pick"><span class="sel">${bSel}</span><span class="od">${fmtAmerican(bProb)}</span></span>
+    </div>`;
+  return `<div class="mp-card">
+    <div class="mp-card-head">${head} · ${(pr.pTie*100).toFixed(0)}% halved (push)</div>
+    ${teams}
+    ${mkt('Moneyline', A, pr.ml.a, B, pr.ml.b)}
+    ${mkt('Spread', `${A} ${pr.spread.aLabel}`, pr.spread.aProb, `${B} ${pr.spread.bLabel}`, pr.spread.bProb)}
+    ${mkt('Total', `Over ${pr.total.line}`, pr.total.overProb, `Under ${pr.total.line}`, pr.total.underProb)}
+  </div>`;
+}
+
+// 3-way team market card (Donkeys / Tie / Brains) from a {d,t,b} outcome.
+function teamMarketCard(head, sub, o){
+  const D = TEAM_INFO.donkeys, B = TEAM_INFO.brains;
+  const pick = (dot, sel, prob) => `<span class="mp-pick">${dot?`<span class="team-dot" style="background:${dot}"></span>`:''}<span class="sel">${sel}</span><span class="od">${fmtAmerican(prob)}</span></span>`;
+  return `<div class="mp-card mp-card-team">
+    <div class="mp-card-head">${head}${sub?` · ${sub}`:''}</div>
+    <div class="mp-mkt3">
+      ${pick(D.dot, D.short, o.d)}
+      ${pick(null, 'Tie', o.t)}
+      ${pick(B.dot, B.short, o.b)}
+    </div>
+  </div>`;
+}
+
+function renderMatches(){
+  const el = document.getElementById('matchesContent');
+  const anyPairings = pairings.some(p => p.donkey1 || p.donkey2 || p.brain1 || p.brain2);
+  if (!anyPairings){
+    el.innerHTML = `<div class="waiting-state"><h3>Waiting on pairings</h3>
+      <p>Match odds calculate automatically once pairings are set on the
+      <a href="matchplay.html" style="color:var(--mint);font-weight:800">Match Play</a> page,
+      and re-price whenever pairings change.</p></div>`;
+    return;
+  }
+  if (!matchMarkets || matchMarkets.hash !== lastPairingsHash) computeMatchMarkets();
+  const by = matchMarkets.byRound;
+  let html = '';
+
+  // ── Cup winner (headline) ──
+  html += `<div class="mp-round">
+    <div class="mp-round-head"><span class="round-chip cup">🏆 The Cup</span>
+      <span class="mp-round-course">First to ${WIN_THRESHOLD} of ${TOTAL_POINTS} pts</span></div>`;
+  html += matchMarkets.cup
+    ? teamMarketCard('Cup Winner', '3-way · 8–8 ties', matchMarkets.cup)
+    : `<div class="mp-card"><div class="mp-pending">Cup odds unlock once all three rounds' pairings are set (${matchMarkets.totalWorth} of ${TOTAL_POINTS} pts in).</div></div>`;
+  html += `</div>`;
+
+  // ── Per-round: round winner + the individual matches ──
+  [1,2,3].forEach(rnd => {
+    if (!by[rnd].length) return;
+    const meta = ROUND_META[rnd];
+    html += `<div class="mp-round">
+      <div class="mp-round-head">
+        <span class="round-chip r${rnd}">${meta.label} · ${meta.formatLabel}</span>
+        <span class="mp-round-course">${meta.course} · ${meta.day}</span>
+      </div>
+      ${matchMarkets.rounds[rnd] ? teamMarketCard(`${meta.label} Round Winner`, 'most points', matchMarkets.rounds[rnd]) : ''}
+      ${by[rnd].map(matchCard).join('')}
+    </div>`;
+  });
+  html += `<div class="market-note">Scratch match play (gross scoring, no handicaps) · fair odds (no vig) from ${MATCH_SIMS.toLocaleString()} simulations per match ·
+    moneyline pushes on a halved match · spread &amp; total auto-set to the fair (≈50/50) line · total = margin of victory in holes ·
+    Cup &amp; round winners are the exact convolution of the match odds (3-way, ties priced) · re-prices automatically when pairings change.</div>`;
+  el.innerHTML = html;
+}
+
+function render(){
+  renderOutright();
+  renderMatches();
+  const note = document.getElementById('updatedNote');
+  if (lastUpdated) note.textContent = 'Updated ' + lastUpdated.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+window.switchTab = function(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  document.querySelector(`.tab-btn.${tab}`)?.classList.add('active');
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  INIT + POLL  (recompute when pairings change)
+// ════════════════════════════════════════════════════════════════════════════
+async function loadAll(){
+  const data = await fetchSheetData();
+  parseSheetData(data);
+  lastUpdated = new Date();
+  document.getElementById('statusText').textContent = 'Live';
+
+  const hash = pairingsHash();
+  const pairingsChanged = hash !== lastPairingsHash;
+  lastPairingsHash = hash;
+
+  // Outright never depends on pairings; matches re-render always (cheap until Phase 3,
+  // where we'll gate the heavy sim on `pairingsChanged`).
+  render();
+}
+
+// Self-test runs only with ?debug in the URL (keeps normal loads fast & quiet);
+// it's always callable from the console via runOddsSelfTest().
+if (location.search.includes('debug')) runOddsSelfTest();
+loadAll();
+setInterval(loadAll, POLL_MS);
+</script>
+<script>
+function toggleNav(btn){
+  btn.classList.toggle('open');
+  document.querySelector('.nav-links').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('nav')){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  }
+});
+document.querySelectorAll('.nav-links a').forEach(function(a){
+  a.addEventListener('click',function(){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

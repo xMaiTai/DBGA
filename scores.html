@@ -44,19 +44,6 @@
     .page-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2rem,6vw,3.5rem);letter-spacing:3px;background:linear-gradient(135deg,var(--yellow),var(--mint));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .page-header p{color:rgba(255,255,255,0.4);font-size:0.82rem;font-weight:700;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
 
-    /* LOCK SCREEN */
-    .lock-screen{position:relative;z-index:1;max-width:360px;margin:40px auto;padding:0 20px}
-    .lock-card{background:var(--card-bg);border-radius:var(--radius);padding:32px 28px;border:1px solid rgba(255,255,255,0.08);border-top:3px solid var(--yellow);text-align:center}
-    .lock-icon{font-size:2.5rem;margin-bottom:12px}
-    .lock-title{font-family:'Boogaloo',cursive;font-size:1.8rem;color:var(--yellow);margin-bottom:6px}
-    .lock-sub{font-size:0.8rem;font-weight:800;color:rgba(255,255,255,0.3);margin-bottom:24px;letter-spacing:1px;text-transform:uppercase}
-    .pin-input{width:100%;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:2rem;text-align:center;letter-spacing:8px;padding:16px;-webkit-text-security:disc;outline:none;transition:border-color 0.2s}
-    .pin-input:focus{border-color:var(--yellow)}
-    .pin-input.error{border-color:var(--pink);animation:shake 0.3s}
-    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-    .pin-btn{margin-top:16px;width:100%;padding:14px;border-radius:50px;background:linear-gradient(135deg,var(--yellow),var(--donkey));border:none;color:var(--darker);font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-    .pin-btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
-    .pin-error{color:var(--pink);font-size:0.8rem;font-weight:800;margin-top:10px;min-height:20px}
 
     /* MAIN APP */
     .app{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:0 16px 100px}
@@ -264,6 +251,7 @@
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html" class="active">Scores</a></li>
     <li><a href="matchplay.html">Match Play</a></li>
+    <li><a href="odds.html">Odds</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -278,22 +266,8 @@
   <p>Live scoring &nbsp;·&nbsp; DBGA 2026</p>
 </div>
 
-<!-- LOCK SCREEN -->
-<div id="lockScreen" class="lock-screen">
-  <div class="lock-card">
-    <div class="lock-icon">🔒</div>
-    <div class="lock-title">Score Entry</div>
-    <div class="lock-sub">Enter PIN to access</div>
-    <input class="pin-input" id="pinInput" type="password" inputmode="numeric"
-      maxlength="4" placeholder="····" autocomplete="off"
-      onkeydown="if(event.key==='Enter')checkPin()" oninput="clearPinError()" />
-    <div class="pin-error" id="pinError">&nbsp;</div>
-    <button class="pin-btn" onclick="checkPin()">Unlock</button>
-  </div>
-</div>
-
-<!-- MAIN APP (hidden until unlocked) -->
-<div id="appScreen" class="app" style="display:none">
+<!-- MAIN APP -->
+<div id="appScreen" class="app">
 
   <!-- Steps -->
   <div class="steps" id="stepsBar">
@@ -426,7 +400,6 @@
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
-const PIN = '1997';
 
 // ─── COURSE DATA ──────────────────────────────────────────────────────────
 const COURSES = {
@@ -491,28 +464,6 @@ let foursomePlayers   = []; // [{ name, team, isPair?, player1?, player2? }]
 let foursomeScores    = {}; // { playerName: Array(18) }
 let foursomeConfirmed = {}; // { playerName: Array(18) }
 let foursomePlayerIdx = 0;  // which player is currently being scored
-
-// ─── PIN ──────────────────────────────────────────────────────────────────
-function checkPin() {
-  const val = document.getElementById('pinInput').value;
-  if (val === PIN) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display  = 'block';
-    loadSheetData();
-  } else {
-    const inp = document.getElementById('pinInput');
-    inp.classList.add('error');
-    document.getElementById('pinError').textContent = 'Incorrect PIN';
-    inp.value = '';
-    setTimeout(() => inp.classList.remove('error'), 400);
-  }
-}
-function clearPinError() {
-  document.getElementById('pinError').innerHTML = '&nbsp;';
-}
-document.addEventListener('keydown', e => {
-  if (document.getElementById('lockScreen').style.display !== 'none' && e.key === 'Enter') checkPin();
-});
 
 // ─── SHEET DATA ───────────────────────────────────────────────────────────
 async function loadSheetData() {
@@ -1497,10 +1448,7 @@ function renderLiveScorecard() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
-// Auto-unlock in dev if PIN already known (remove for production)
-document.getElementById('pinInput').addEventListener('keyup', e => {
-  if (e.key === 'Enter') checkPin();
-});
+loadSheetData();
 </script>
 <script>
 function toggleNav(btn){

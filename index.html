@@ -127,6 +127,7 @@
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html">Scores</a></li>
     <li><a href="matchplay.html">Match Play</a></li>
+    <li><a href="odds.html">Odds</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -264,7 +265,9 @@ function diff(gross, course) { const c=COURSES[course]; if(!c) return null; retu
 function calcHcp(rounds) { if(!rounds.length) return null; const diffs=rounds.map(r=>diff(r.gross,r.course)).filter(Boolean).sort((a,b)=>a-b); const n=Math.max(1,Math.floor(diffs.length*0.4)); return Math.round(diffs.slice(0,n).reduce((s,d)=>s+d,0)/n*10)/10; }
 function avgGross(rounds) { if(!rounds.length) return null; return rounds.reduce((s,r)=>s+r.gross,0)/rounds.length; }
 function projPerRound(rounds, hcp) {
-  if(!rounds.length) return Math.round(72+hcp*1.1);
+  // No history: estimate per-round gross from handicap using a least-squares fit
+  // to this field's own historical gross-vs-handicap relationship (~74.5 + 1.3*hcp).
+  if(!rounds.length) return Math.round(74.5+hcp*1.3);
   const yrs=[...new Set(rounds.map(r=>r.year))].sort((a,b)=>b-a);
   let ws=0,tw=0;
   yrs.forEach((yr,i)=>{ const w=Math.pow(0.7,i); const a=avgGross(rounds.filter(r=>r.year===yr)); if(a){ws+=a*w;tw+=w;} });
