@@ -232,8 +232,8 @@ const COURSES = {
   'Owl\'s Nest':{ slope:133, rating:73.0, par:72 },
 };
 
-// R1 = The Jack (Fri individual), R2 = Owl's Nest scramble (Sat), R3 = Owl's Nest individual (Sun)
-const ROUND_COURSE = { '1':'The Jack', '3':'Owl\'s Nest' };
+// R1 = The Jack scramble (Fri), R2 = Owl's Nest individual (Sat), R3 = Owl's Nest individual (Sun)
+const ROUND_COURSE = { '2':'Owl\'s Nest', '3':'Owl\'s Nest' };
 
 // ─── HISTORY (2023-2025) ───────────────────────────────────────────────────
 const HISTORY = [
@@ -426,7 +426,7 @@ async function fetchAllData() {
 
 // ─── INDIVIDUAL SCORES BUILDER ────────────────────────────────────────────
 // Sheet cols: Name, H1–H18 (one row per player per round)
-// r1data comes from Scores_R1 tab, r3data from Scores_R3 tab
+// r2data comes from Scores_R2 tab, r3data from Scores_R3 tab
 function sumHoles(row) {
   if (!row) return null;
   let total = 0, played = 0;
@@ -437,28 +437,28 @@ function sumHoles(row) {
   return played > 0 ? total : null;
 }
 
-function buildIndividualRows(r1Rows, r3Rows) {
+function buildIndividualRows(r2Rows, r3Rows) {
   return ROSTER.map(player => {
     const hcpIdx = calcHcpIndex(player.name);
-    const r1data = (r1Rows||[]).find(r => r.Name === player.name);
+    const r2data = (r2Rows||[]).find(r => r.Name === player.name);
     const r3data = (r3Rows||[]).find(r => r.Name === player.name);
-    const r1gross = sumHoles(r1data);
+    const r2gross = sumHoles(r2data);
     const r3gross = sumHoles(r3data);
-    const r1course = 'The Jack';
+    const r2course = "Owl's Nest";
     const r3course = "Owl's Nest";
-    const r1phcp = playingHcp(hcpIdx, r1course);
+    const r2phcp = playingHcp(hcpIdx, r2course);
     const r3phcp = playingHcp(hcpIdx, r3course);
-    const r1net = r1gross !== null ? r1gross - r1phcp : null;
+    const r2net = r2gross !== null ? r2gross - r2phcp : null;
     const r3net = r3gross !== null ? r3gross - r3phcp : null;
     // total gross = sum of played individual rounds
-    const grossPlayed = [r1gross, r3gross].filter(s => s !== null);
-    const netPlayed   = [r1net,   r3net  ].filter(s => s !== null);
+    const grossPlayed = [r2gross, r3gross].filter(s => s !== null);
+    const netPlayed   = [r2net,   r3net  ].filter(s => s !== null);
     const grossTotal = grossPlayed.length ? grossPlayed.reduce((a,b)=>a+b,0) : null;
     const netTotal   = netPlayed.length   ? netPlayed.reduce((a,b)=>a+b,0)   : null;
-    const thru = [r1data?'R1':null, r3data?'R3':null].filter(Boolean).join('+') || '–';
+    const thru = [r2data?'R2':null, r3data?'R3':null].filter(Boolean).join('+') || '–';
     return {
       name: player.name, nickname: player.nickname, team: player.team,
-      hcpIdx, r1gross, r3gross, r1net, r3net, r1phcp, r3phcp,
+      hcpIdx, r2gross, r3gross, r2net, r3net, r2phcp, r3phcp,
       grossTotal, netTotal, thru,
       proj: projScore(player.name),
     };
@@ -466,13 +466,13 @@ function buildIndividualRows(r1Rows, r3Rows) {
 }
 
 // ─── SCRAMBLE DATA BUILDER ────────────────────────────────────────────────
-// Pairs are defined in the Pairings tab (Round=2), not the Scramble tab.
-// Scores_R2 tab: Name = "Player1 & Player2" (pair ID), H1–H18 (scramble hole scores)
-function buildScrambleData(pairingsSheet, r2Rows) {
-  // Derive pairs from Pairings tab filtered to Round 2
-  const r2Pairings = (pairingsSheet||[]).filter(r => parseInt(r.Round) === 2);
+// Pairs are defined in the Pairings tab (Round=1), not the Scramble tab.
+// Scores_R1 tab: Name = "Player1 & Player2" (pair ID), H1–H18 (scramble hole scores)
+function buildScrambleData(pairingsSheet, r1Rows) {
+  // Derive pairs from Pairings tab filtered to Round 1
+  const r1Pairings = (pairingsSheet||[]).filter(r => parseInt(r.Round) === 1);
   const pairs = [];
-  r2Pairings.forEach(row => {
+  r1Pairings.forEach(row => {
     if (row.Donkey1 || row.Donkey2) {
       pairs.push({ team: 'donkeys', p1name: row.Donkey1||'', p2name: row.Donkey2||'' });
     }
@@ -485,43 +485,43 @@ function buildScrambleData(pairingsSheet, r2Rows) {
     // Score row is keyed by pair ID: "Player1 & Player2" in the Name column
     const pairId1 = [p1name, p2name].filter(Boolean).join(' & ');
     const pairId2 = [p2name, p1name].filter(Boolean).join(' & ');
-    const scoreRow = (r2Rows||[]).find(r =>
+    const scoreRow = (r1Rows||[]).find(r =>
       (r.Name && (r.Name === pairId1 || r.Name === pairId2)) ||
       r.Donkey1 === p1name || r.Donkey1 === p2name
     );
     const gross = sumHoles(scoreRow);
     const p1idx = p1name ? calcHcpIndex(p1name) : 0;
     const p2idx = p2name ? calcHcpIndex(p2name) : 0;
-    const pairPhcp = (p1name && p2name) ? scramblePairHcp(p1idx, p2idx, "Owl's Nest") : 0;
+    const pairPhcp = (p1name && p2name) ? scramblePairHcp(p1idx, p2idx, 'The Jack') : 0;
     const net = gross !== null ? gross - pairPhcp : null;
     return { team, p1name, p2name, gross, net, pairPhcp, p1idx, p2idx };
   });
 }
 
 // ─── TEAM NET TOTALS ──────────────────────────────────────────────────────
-// Team net = sum of each player's net R1 + sum of each player's net R3
-//            + sum of each scramble pair's net R2 for that team
+// Team net = sum of each player's net R2 + sum of each player's net R3
+//            + sum of each scramble pair's net R1 for that team
 function calcTeamTotals(individualRows, scramblePairs, teamKey) {
   const members = individualRows.filter(p => p.team === teamKey);
   // Individual rounds net
-  const r1net = members.map(p => p.r1net).filter(s => s !== null);
+  const r2net = members.map(p => p.r2net).filter(s => s !== null);
   const r3net = members.map(p => p.r3net).filter(s => s !== null);
-  const r1netTotal = r1net.length ? r1net.reduce((a,b)=>a+b,0) : null;
+  const r2netTotal = r2net.length ? r2net.reduce((a,b)=>a+b,0) : null;
   const r3netTotal = r3net.length ? r3net.reduce((a,b)=>a+b,0) : null;
   // Scramble net
   const teamPairs = scramblePairs.filter(p => p.team === teamKey);
   const scrambleNets = teamPairs.map(p => p.net).filter(s => s !== null);
   const scrambleNetTotal = scrambleNets.length ? scrambleNets.reduce((a,b)=>a+b,0) : null;
   // Running total — only include rounds that have at least some scores
-  const parts = [r1netTotal, scrambleNetTotal, r3netTotal].filter(s => s !== null);
+  const parts = [r2netTotal, scrambleNetTotal, r3netTotal].filter(s => s !== null);
   const total = parts.length ? parts.reduce((a,b)=>a+b,0) : null;
   // Gross for reference
-  const r1gross = members.map(p=>p.r1gross).filter(s=>s!==null);
+  const r2gross = members.map(p=>p.r2gross).filter(s=>s!==null);
   const r3gross = members.map(p=>p.r3gross).filter(s=>s!==null);
   const scrambleGross = teamPairs.map(p=>p.gross).filter(s=>s!==null);
-  const grossTotal = [...r1gross,...scrambleGross,...r3gross].length
-    ? [...r1gross,...scrambleGross,...r3gross].reduce((a,b)=>a+b,0) : null;
-  return { r1netTotal, scrambleNetTotal, r3netTotal, total, grossTotal, members, teamPairs };
+  const grossTotal = [...r2gross,...scrambleGross,...r3gross].length
+    ? [...r2gross,...scrambleGross,...r3gross].reduce((a,b)=>a+b,0) : null;
+  return { r2netTotal, scrambleNetTotal, r3netTotal, total, grossTotal, members, teamPairs };
 }
 
 // ─── DRAFT TEAMS HELPER ───────────────────────────────────────────────────
@@ -554,10 +554,10 @@ function getDraftTeams() {
 let prevPositions = {};
 function renderIndividualTable(containerId, rows, type, round) {
   const container = document.getElementById(containerId);
-  const isLive = rows.some(r => r.r1gross !== null || r.r3gross !== null);
+  const isLive = rows.some(r => r.r2gross !== null || r.r3gross !== null);
   let displayRows = rows.map(r => {
     let total = null;
-    if (round === '1') total = type==='net' ? r.r1net : r.r1gross;
+    if (round === '2') total = type==='net' ? r.r2net : r.r2gross;
     else if (round === '3') total = type==='net' ? r.r3net : r.r3gross;
     else total = type==='net' ? r.netTotal : r.grossTotal;
     return { ...r, displayTotal: total };
@@ -585,14 +585,14 @@ function renderIndividualTable(containerId, rows, type, round) {
     container.innerHTML = `<div class="waiting-state"><div class="waiting-emoji"></div><h3>No scores yet</h3><p>Scores will appear here once the live scoring begins in round 1. Or.. I'm just loading slowly</p></div>`;
     return;
   }
-  const r1Label = type==='net' ? 'R1 Net (Jack)' : 'R1 Gross (Jack)';
+  const r2Label = type==='net' ? 'R2 Net (Owls)' : 'R2 Gross (Owls)';
   const r3Label = type==='net' ? 'R3 Net (Owls)' : 'R3 Gross (Owls)';
-  const totalLabel = round==='all' ? 'Total' : (round==='1' ? r1Label : r3Label);
+  const totalLabel = round==='all' ? 'Total' : (round==='2' ? r2Label : r3Label);
   const hcpCol = type==='net' ? `<th class="num">HCP</th>` : '';
   container.innerHTML = `<table class="lb-table"><thead><tr>
     <th>Pos</th><th>Player</th>
     <th class="num">${totalLabel}</th><th class="num">Back</th>
-    ${round==='all'?`<th class="num">${r1Label}</th><th class="num">${r3Label}</th>`:''}
+    ${round==='all'?`<th class="num">${r2Label}</th><th class="num">${r3Label}</th>`:''}
     ${hcpCol}<th class="num">Proj.</th><th class="num">Thru</th>
   </tr></thead><tbody>${displayRows.map(r => {
     const posNum = r.position??'–';
@@ -605,7 +605,7 @@ function renderIndividualTable(containerId, rows, type, round) {
     const backDisp = r.strokesBack===null ? '—'
       : r.strokesBack===0 ? '<span class="back-lead">LEAD</span>' : `+${r.strokesBack}`;
     const teamDot = `<span class="team-dot" style="background:${TEAM_INFO[r.team]?.dot}"></span>`;
-    const r1disp = type==='net' ? (r.r1net??'—') : (r.r1gross??'—');
+    const r2disp = type==='net' ? (r.r2net??'—') : (r.r2gross??'—');
     const r3disp = type==='net' ? (r.r3net??'—') : (r.r3gross??'—');
     const hcpDisp = type==='net' ? `<td class="num hcp-cell">${r.hcpIdx}</td>` : '';
     const scoreClass = r.displayTotal===null?'score-na':'score-even';
@@ -613,7 +613,7 @@ function renderIndividualTable(containerId, rows, type, round) {
       <td><div class="name-cell">${teamDot}<span class="player-fullname">${r.name}</span><span class="player-nick">${r.nickname}</span></div></td>
       <td class="num score-cell ${scoreClass}">${scoreDisp}</td>
       <td class="num back-cell">${backDisp}</td>
-      ${round==='all'?`<td class="num round-cell">${r1disp}</td><td class="num round-cell">${r3disp}</td>`:''}
+      ${round==='all'?`<td class="num round-cell">${r2disp}</td><td class="num round-cell">${r3disp}</td>`:''}
       ${hcpDisp}
       <td class="num proj-cell">${r.proj}</td>
       <td class="num thru-cell">${r.thru}</td>
@@ -625,10 +625,10 @@ function renderIndividualTable(containerId, rows, type, round) {
 function renderRoundSelector(containerId, type) {
   const el = document.getElementById(containerId);
   const activeClass = type==='net' ? 'net-active' : 'active';
-  // Individual rounds only: R1 (Jack Fri), R3 (Owls Sun), All
+  // Individual rounds only: R2 (Owls Sat), R3 (Owls Sun), All
   el.innerHTML = [
     { key:'all', label:'All Rounds' },
-    { key:'1',   label:'R1 · The Jack (Fri)' },
+    { key:'2',   label:'R2 · Owl\'s Nest (Sat)' },
     { key:'3',   label:'R3 · Owl\'s Nest (Sun)' },
   ].map(r => `<button class="round-btn ${activeRound===r.key?activeClass:''}" onclick="setRound('${r.key}','${type}')">${r.label}</button>`).join('');
 }
@@ -663,7 +663,7 @@ function renderTeams(individualRows, scramblePairs) {
 
   function teamCard(key, totals) {
     const info = TEAM_INFO[key];
-    const { r1netTotal, scrambleNetTotal, r3netTotal, total, grossTotal, members, teamPairs } = totals;
+    const { r2netTotal, scrambleNetTotal, r3netTotal, total, grossTotal, members, teamPairs } = totals;
     const fmt = v => v!==null ? v : '—';
     return `<div class="team-standing-card ${key}">
       <div class="team-standing-header">
@@ -675,15 +675,15 @@ function renderTeams(individualRows, scramblePairs) {
         </div>
       </div>
       <div class="team-rounds-grid">
-        <div class="team-round-box ${r1netTotal!==null?'has-score':''}">
-          <div class="trb-score">${fmt(r1netTotal)}</div>
-          <div class="trb-label">R1 Net</div>
-          <div class="trb-sub">The Jack (Fri)</div>
-        </div>
         <div class="team-round-box ${scrambleNetTotal!==null?'has-score':''}">
           <div class="trb-score">${fmt(scrambleNetTotal)}</div>
+          <div class="trb-label">R1 Net</div>
+          <div class="trb-sub">Scramble (Fri)</div>
+        </div>
+        <div class="team-round-box ${r2netTotal!==null?'has-score':''}">
+          <div class="trb-score">${fmt(r2netTotal)}</div>
           <div class="trb-label">R2 Net</div>
-          <div class="trb-sub">Scramble (Sat)</div>
+          <div class="trb-sub">Owl's Nest (Sat)</div>
         </div>
         <div class="team-round-box ${r3netTotal!==null?'has-score':''}">
           <div class="trb-score">${fmt(r3netTotal)}</div>
@@ -695,7 +695,7 @@ function renderTeams(individualRows, scramblePairs) {
         ${members.map(p => `<div class="team-player-row">
           <span class="tpr-name">${p.name}</span>
           <span class="tpr-scores">
-            <span class="tpr-score ${p.r1net!==null?'has':''}">R1:${p.r1net??'—'}</span>
+            <span class="tpr-score ${p.r2net!==null?'has':''}">R2:${p.r2net??'—'}</span>
             <span class="tpr-score ${p.r3net!==null?'has':''}">R3:${p.r3net??'—'}</span>
           </span>
         </div>`).join('')}
@@ -761,7 +761,7 @@ function renderScramble(scramblePairs) {
     const info = TEAM_INFO[teamKey];
     return `<div class="scramble-team-card ${teamKey}">
       <div class="scramble-team-title">${info.name}</div>
-      <div class="scramble-team-sub">Owl's Nest · Saturday Scramble</div>
+      <div class="scramble-team-sub">The Jack · Friday Scramble</div>
       <div class="scramble-pairs">${pairs.map(pairRow).join('')}</div>
       <div class="scramble-team-total">
         <span class="stt-label">Team Net Total</span>
@@ -776,7 +776,7 @@ function renderScramble(scramblePairs) {
       ${teamBlock('donkeys', donkeyPairs, donkeyTotal)}
       ${teamBlock('brains',  brainPairs,  brainTotal)}
     </div>
-    <div class="scramble-source-note">Scramble pair net = Gross − ((lower HCP × 0.35 + higher HCP × 0.15) × Owl's Nest slope / 113)</div>`;
+    <div class="scramble-source-note">Scramble pair net = Gross − ((lower HCP × 0.35 + higher HCP × 0.15) × The Jack slope / 113)</div>`;
 }
 
 // ─── RENDER: HISTORY ──────────────────────────────────────────────────────
@@ -869,8 +869,8 @@ async function loadData() {
   const r2Rows       = data?.['Scores_R2'] || [];
   // Cache draft data globally so getDraftTeams() can read it
   window._sheetDraftData = data?.['Draft'] || [];
-  cachedIndividual = buildIndividualRows(r1Rows, r3Rows);
-  cachedScramble   = buildScrambleData(pairingsRows, r2Rows);
+  cachedIndividual = buildIndividualRows(r2Rows, r3Rows);
+  cachedScramble   = buildScrambleData(pairingsRows, r1Rows);
   const hasData = r1Rows.length > 0 || r3Rows.length > 0 || r2Rows.length > 0;
   updateStatus(hasData);
   renderCurrent();

@@ -621,7 +621,7 @@ function calcAllPoints() {
 }
 
 function buildMatchesFromPairing(p, rnd, courseName) {
-  const format = rnd===1 ? 'bestball' : rnd===2 ? 'scramble' : 'singles';
+  const format = rnd===1 ? 'scramble' : rnd===2 ? 'bestball' : 'singles';
   const isSolo = p.matchType === 'solo' || (!p.donkey2 && p.brain1 && p.brain2);
   const results = [];
 
@@ -647,12 +647,12 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     return results;
   }
 
-  if (rnd === 2) {
+  if (rnd === 1) {
     // Scramble — pair IDs = "Player1 & Player2"
     const dPairId = [p.donkey1, p.donkey2].filter(Boolean).join(' & ');
     const bPairId = [p.brain1,  p.brain2 ].filter(Boolean).join(' & ');
-    const dScores = [scores.R2[dPairId] || Array(18).fill(null)];
-    const bScores = [scores.R2[bPairId] || Array(18).fill(null)];
+    const dScores = [scores.R1[dPairId] || Array(18).fill(null)];
+    const bScores = [scores.R1[bPairId] || Array(18).fill(null)];
     const calc = calcMatch(dScores, bScores, [0], [0], courseName, 'scramble');
     const pts = matchResultToPoints(calc.winner, 1);
     results.push({ label:`${dPairId} vs ${bPairId}`, format:'Scramble', calc, pts, worth:1,
@@ -661,7 +661,7 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     return results;
   }
 
-  // Round 1 best ball
+  // Round 2 best ball
   if (isSolo) {
     // Solo Donkey plays two individual matches vs each Brain (each worth 0.5)
     const dName = p.donkey1;
@@ -669,8 +669,8 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     [p.brain1, p.brain2].filter(Boolean).forEach(bName => {
       const bHcp = getPlayerHcp(bName);
       const { p1:dPlay, p2:bPlay } = singlesHcps(dHcp, bHcp, courseName);
-      const dScores = [scores.R1[dName] || Array(18).fill(null)];
-      const bScores = [scores.R1[bName] || Array(18).fill(null)];
+      const dScores = [scores.R2[dName] || Array(18).fill(null)];
+      const bScores = [scores.R2[bName] || Array(18).fill(null)];
       const calc = calcMatch(dScores, bScores, [dPlay], [bPlay], courseName, 'singles');
       const pts = matchResultToPoints(calc.winner, 0.5);
       results.push({ label:`${dName} vs ${bName}`, format:'Best Ball (Solo)', calc, pts, worth:0.5,
@@ -689,9 +689,9 @@ function buildMatchesFromPairing(p, rnd, courseName) {
   const dHcps = allHcps.filter((_,i)=>players[i]?.side==='d');
   const bHcps = allHcps.filter((_,i)=>players[i]?.side==='b');
   const dScores = [p.donkey1,p.donkey2].filter(Boolean)
-    .map(n => scores.R1[n] || Array(18).fill(null));
+    .map(n => scores.R2[n] || Array(18).fill(null));
   const bScores = [p.brain1,p.brain2].filter(Boolean)
-    .map(n => scores.R1[n] || Array(18).fill(null));
+    .map(n => scores.R2[n] || Array(18).fill(null));
   const calc = calcMatch(dScores, bScores, dHcps, bHcps, courseName, 'bestball');
   const pts = matchResultToPoints(calc.winner, 1);
   const dLabel = [p.donkey1,p.donkey2].filter(Boolean).join(' & ');
@@ -738,7 +738,7 @@ function renderStandings() {
         <div class="sc-pts-label">Points · Need ${ptsFmts(dNeeds)} more to win</div>
         <div class="sc-rounds">
           ${pts.byRound.map(r => `<div class="sc-round-row">
-            <span class="sc-round-label">R${r.r} · ${r.r===1?'Best Ball':r.r===2?'Scramble':'Singles'}</span>
+            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Best Ball':'Singles'}</span>
             <span class="sc-round-pts" style="color:var(--donkey)">${ptsFmts(r.donkeys)}</span>
           </div>`).join('')}
         </div>
@@ -749,7 +749,7 @@ function renderStandings() {
         <div class="sc-pts-label">Points · Need ${ptsFmts(bNeeds)} more to win</div>
         <div class="sc-rounds">
           ${pts.byRound.map(r => `<div class="sc-round-row">
-            <span class="sc-round-label">R${r.r} · ${r.r===1?'Best Ball':r.r===2?'Scramble':'Singles'}</span>
+            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Best Ball':'Singles'}</span>
             <span class="sc-round-pts" style="color:var(--lavender)">${ptsFmts(r.brains)}</span>
           </div>`).join('')}
         </div>
@@ -822,11 +822,11 @@ function renderMatchScorecard(donkeys, brains, dRawScores, bRawScores, courseNam
   const isScramble = format === 'Scramble';
 
   if (isScramble) {
-    // R2: one shared scorecard per side, labelled with both player names
+    // R1: one shared scorecard per side, labelled with both player names
     cards.push(playerCard(donkeys.join(' &amp; '), dRawScores?.[0], 'var(--donkey)'));
     cards.push(playerCard(brains.join(' &amp; '),  bRawScores?.[0], 'var(--lavender)'));
   } else {
-    // R1 best ball / R3 singles: one card per player
+    // R2 best ball / R3 singles: one card per player
     donkeys.forEach((name, i) => cards.push(playerCard(name, dRawScores?.[i], 'var(--donkey)')));
     brains.forEach((name, i)  => cards.push(playerCard(name, bRawScores?.[i], 'var(--lavender)')));
   }
@@ -837,7 +837,7 @@ function renderMatchScorecard(donkeys, brains, dRawScores, bRawScores, courseNam
 function renderRoundMatchTable(rndData) {
   const ptsFmts = v => Number.isInteger(v) ? v : v.toFixed(1);
   const badgeClass = `r${rndData.r}`;
-  const formats = { 1:'Best Ball · The Jack',2:'Scramble · Owl\'s Nest',3:'Singles · Owl\'s Nest' };
+  const formats = { 1:'Scramble · The Jack',2:'Best Ball · Owl\'s Nest',3:'Singles · Owl\'s Nest' };
   if (!rndData.matches.length) {
     return `<div class="round-section">
       <div class="round-header">
@@ -932,7 +932,7 @@ function renderRoundDetail(rnd) {
         }
       });
     }
-    const formatLabel = rnd===1 ? 'Best Ball' : rnd===2 ? 'Scramble' : 'Singles';
+    const formatLabel = rnd===1 ? 'Scramble' : rnd===2 ? 'Best Ball' : 'Singles';
     el.innerHTML = `<div class="waiting-state">
       <h3>Pairings Set · Awaiting Play</h3>
       <p>${formatLabel} matchups will appear once scores are entered.</p>
@@ -1118,8 +1118,8 @@ function initRoundFoursomes(rnd) {
 }
 
 const ROUND_LABELS = {
-  1: { label:'R1 \u00b7 Best Ball', course:'The Jack \u00b7 Friday',     color:'var(--sky)'      },
-  2: { label:'R2 \u00b7 Scramble',  course:"Owl's Nest \u00b7 Saturday", color:'var(--pink)'     },
+  1: { label:'R1 \u00b7 Scramble',  course:'The Jack \u00b7 Friday',     color:'var(--sky)'      },
+  2: { label:'R2 \u00b7 Best Ball', course:"Owl's Nest \u00b7 Saturday", color:'var(--pink)'     },
   3: { label:'R3 \u00b7 Singles',   course:"Owl's Nest \u00b7 Sunday",   color:'var(--lavender)' },
 };
 

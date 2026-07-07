@@ -285,16 +285,16 @@
         <div class="round-card r1" onclick="selectRound('R1',this)">
           <span class="rc-badge">R1</span>
           <div class="rc-info">
-            <div class="rc-name">Best Ball</div>
-            <div class="rc-sub">Friday &middot; The Jack &middot; Individual scores</div>
+            <div class="rc-name">Scramble</div>
+            <div class="rc-sub">Friday &middot; The Jack &middot; Pair score</div>
           </div>
           <span class="rc-check">&#x2713;</span>
         </div>
         <div class="round-card r2" onclick="selectRound('R2',this)">
           <span class="rc-badge">R2</span>
           <div class="rc-info">
-            <div class="rc-name">Scramble</div>
-            <div class="rc-sub">Saturday &middot; Owl's Nest &middot; Pair score</div>
+            <div class="rc-name">Best Ball</div>
+            <div class="rc-sub">Saturday &middot; Owl's Nest &middot; Individual scores</div>
           </div>
           <span class="rc-check">&#x2713;</span>
         </div>
@@ -442,7 +442,7 @@ const ROSTER = [
 // ─── STATE ────────────────────────────────────────────────────────────────
 let selectedRound  = null;   // 'R1' | 'R2' | 'R3'
 let selectedPlayer = null;   // player name or pair ID
-let selectedPair   = null;   // { player1, player2, team } for R2
+let selectedPair   = null;   // { player1, player2, team } for R1
 let holeScores     = Array(18).fill(null);
 let confirmedHoles = Array(18).fill(false);
 let saveTimerPending = false;
@@ -471,11 +471,11 @@ async function loadSheetData() {
   try {
     const res = await fetch(APPS_SCRIPT_URL);
     sheetData = await res.json();
-    // Parse scramble pairs from Pairings tab (Round 2 rows)
-    // Each R2 pairings row contains one DiPano pair and one Dhand pair
+    // Parse scramble pairs from Pairings tab (Round 1 rows)
+    // Each R1 pairings row contains one DiPano pair and one Dhand pair
     scramblePairs = [];
     (sheetData['Pairings'] || [])
-      .filter(r => parseInt(r.Round) === 2)
+      .filter(r => parseInt(r.Round) === 1)
       .forEach(r => {
         if (r.Donkey1 || r.Donkey2) {
           scramblePairs.push({
@@ -506,7 +506,7 @@ function loadExistingScores() {
   const tabKey = selectedRound === 'R1' ? 'Scores_R1'
                : selectedRound === 'R2' ? 'Scores_R2' : 'Scores_R3';
   const rows = sheetData[tabKey] || [];
-  // Scores are keyed by Name (individuals) or Name/PairID (R2 scramble pairs)
+  // Scores are keyed by Name (individuals) or Name/PairID (R1 scramble pairs)
   const row = rows.find(r => (r.Name || r.PairID || r.Donkey1 || '') === selectedPlayer);
   if (row) {
     holeScores = Array.from({length:18}, (_,i) => {
@@ -598,13 +598,13 @@ function renderPlayerList() {
   html += `<div class="section-divider">Solo</div>`;
 
   // ── INDIVIDUAL / PAIR SECTION ──
-  if (selectedRound === 'R2') {
+  if (selectedRound === 'R1') {
     const pairs = scramblePairs.length > 0 ? scramblePairs : [];
     if (!pairs.length) {
       const isLoading = Object.keys(sheetData).length === 0;
       html += isLoading
         ? `<div style="font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.35);text-align:center;padding:20px 0">Loading pairs…</div>`
-        : `<div style="font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.35);text-align:center;padding:20px 0">No scramble pairs found. Set up R2 pairings in the <a href="matchplay.html?round=2" style="color:var(--mint)">Match Play</a> page first.</div>`;
+        : `<div style="font-size:0.82rem;font-weight:700;color:rgba(255,255,255,0.35);text-align:center;padding:20px 0">No scramble pairs found. Set up R1 pairings in the <a href="matchplay.html?round=1" style="color:var(--mint)">Match Play</a> page first.</div>`;
     } else {
       html += pairs.map(p => {
         const pairId = [p.player1, p.player2].filter(Boolean).join(' & ');
@@ -637,12 +637,12 @@ function renderPlayerList() {
 function getFoursomesForRound(round) {
   if (!round) return [];
   const rndNum = parseInt(round.replace('R', ''));
-  const isR2 = round === 'R2';
+  const isR1 = round === 'R1';
   return (sheetData['Pairings'] || [])
     .filter(r => parseInt(r.Round) === rndNum)
     .map(r => {
       const players = [];
-      if (isR2) {
+      if (isR1) {
         const p1 = [r.Donkey1, r.Donkey2].filter(Boolean);
         const p2 = [r.Brain1,  r.Brain2 ].filter(Boolean);
         if (p1.length) players.push({ name: p1.join(' & '), team: 'donkeys', isPair: true, player1: r.Donkey1||'', player2: r.Donkey2||'' });
@@ -785,7 +785,7 @@ function renderHoleEntry() {
   }
 
   // Player / pair name (hidden in review mode via CSS)
-  const playerLabel = selectedRound === 'R2' && selectedPair
+  const playerLabel = selectedRound === 'R1' && selectedPair
     ? `${selectedPair.player1} & ${selectedPair.player2}`
     : selectedPlayer || '';
   document.getElementById('holePlayer').textContent = playerLabel;
@@ -1093,7 +1093,7 @@ function renderSummary() {
   const el = document.getElementById('summaryContent');
   const course = COURSES[selectedRound];
   const roundColors = { R1:'var(--sky)', R2:'var(--pink)', R3:'var(--lavender)' };
-  const roundNames  = { R1:'R1 · Best Ball', R2:'R2 · Scramble', R3:'R3 · Singles' };
+  const roundNames  = { R1:'R1 · Scramble', R2:'R2 · Best Ball', R3:'R3 · Singles' };
   const color = roundColors[selectedRound];
 
   function cellClass(score, par) {
@@ -1133,9 +1133,9 @@ function renderSummary() {
     ${played < 18 ? `<div class="summary-incomplete">&#9888; Only ${played}/18 holes recorded for ${playerLabel}.</div>` : ''}`;
   }
 
-  // Group Score card — best ball per hole per team, shown for R1/R3 foursome mode
+  // Group Score card — best ball per hole per team, shown for R2/R3 foursome mode
   function groupScoreCard() {
-    if (!foursomeMode || !foursomePlayers.length || selectedRound === 'R2') return '';
+    if (!foursomeMode || !foursomePlayers.length || selectedRound === 'R1') return '';
     const donkeys = foursomePlayers.filter(p => p.team === 'donkeys');
     const brains  = foursomePlayers.filter(p => p.team === 'brains');
     const bestBall = players => Array.from({length:18}, (_,h) => {
@@ -1183,7 +1183,7 @@ function renderSummary() {
       return playerCard(label, foursomeScores[p.name]);
     }).join('');
   } else {
-    const label = selectedRound === 'R2' && selectedPair
+    const label = selectedRound === 'R1' && selectedPair
       ? `${selectedPair.player1} &amp; ${selectedPair.player2}`
       : selectedPlayer;
     cardsHtml = playerCard(label, holeScores);
@@ -1417,7 +1417,7 @@ function renderLiveScorecard() {
   } else if (selectedPlayer) {
     const entry = ROSTER.find(r => r.name === selectedPlayer);
     const tc = entry?.team === 'donkeys' ? 'donkey' : entry?.team === 'brains' ? 'brain' : '';
-    const lbl = (selectedRound === 'R2' && selectedPair)
+    const lbl = (selectedRound === 'R1' && selectedPair)
       ? `${selectedPair.player1} &amp; ${selectedPair.player2}` : selectedPlayer;
     html += buildRow(lbl, holeScores, tc);
 

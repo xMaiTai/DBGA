@@ -9,15 +9,15 @@ const HOLE_HEADERS = Array.from({length: 18}, (_, i) => `H${i + 1}`);
 
 const TAB_CONFIG = {
   Scores_R1: {
-    headers:     ['Name', ...HOLE_HEADERS],
-    idCol:       'Name',
-    description: 'R1 · The Jack · Friday Individual',
+    headers:     ['Donkey1', ...HOLE_HEADERS],
+    idCol:       'Donkey1',
+    description: 'R1 · The Jack · Friday Scramble (keyed by Donkey partner name)',
     color:       '#7EC8E3',  // sky blue
   },
   Scores_R2: {
-    headers:     ['Donkey1', ...HOLE_HEADERS],
-    idCol:       'Donkey1',
-    description: "R2 · Owl's Nest · Saturday Scramble (keyed by Donkey partner name)",
+    headers:     ['Name', ...HOLE_HEADERS],
+    idCol:       'Name',
+    description: "R2 · Owl's Nest · Saturday Best Ball",
     color:       '#F4A7C3',  // pink
   },
   Scores_R3: {
@@ -438,9 +438,9 @@ function applyScoreConditionalFormatting(sheet, pars) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function applyValidation(sheet, name, cfg) {
-  if (name === 'Scores_R1' || name === 'Scores_R3') {
+  if (name === 'Scores_R2' || name === 'Scores_R3') {
     applyIndividualScoreValidation(sheet);
-  } else if (name === 'Scores_R2') {
+  } else if (name === 'Scores_R1') {
     applyScrambleScoreValidation(sheet);
   } else if (name === 'Scramble') {
     applyScrambleDefValidation(sheet);

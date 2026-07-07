@@ -128,7 +128,7 @@
     <li><a href="leaderboard.html">Leaderboard</a></li>
     <li><a href="scores.html">Scores</a></li>
     <li><a href="matchplay.html">Match Play</a></li>
-    <li><a href="odds.html" class="active">Sportsbook</a></li>
+    <li><a href="odds.html" class="active">Odds</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -192,8 +192,8 @@ const COURSES = {
 
 // ─── ROUND / FORMAT META ───────────────────────────────────────────────────
 const ROUND_META = {
-  1: { label:'R1', format:'bestball', formatLabel:'Best Ball', course:'The Jack',   day:'Friday',   color:'var(--sky)'      },
-  2: { label:'R2', format:'scramble', formatLabel:'Scramble',  course:"Owl's Nest", day:'Saturday', color:'var(--pink)'     },
+  1: { label:'R1', format:'scramble', formatLabel:'Scramble',  course:'The Jack',   day:'Friday',   color:'var(--sky)'      },
+  2: { label:'R2', format:'bestball', formatLabel:'Best Ball', course:"Owl's Nest", day:'Saturday', color:'var(--pink)'     },
   3: { label:'R3', format:'singles',  formatLabel:'Singles',   course:"Owl's Nest", day:'Sunday',   color:'var(--lavender)' },
 };
 
@@ -360,10 +360,10 @@ function simRoundGross(rng, index, courseName, name){
 // ════════════════════════════════════════════════════════════════════════════
 //  PHASE 2 — OUTRIGHT SIM
 //  Mirrors leaderboard.html's individual stroke-play model: the individual
-//  total is R1 (Best Ball @ The Jack) + R3 (Singles @ Owl's Nest). R2 scramble
+//  total is R2 (Best Ball @ Owl's Nest) + R3 (Singles @ Owl's Nest). R1 scramble
 //  is a pair event and does NOT count toward individual gross/net.
-//    gross total = R1 gross + R3 gross
-//    net total   = (R1 gross − courseHcp@TheJack) + (R3 gross − courseHcp@Owl's)
+//    gross total = R2 gross + R3 gross
+//    net total   = (R2 gross − courseHcp@Owl's) + (R3 gross − courseHcp@Owl's)
 //  Simulate many tournaments, count finishing positions → fair American odds.
 // ════════════════════════════════════════════════════════════════════════════
 const OUTRIGHT_SIMS = 20000;
@@ -394,7 +394,7 @@ function simOutright(nSims){
   const rng = makeRng(OUTRIGHT_SEED);
   const ps = ROSTER_BASE.map(p => ({
     name: p.name, hcp: p.hcp,
-    r1phcp: courseHcp(p.hcp, 'The Jack'),
+    r2phcp: courseHcp(p.hcp, "Owl's Nest"),
     r3phcp: courseHcp(p.hcp, "Owl's Nest"),
   }));
   const M = ps.length;
@@ -406,10 +406,10 @@ function simOutright(nSims){
 
   for (let s = 0; s < nSims; s++){
     for (let i = 0; i < M; i++){
-      const g1 = sumArr(simRoundGross(rng, ps[i].hcp, 'The Jack', ps[i].name));
+      const g2 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest", ps[i].name));
       const g3 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest", ps[i].name));
-      gross[i] = g1 + g3;
-      net[i]   = (g1 - ps[i].r1phcp) + (g3 - ps[i].r3phcp);
+      gross[i] = g2 + g3;
+      net[i]   = (g2 - ps[i].r2phcp) + (g3 - ps[i].r3phcp);
     }
     tallyInto(acc, 'gross', gross, M);
     tallyInto(acc, 'net',   net,   M);
@@ -435,7 +435,7 @@ function simOutright(nSims){
 //    • Moneyline — 2-way, halved match PUSHES → p = winA / (winA + winB)
 //    • Spread    — holes line, auto-set near the fair (≈50/50) margin
 //    • Total     — O/U on MARGIN OF VICTORY (holes), auto-set near fair
-//  Best Ball (R1), Scramble (R2, best-of-pair), and Singles (R3) all priced here.
+//  Scramble (R1, best-of-pair), Best Ball (R2), and Singles (R3) all priced here.
 // ════════════════════════════════════════════════════════════════════════════
 const MATCH_SIMS = 8000;
 
@@ -464,7 +464,7 @@ function buildOddsMatches(p, rnd, courseName){
       .forEach(({d,b}) => out.push(single(d, b, isSolo?0.5:1)));
     return out;
   }
-  if (rnd === 2){
+  if (rnd === 1){
     // Scramble (scratch, pair vs pair). Modeled as best-of-pair per hole — the
     // "best of every shot" synergy of a true scramble lifts BOTH pairs about
     // equally, so it nets out in head-to-head odds; what's left is relative
@@ -474,7 +474,7 @@ function buildOddsMatches(p, rnd, courseName){
     if (A.length && B.length) out.push(mk('scramble', 1, A, B, 'Scramble'));
     return out;
   }
-  // R1 best ball
+  // R2 best ball
   if (isSolo){
     [p.brain1, p.brain2].filter(Boolean)
       .forEach(b => out.push(single(p.donkey1, b, 0.5, 'Best Ball (Solo)')));
@@ -667,10 +667,10 @@ function runOddsSelfTest(){
   ok(Math.abs(prc.spread.aProb - 0.5) < 0.12, `  fair spread near 50/50 (got ${(prc.spread.aProb*100).toFixed(0)}% at A ${prc.spread.aLabel})`);
   ok(Math.abs(prc.total.overProb - 0.5) < 0.12, `  fair total near 50/50 (got ${(prc.total.overProb*100).toFixed(0)}% over ${prc.total.line})`);
 
-  // 4c) scramble (R2) — builds a 2v2 best-of-pair match and prices cleanly
+  // 4c) scramble (R1) — builds a 2v2 best-of-pair match and prices cleanly
   const ms = buildOddsMatches(
-    { round:2, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Jason Sulmonetti', matchType:'standard' },
-    2, "Owl's Nest");
+    { round:1, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Jason Sulmonetti', matchType:'standard' },
+    1, 'The Jack');
   ok(ms.length === 1 && ms[0].format === 'scramble' && !ms[0].pending, `  scramble builds one priced match`);
   const prs = priceMatch(simMatchOdds(ms[0], 6000));
   ok(Math.abs(prs.ml.a + prs.ml.b - 1) < 1e-9, `  scramble moneyline splits sum to 1`);
@@ -812,8 +812,8 @@ function renderOutright(){
     </div>
     <div class="market-grid">${markets.map(m => marketCard(m, r, side)).join('')}</div>
     <div class="market-note">Fair odds (no vig) from ${r.nSims.toLocaleString()} simulated tournaments ·
-      individual total = R1 (The Jack) + R3 (Owl's Nest) · net = each round's gross minus course handicap ·
-      R2 scramble is a team event and is excluded from individual standings.</div>`;
+      individual total = R2 (Owl's Nest) + R3 (Owl's Nest) · net = each round's gross minus course handicap ·
+      R1 scramble is a team event and is excluded from individual standings.</div>`;
 }
 window.setOutrightSide = function(side){
   outrightSide = side;
