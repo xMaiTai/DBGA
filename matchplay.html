@@ -85,6 +85,7 @@
     .round-badge.r3{background:rgba(184,143,224,0.15);color:var(--lavender);border:1px solid rgba(184,143,224,0.3)}
     .round-title{font-family:'Boogaloo',cursive;font-size:1.3rem;color:#fff}
     .round-pts-avail{font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.3);margin-left:auto}
+    .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
     .match-table{width:100%;border-collapse:collapse;font-size:0.84rem}
     .match-table th{padding:8px 12px;font-size:0.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);text-align:left;border-bottom:1px solid rgba(255,255,255,0.07)}
     .match-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
@@ -227,6 +228,8 @@
       .foursome-body{grid-template-columns:1fr}
       .vs-divider{padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)}
       .hole-grid{grid-template-columns:30px repeat(9,1fr);font-size:0.7rem}
+      .match-table{width:max-content;min-width:100%}
+      .match-table th,.match-table td{padding:9px 10px;font-size:0.78rem}
     }
     /* SINGLES 1v1 MATCHUPS */
     .singles-matchups{border-top:1px solid rgba(255,255,255,0.07);margin-top:12px;padding-top:12px}
@@ -892,10 +895,12 @@ function renderRoundMatchTable(rndData) {
       <span class="round-pts-avail">${ptsFmts(rndData.donkeys + rndData.brains)} / ${rndData.r===3?8:4} pts played</span>
     </div>
     <div style="background:var(--card-bg);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.08);overflow:hidden">
-      <table class="match-table">
-        <thead><tr><th>Match</th><th>Status</th><th>Holes</th><th>Pts</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="match-table">
+          <thead><tr><th>Match</th><th>Status</th><th>Holes</th><th>Pts</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     </div>
   </div>`;
 }
