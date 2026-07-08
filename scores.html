@@ -1007,9 +1007,24 @@ function autosave() {
   }, 800);
 }
 
-// Foursome mode: fire immediately — one save per completed hole, no debounce
-// needed.
+// Foursome mode: debounced like solo mode. Coalescing rapid consecutive
+// hole saves into one call is safe because each save always sends a
+// player's full cumulative hole array, not just the newest value — skipping
+// intermediate saves during a fast entry burst loses nothing, and it
+// directly cuts the request volume that was driving Apps Script lock
+// contention (see upsertScore) when a group entered scores quickly.
+let foursomeSaveTimer = null;
+let foursomeSaveTimerPending = false;
 function autosaveFoursome() {
+  foursomeSaveTimerPending = true;
+  clearTimeout(foursomeSaveTimer);
+  foursomeSaveTimer = setTimeout(() => {
+    foursomeSaveTimerPending = false;
+    runFoursomeSave();
+  }, 700);
+}
+
+function runFoursomeSave() {
   // Snapshot the player list and their scores at this moment so the async
   // work is fully self-contained and immune to any later state changes
   const snapshot = foursomePlayers.map(p => ({
@@ -1044,33 +1059,45 @@ function postScore(name, holes, confirmed) {
   return next;
 }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // Low-level POST — explicit arguments, never reads/writes the globals that
 // the live scoring UI owns (holeScores, selectedPlayer, confirmedHoles).
 // Treats any HTTP 2xx as success: Apps Script writes data before generating
 // its response, so a successful HTTP status means the data is in the sheet
 // even if the response body is non-JSON or uses a different status string.
+// Retries transient failures (network blips, Apps Script lock contention —
+// see the LockService note in upsertScore) a couple of times before giving
+// up. Previously a single dropped request silently lost that hole's score
+// for good with no automatic recovery.
+const SAVE_MAX_ATTEMPTS = 3;
+const SAVE_RETRY_DELAYS_MS = [600, 1500]; // between attempts 1→2 and 2→3
 async function postScoreNow(name, holes, confirmed) {
   if (!APPS_SCRIPT_URL) return { ok:false, error:'No URL' };
-  showSaveBar('saving', 'Saving…');
-  // GET with query params — same reliable channel as fetchSheetData.
-  // doGet handles ?action=saveScore writes on the Apps Script side.
-  try {
-    const url = new URL(APPS_SCRIPT_URL);
-    url.searchParams.set('action', 'saveScore');
-    url.searchParams.set('data', JSON.stringify({ round: selectedRound, name, holes }));
-    const res  = await fetch(url.toString());
-    const json = await res.json();
-    if (json.status === 'ok') {
-      if (confirmed) holes.forEach((s, i) => { if (s !== null) confirmed[i] = true; });
-      showSaveBar('saved', 'Saved!');
-      return { ok:true };
+  let lastError = 'Save failed';
+  for (let attempt = 1; attempt <= SAVE_MAX_ATTEMPTS; attempt++) {
+    showSaveBar('saving', attempt === 1 ? 'Saving…' : `Retrying… (${attempt}/${SAVE_MAX_ATTEMPTS})`);
+    // GET with query params — same reliable channel as fetchSheetData.
+    // doGet handles ?action=saveScore writes on the Apps Script side.
+    try {
+      const url = new URL(APPS_SCRIPT_URL);
+      url.searchParams.set('action', 'saveScore');
+      url.searchParams.set('data', JSON.stringify({ round: selectedRound, name, holes }));
+      const res  = await fetch(url.toString());
+      const json = await res.json();
+      if (json.status === 'ok') {
+        if (confirmed) holes.forEach((s, i) => { if (s !== null) confirmed[i] = true; });
+        showSaveBar('saved', 'Saved!');
+        return { ok:true };
+      }
+      lastError = json.error || 'Save failed';
+    } catch(e) {
+      lastError = e.message || 'Network error';
     }
-    showSaveBar('error', json.error || 'Save failed');
-    return { ok:false, error: json.error };
-  } catch(e) {
-    showSaveBar('error', 'Network error — check connection');
-    return { ok:false, error: e.message };
+    if (attempt < SAVE_MAX_ATTEMPTS) await sleep(SAVE_RETRY_DELAYS_MS[attempt - 1]);
   }
+  showSaveBar('error', `${lastError} — re-open this hole to retry`);
+  return { ok:false, error: lastError };
 }
 
 async function saveScores() {
@@ -1085,7 +1112,7 @@ function updateHoleWarning() {
   const el = document.getElementById('holeWarning');
   if (!el) return;
   // Don't show while a save is still pending (timer hasn't fired yet)
-  if (saveTimerPending) { el.style.display = 'none'; return; }
+  if (saveTimerPending || foursomeSaveTimerPending) { el.style.display = 'none'; return; }
 
   // Find past holes (before currentHole) that have a score but aren't confirmed saved
   const unsaved = [];
@@ -1225,6 +1252,13 @@ async function saveToLeaderboard() {
   const fb  = document.getElementById('summaryFeedback');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   if (fb)  { fb.innerHTML = ''; }
+
+  // This is the authoritative save — don't let a pending debounced autosave
+  // fire again right after and duplicate the request.
+  clearTimeout(saveTimer);
+  saveTimerPending = false;
+  clearTimeout(foursomeSaveTimer);
+  foursomeSaveTimerPending = false;
 
   if (foursomeMode) {
     let allOk = true, anyError = '';

@@ -258,31 +258,48 @@ function upsertScore(ss, round, name, holes) {
   const cfg     = TAB_CONFIG[tabName];
   if (!cfg) return { ok: false, error: `Unknown round: ${round}` };
 
-  const sheet   = getOrCreateSheet(ss, tabName);
-
-  // If the sheet exists but was never properly scaffolded (no recognisable header row),
-  // prepend a header row so findRowByIdCol can upsert instead of blindly appendRow-ing.
-  const knownKeywords = ['Name','Donkey1','Round','Team','Player1'];
-  const topRows = sheet.getLastRow() > 0
-    ? sheet.getRange(1, 1, Math.min(sheet.getLastRow(), 4), 1).getValues().flat()
-    : [];
-  const hasHeader = topRows.some(v => knownKeywords.includes(String(v).trim()));
-  if (!hasHeader && sheet.getLastRow() > 0) {
-    sheet.insertRowBefore(1);
-    sheet.getRange(1, 1, 1, cfg.headers.length).setValues([cfg.headers]);
-    sheet.setFrozenRows(Math.max(sheet.getFrozenRows(), 1));
+  // Serialize score writes. Without a lock, two concurrent requests — e.g. two
+  // foursomes both saving their hole-1 score around the same time, or a
+  // group entering scores faster than each save round-trips — can both see
+  // "sheet/row doesn't exist yet" and race to create it. The loser throws
+  // (duplicate sheet name, or a write clobbered mid-flight), which Apps
+  // Script returns as a non-JSON error page — the client sees that as a
+  // "network error" even though nothing was actually wrong with the network.
+  // tryLock (not waitLock) so a timeout returns a clean JSON error instead
+  // of an uncaught exception.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) {
+    return { ok: false, error: 'Server busy — please try again' };
   }
+  try {
+    const sheet = getOrCreateSheet(ss, tabName);
 
-  const rowData = [name, ...holes.map(h => (h === null || h === undefined) ? '' : Number(h))];
-  const existingRowNum = findRowByIdCol(sheet, cfg.idCol, name);
+    // If the sheet exists but was never properly scaffolded (no recognisable header row),
+    // prepend a header row so findRowByIdCol can upsert instead of blindly appendRow-ing.
+    const knownKeywords = ['Name','Donkey1','Round','Team','Player1'];
+    const topRows = sheet.getLastRow() > 0
+      ? sheet.getRange(1, 1, Math.min(sheet.getLastRow(), 4), 1).getValues().flat()
+      : [];
+    const hasHeader = topRows.some(v => knownKeywords.includes(String(v).trim()));
+    if (!hasHeader && sheet.getLastRow() > 0) {
+      sheet.insertRowBefore(1);
+      sheet.getRange(1, 1, 1, cfg.headers.length).setValues([cfg.headers]);
+      sheet.setFrozenRows(Math.max(sheet.getFrozenRows(), 1));
+    }
 
-  if (existingRowNum > 0) {
-    sheet.getRange(existingRowNum, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
+    const rowData = [name, ...holes.map(h => (h === null || h === undefined) ? '' : Number(h))];
+    const existingRowNum = findRowByIdCol(sheet, cfg.idCol, name);
+
+    if (existingRowNum > 0) {
+      sheet.getRange(existingRowNum, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
   }
-
-  return { ok: true };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
