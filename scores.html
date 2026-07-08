@@ -1008,8 +1008,7 @@ function autosave() {
 }
 
 // Foursome mode: fire immediately — one save per completed hole, no debounce
-// needed. Each call gets its own independent promise so a fast user can't
-// cancel a previous hole's in-flight save.
+// needed.
 function autosaveFoursome() {
   // Snapshot the player list and their scores at this moment so the async
   // work is fully self-contained and immune to any later state changes
@@ -1027,12 +1026,30 @@ function autosaveFoursome() {
   })();
 }
 
+// Every save for a given player must land on the server in the order it was
+// submitted. upsertScore overwrites the player's ENTIRE row on every call, so
+// if an earlier save (fewer holes filled in) is still in flight when a later,
+// more-complete save fires — e.g. consecutive holes confirmed faster than a
+// slow/spotty course wifi round-trip, or rapid edits in edit mode — the two
+// requests can resolve out of order. Whichever lands last wins, and if that's
+// the older/smaller snapshot it blanks out every hole after it. Route every
+// save through a single global chain, keyed per player, so a save never
+// starts until the previous save for that same player has finished.
+const saveChains = {};
+function postScore(name, holes, confirmed) {
+  const prev = saveChains[name] || Promise.resolve();
+  const run  = () => postScoreNow(name, holes, confirmed);
+  const next = prev.then(run, run);
+  saveChains[name] = next.catch(() => {}); // keep the chain alive after an error
+  return next;
+}
+
 // Low-level POST — explicit arguments, never reads/writes the globals that
 // the live scoring UI owns (holeScores, selectedPlayer, confirmedHoles).
 // Treats any HTTP 2xx as success: Apps Script writes data before generating
 // its response, so a successful HTTP status means the data is in the sheet
 // even if the response body is non-JSON or uses a different status string.
-async function postScore(name, holes, confirmed) {
+async function postScoreNow(name, holes, confirmed) {
   if (!APPS_SCRIPT_URL) return { ok:false, error:'No URL' };
   showSaveBar('saving', 'Saving…');
   // GET with query params — same reliable channel as fetchSheetData.
