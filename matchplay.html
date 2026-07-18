@@ -169,8 +169,7 @@
     .foursome-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06)}
     .foursome-num{font-family:'Boogaloo',cursive;font-size:1.1rem;color:rgba(255,255,255,0.6);letter-spacing:1px}
     .foursome-teetime{display:flex;align-items:center;gap:8px}
-    .tee-time-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:0.82rem;padding:5px 10px;width:90px;text-align:center}
-    .tee-time-input:focus{outline:none;border-color:rgba(110,220,196,0.4)}
+    .tee-time-fixed{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:0.82rem;font-weight:700;padding:5px 12px;display:inline-block;text-align:center}
     .foursome-body{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch}
     .team-side{padding:14px 16px}
     .team-side.donkey-side{border-right:1px solid rgba(255,255,255,0.06)}
@@ -272,6 +271,7 @@
     <li><a href="scores.html">Scores</a></li>
     <li><a href="matchplay.html" class="active">Match Play</a></li>
     <li><a href="odds.html">Odds</a></li>
+    <li><a href="dayview.html">Day View</a></li>
     <li><a href="draft.html">Draft Board</a></li>
     <li><a href="courses.html">Courses</a></li>
     <li><a href="airbnb.html">The House</a></li>
@@ -371,6 +371,22 @@ const TEAM_INFO = {
   donkeys:{ name:'Team DiPano', color:'var(--donkey)', dot:'#C8A97E', short:'DiPano' },
   brains: { name:'Team Dhand',  color:'var(--lavender)', dot:'#B88FE0', short:'Dhand' },
 };
+
+// ─── FIXED TEE TIMES (no longer editable — one slot per foursome, in order) ─
+const TEE_TIMES = {
+  1: ['12:00','12:10','12:20','12:30'],
+  2: ['14:40','14:50','15:10','15:20'],
+  3: ['07:57','08:06','08:15','08:24'],
+};
+function teeTimeFor(rnd, idx) { return (TEE_TIMES[rnd] || [])[idx] || ''; }
+function fmtTeeTime(t) {
+  if (!t) return '—';
+  const [h, m] = t.split(':').map(Number);
+  if (isNaN(h)) return t;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${String(m).padStart(2,'0')} ${ap}`;
+}
 
 // ─── HCP HELPERS ──────────────────────────────────────────────────────────
 function courseHcp(index, courseName) {
@@ -1113,14 +1129,14 @@ function initRoundFoursomes(rnd) {
   if (builderFoursomes[rnd] !== null) return;
   const existing = pairings.filter(p => p.round === rnd);
   if (existing.length > 0) {
-    builderFoursomes[rnd] = existing.map(p => ({
+    builderFoursomes[rnd] = existing.map((p,i) => ({
       donkey1:p.donkey1||'', donkey2:p.donkey2||'',
       brain1:p.brain1||'',   brain2:p.brain2||'',
-      teeTime:p.teeTime||'',
+      teeTime:teeTimeFor(rnd,i),
       ...(rnd===2 ? { singlesOrder: p.matchType==='cross' ? 'cross' : 'standard' } : {}),
     }));
   } else {
-    builderFoursomes[rnd] = [{ donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:'',
+    builderFoursomes[rnd] = [{ donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:teeTimeFor(rnd,0),
       ...(rnd===2 ? { singlesOrder:'standard' } : {}) }];
   }
 }
@@ -1138,7 +1154,7 @@ function renderLockedPairings(el) {
     const rows = rndPairings.map((p, i) => {
       const dNames = [p.donkey1, p.donkey2].filter(Boolean);
       const bNames = [p.brain1,  p.brain2 ].filter(Boolean);
-      const tee = p.teeTime ? `<span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.3);margin-left:auto">${p.teeTime}</span>` : '';
+      const tee = p.teeTime ? `<span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.3);margin-left:auto">${fmtTeeTime(p.teeTime)}</span>` : '';
       return `<div class="locked-foursome-row">
         <span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.3);min-width:60px">Match ${i+1}</span>
         <span style="color:var(--donkey)">${dNames.join(' &amp; ') || '—'}</span>
@@ -1216,7 +1232,7 @@ function renderPairings() {
     const lockRows = rndPairings.map((p, i) => {
       const dNames = [p.donkey1, p.donkey2].filter(Boolean);
       const bNames = [p.brain1,  p.brain2 ].filter(Boolean);
-      const tee = p.teeTime ? `<span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.3);margin-left:auto">${p.teeTime}</span>` : '';
+      const tee = p.teeTime ? `<span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.3);margin-left:auto">${fmtTeeTime(p.teeTime)}</span>` : '';
       // For R2, show the two individual 1v1 matchups
       const singlesHtml = rnd === 2 ? (() => {
         const cross = p.matchType === 'cross';
@@ -1351,8 +1367,7 @@ function renderPairings() {
             </span>
             <div class="foursome-teetime">
               <span style="font-size:0.68rem;font-weight:800;color:rgba(255,255,255,0.3);margin-right:6px">TEE TIME</span>
-              <input class="tee-time-input" type="time" value="${f.teeTime||''}"
-                onchange="getActiveFoursomes()[${i}].teeTime=this.value" />
+              <span class="tee-time-fixed">${fmtTeeTime(f.teeTime)}</span>
               <button class="btn btn-danger" style="padding:5px 12px;font-size:0.7rem;margin-left:8px"
                 onclick="removeFoursome(${i})">Remove</button>
             </div>
@@ -1485,14 +1500,17 @@ window.removeFromSlot = function(fIdx, slotKey) {
 };
 
 window.addFoursome = function() {
-  const newF = { donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:'' };
+  const arr = getActiveFoursomes();
+  const newF = { donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:teeTimeFor(activeBuilderRound, arr.length) };
   if (activeBuilderRound === 2) newF.singlesOrder = 'standard';
-  getActiveFoursomes().push(newF);
+  arr.push(newF);
   renderPairings();
 };
 
 window.removeFoursome = function(fIdx) {
-  getActiveFoursomes().splice(fIdx, 1);
+  const arr = getActiveFoursomes();
+  arr.splice(fIdx, 1);
+  arr.forEach((f,i) => { f.teeTime = teeTimeFor(activeBuilderRound, i); });
   renderPairings();
 };
 
@@ -1504,7 +1522,7 @@ window.toggleSinglesOrder = function(fIdx) {
 
 window.resetBuilder = function() {
   if (!confirm(`Reset Round ${activeBuilderRound} pairings? This cannot be undone.`)) return;
-  builderFoursomes[activeBuilderRound] = [{ donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:'' }];
+  builderFoursomes[activeBuilderRound] = [{ donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:teeTimeFor(activeBuilderRound,0) }];
   renderPairings();
 };
 

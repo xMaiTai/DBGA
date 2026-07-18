@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DBGA – Day View</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --mint:#6EDCC4; --lavender:#B88FE0; --pink:#F4A7C3; --sky:#7EC8E3;
+    --yellow:#FFE156; --donkey:#C8A97E; --dark:#1A1A2E; --darker:#12121F;
+    --card-bg:rgba(255,255,255,0.06); --radius:14px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Nunito',sans-serif;background:var(--darker);color:#fff;display:flex;flex-direction:column}
+  body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--mint) 1px,transparent 1px),radial-gradient(circle,var(--pink) 1px,transparent 1px);background-size:60px 60px,90px 90px;background-position:0 0,30px 30px;opacity:0.035;pointer-events:none;z-index:0}
+
+  /* ── NAV ── */
+  nav{flex-shrink:0;position:relative;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:8px 28px;background:rgba(18,18,31,0.92);backdrop-filter:blur(16px);border-bottom:2px solid rgba(110,220,196,0.2)}
+  .nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+  .nav-logo img{height:34px;width:34px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(110,220,196,0.5))}
+  .nav-logo span{font-family:'Boogaloo',cursive;font-size:1.5rem;letter-spacing:2px;background:linear-gradient(135deg,var(--mint),var(--lavender),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .nav-links{display:flex;gap:4px;list-style:none}
+  .nav-links a{text-decoration:none;color:rgba(255,255,255,0.65);font-weight:700;font-size:0.74rem;letter-spacing:0.5px;text-transform:uppercase;padding:6px 12px;border-radius:50px;transition:all 0.2s}
+  .nav-links a:hover{color:#fff;background:rgba(110,220,196,0.15)}
+  .nav-links a.active{color:var(--mint);background:rgba(110,220,196,0.1)}
+  .hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:201;flex-shrink:0}
+  .hamburger span{display:block;width:24px;height:2px;background:#fff;border-radius:2px;transition:all 0.25s}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  @media(max-width:900px){
+    .hamburger{display:flex}
+    .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(18,18,31,0.98);backdrop-filter:blur(16px);flex-direction:column;padding:10px 20px 16px;gap:2px;border-bottom:2px solid rgba(110,220,196,0.2)}
+    .nav-links.open{display:flex}
+    .nav-links li a{display:block;padding:10px 14px;font-size:0.85rem;border-radius:10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .nav-links li:last-child a{border-bottom:none}
+  }
+
+  /* ── DAY BAR ── */
+  .daybar{flex-shrink:0;position:relative;z-index:1;display:flex;align-items:stretch;gap:10px;padding:8px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .day-tabs{display:flex;gap:8px;flex:1}
+  .day-tab{flex:1;max-width:220px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);cursor:pointer;transition:all 0.15s;text-align:left}
+  .day-tab .dt-label{font-family:'Boogaloo',cursive;font-size:1.15rem;letter-spacing:1px;line-height:1.1}
+  .day-tab .dt-date{font-size:0.62rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;opacity:0.75}
+  .day-tab .dt-fmt{font-size:0.6rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;opacity:0.55}
+  .day-tab.r1.active{background:rgba(126,200,227,0.14);color:var(--sky);border-color:rgba(126,200,227,0.4)}
+  .day-tab.r2.active{background:rgba(244,167,195,0.14);color:var(--pink);border-color:rgba(244,167,195,0.4)}
+  .day-tab.r3.active{background:rgba(184,143,224,0.14);color:var(--lavender);border-color:rgba(184,143,224,0.4)}
+  .day-tab:not(.active):hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.05)}
+  .day-status{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;flex-shrink:0}
+  .status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:50px;font-size:0.64rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;background:rgba(110,220,196,0.12);color:var(--mint);border:1px solid rgba(110,220,196,0.3)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+  .updated-note{font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace}
+
+  /* ── MAIN ── */
+  .main{flex:1;min-height:0;position:relative;z-index:1;display:flex;gap:14px;padding:12px 20px 14px;overflow:hidden}
+
+  /* ── COURSE PANEL (left) ── */
+  .course-panel{flex-shrink:0;width:300px;display:flex;flex-direction:column;gap:clamp(10px,1.6vh,20px);min-height:0;justify-content:center}
+  .cp-card{background:var(--card-bg);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:clamp(14px,2.2vh,24px) clamp(16px,1.6vw,24px)}
+  .cp-label{font-size:0.72rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px}
+  .cp-course-name{font-family:'Boogaloo',cursive;font-size:clamp(1.6rem,3.4vh,2.4rem);letter-spacing:0.5px;line-height:1.1;margin-bottom:14px}
+  .cp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .cp-stat{background:rgba(255,255,255,0.04);border-radius:9px;padding:clamp(8px,1.4vh,14px) 2px;text-align:center;border:1px solid rgba(255,255,255,0.05)}
+  .cp-stat .v{display:block;font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(1rem,1.9vh,1.35rem)}
+  .cp-stat .l{display:block;font-size:0.6rem;font-weight:900;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:3px}
+  .cp-format-name{font-family:'Boogaloo',cursive;font-size:clamp(1.6rem,3.4vh,2.4rem);letter-spacing:0.5px;margin-bottom:10px}
+  .cp-format-desc{font-size:clamp(0.88rem,1.7vh,1.08rem);font-weight:700;color:rgba(255,255,255,0.6);line-height:1.6}
+  .cp-card.meta{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px);padding:clamp(12px,2vh,20px) clamp(16px,1.6vw,24px)}
+  .cp-mini{display:flex;align-items:baseline;justify-content:space-between}
+  .cp-mini .l{font-size:0.7rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,255,255,0.35)}
+  .cp-mini .v{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(0.9rem,1.6vh,1.1rem);color:rgba(255,255,255,0.9)}
+  .cp-legend{font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.28);line-height:1.6;font-style:italic;padding-top:2px}
+
+  /* ── MATCHUPS GRID ── */
+  .matchups{flex:1;min-height:0;display:grid;gap:clamp(8px,1.3vh,14px)}
+  .mu-card{background:var(--card-bg);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+  .mu-head{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:clamp(8px,1.4vh,16px) clamp(14px,1.4vw,22px);background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06)}
+  .mu-tee{font-family:'Share Tech Mono',monospace;font-weight:800;font-size:clamp(1.1rem,2.4vh,1.6rem);color:#fff}
+  .mu-fmt{font-size:clamp(0.66rem,1.15vh,0.85rem);font-weight:900;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-align:right}
+  .mu-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;padding:clamp(6px,1vh,14px) clamp(14px,1.4vw,22px)}
+  .mu-side{display:flex;align-items:center;gap:clamp(8px,1vw,16px)}
+  .mu-side .team-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .mu-players{flex:1;min-width:0;display:flex;flex-direction:column;gap:clamp(4px,0.8vh,8px);justify-content:center}
+  .mu-player{display:flex;min-width:0}
+  .mu-player .nm{font-weight:800;font-size:clamp(1.05rem,2.3vh,1.7rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mu-side-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:clamp(3px,0.6vh,6px)}
+  .mu-proj{font-family:'Share Tech Mono',monospace;font-size:clamp(0.62rem,1.1vh,0.8rem);color:rgba(255,255,255,0.4)}
+  .mu-stat-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;animation:statPop 0.5s ease-out}
+  .mu-stat-tag{font-size:clamp(0.52rem,0.9vh,0.65rem);font-weight:900;letter-spacing:1px;color:rgba(255,255,255,0.3)}
+  .mu-odds{flex-shrink:0;font-family:'Share Tech Mono',monospace;font-weight:700;font-size:clamp(0.95rem,2vh,1.4rem);padding:clamp(5px,0.9vh,10px) clamp(10px,1vw,16px);border-radius:9px;min-width:4.4em;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)}
+  .mu-odds.fav{color:var(--mint);border-color:rgba(110,220,196,0.35);background:rgba(110,220,196,0.1)}
+  @keyframes statPop{
+    0%{opacity:0;transform:translateY(-5px) scale(0.92)}
+    55%{opacity:1;transform:translateY(0) scale(1.05)}
+    100%{opacity:1;transform:translateY(0) scale(1)}
+  }
+  .mu-vs{flex-shrink:0;text-align:center;font-family:'Share Tech Mono',monospace;font-size:clamp(0.68rem,1.2vh,0.9rem);font-weight:700;color:rgba(255,255,255,0.22);letter-spacing:1px;padding:clamp(2px,0.6vh,6px) 0}
+
+  /* Dense variant (R2 singles, up to 8 narrower cards) — trim width-sensitive sizing */
+  .matchups.dense .mu-player .nm{font-size:clamp(0.95rem,2vh,1.35rem)}
+  .matchups.dense .mu-odds{font-size:clamp(0.85rem,1.7vh,1.1rem);min-width:3.6em;padding:clamp(4px,0.8vh,8px) clamp(8px,0.8vw,12px)}
+  .matchups.dense .mu-fmt{font-size:clamp(0.6rem,1vh,0.72rem)}
+  .matchups.dense .mu-tee{font-size:clamp(0.95rem,2vh,1.3rem)}
+
+  .mu-waiting{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,0.35);text-align:center}
+  .mu-waiting h3{font-family:'Boogaloo',cursive;font-size:1.5rem;color:rgba(255,255,255,0.55);letter-spacing:1px}
+  .mu-waiting p{font-size:0.8rem;font-weight:700;max-width:420px}
+
+  @media(max-width:1000px){
+    html,body{height:auto;overflow:auto}
+    .main{flex-direction:column;overflow:visible}
+    .course-panel{width:auto;flex-direction:row;flex-wrap:wrap}
+    .course-panel .cp-card{flex:1;min-width:220px}
+    .matchups{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(260px,1fr)) !important;grid-template-rows:none !important}
+    .mu-card{min-height:110px}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><img src="assets/logo.png" alt="DBGA Logo" /><span>DBGA</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="scores.html">Scores</a></li>
+    <li><a href="matchplay.html">Match Play</a></li>
+    <li><a href="odds.html">Odds</a></li>
+    <li><a href="dayview.html" class="active">Day View</a></li>
+    <li><a href="draft.html">Draft Board</a></li>
+    <li><a href="courses.html">Courses</a></li>
+    <li><a href="airbnb.html">The House</a></li>
+  </ul>
+  <button class="hamburger" onclick="toggleNav(this)" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="daybar">
+  <div class="day-tabs" id="dayTabs"></div>
+  <div class="day-status">
+    <span class="status-pill"><span class="status-dot"></span>Live</span>
+    <span class="updated-note" id="updatedNote">Loading…</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="course-panel" id="coursePanel"></div>
+  <div class="matchups" id="matchupsGrid"></div>
+</div>
+
+<script>
+// ─── CONFIG (mirrors odds.html's engine) ───────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26T9ZxDsUwVelkfoZVG7PFeHFdQWaDSPTitTi1rJt-HxvlDk9feAyJZg/exec';
+const POLL_MS = 90000;
+const MATCH_SIMS = 8000;
+
+const COURSES = {
+  'The Jack':   { slope:117, rating:68.6, par:70,
+    pars: [4,4,4,4,3,4,4,3,4, 4,4,3,5,4,4,3,4,5],
+    hcps: [10,12,1,5,17,4,16,14,8, 13,3,11,9,6,15,18,2,7] },
+  "Owl's Nest": { slope:133, rating:73.0, par:72,
+    pars: [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
+    hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14] },
+  "Owl's Nest - Vineyard": { slope:115, rating:66.6, par:70,
+    pars: [4,4,4,3,5,4,3,5,4, 3,3,4,4,4,4,4,4,4],
+    hcps: [15,7,9,11,1,17,13,5,3, 14,18,6,10,12,16,8,2,4] },
+};
+const COURSE_YARDS = { 'The Jack':6109, "Owl's Nest":6818, "Owl's Nest - Vineyard":5629 };
+
+// Fixed tee times — no longer editable, one slot per foursome, in match order.
+const TEE_TIMES = {
+  1: ['12:00','12:10','12:20','12:30'],
+  2: ['14:40','14:50','15:10','15:20'],
+  3: ['07:57','08:06','08:15','08:24'],
+};
+function teeTimeFor(rnd, idx) { return (TEE_TIMES[rnd] || [])[idx] || ''; }
+
+const ROUND_META = {
+  1: { label:'R1', format:'scramble', formatLabel:'Scramble',  course:'The Jack',              day:'Friday',   date:'Fri · Jul 31', color:'var(--sky)'      },
+  2: { label:'R2', format:'singles',  formatLabel:'Singles',   course:"Owl's Nest",             day:'Saturday', date:'Sat · Aug 1',  color:'var(--pink)'     },
+  3: { label:'R3', format:'bestball', formatLabel:'Best Ball', course:"Owl's Nest - Vineyard",  day:'Sunday',   date:'Sun · Aug 2',  color:'var(--lavender)' },
+};
+const ROUND_DATES = {
+  1: new Date('2026-07-31T00:00:00-04:00'),
+  2: new Date('2026-08-01T00:00:00-04:00'),
+  3: new Date('2026-08-02T00:00:00-04:00'),
+};
+const FORMAT_DESC = {
+  scramble: 'All four players tee off, each pairing pick the best shot of the two, then plays their next ball from there. Repeat to the hole — one score per team.',
+  singles:  'Head-to-head 1-on-1 stroke play, straight up — no strokes given. Lowest gross score on the hole wins it.',
+  bestball: 'Everyone plays their own ball all the way in. The lowest score on each team counts for that hole.',
+};
+
+const ROSTER_BASE = [
+  { name:'Jack Lyons',       hcp:15.4 },
+  { name:'Carson Smith',     hcp:12.6 },
+  { name:'Josh McLeman',     hcp:17.3 },
+  { name:'Matt Holm',        hcp:15.4 },
+  { name:'Ed Weaver',        hcp:24.7 },
+  { name:'Justin Roberts',   hcp:15.0 },
+  { name:'Justin Estrella',  hcp:20.8 },
+  { name:'Devan Dhand',      hcp:21.6 },
+  { name:'Matt DiPano',      hcp:22.4 },
+  { name:'David Resmini',    hcp:28.5 },
+  { name:'Mitchell Rotondi', hcp:25.7 },
+  { name:'Jason Sulmonetti', hcp:30.3 },
+  { name:'Brendan Barry',    hcp:28.3 },
+  { name:'Trevor Ross',      hcp:37.3 },
+  { name:'Corey DaSilva',    hcp:35.0 },
+  { name:'David Allen',      hcp:23.0 },
+];
+const TEAM_INFO = {
+  donkeys:{ name:'Team DiPano', dot:'#C8A97E' },
+  brains: { name:'Team Dhand',  dot:'#B88FE0' },
+};
+function getPlayerHcp(name){ return ROSTER_BASE.find(p=>p.name===name)?.hcp ?? 20; }
+
+// ─── SCORING MODEL (verbatim subset of odds.html's engine — kept identical so
+// projections/odds here always agree with the Odds page) ───────────────────
+function makeRng(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randNorm(rng){
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function probToAmerican(p){
+  if (!(p > 0) || p >= 1) return null;
+  return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p);
+}
+function fmtAmerican(p){
+  if (p >= 1)   return '—';
+  if (!(p > 0)) return '+9999';
+  const a = probToAmerican(p);
+  return a > 0 ? `+${a}` : `${a}`;
+}
+
+const PLAYER_CALIB = {
+  'Jack Lyons':{avgDiff:19.9,sd:3.2,n:7},       'Carson Smith':{avgDiff:19.9,sd:6.7,n:7},
+  'Josh McLeman':{avgDiff:22.3,sd:4.2,n:7},     'Matt Holm':{avgDiff:19.5,sd:3.8,n:7},
+  'Ed Weaver':{avgDiff:25.3,sd:0.7,n:5},        'Justin Estrella':{avgDiff:27.2,sd:5.1,n:7},
+  'Devan Dhand':{avgDiff:29.9,sd:6.1,n:7},      'Matt DiPano':{avgDiff:31.9,sd:7.5,n:7},
+  'Mitchell Rotondi':{avgDiff:31.5,sd:4.6,n:7}, 'Jason Sulmonetti':{avgDiff:38.4,sd:7.9,n:5},
+  'Brendan Barry':{avgDiff:32.9,sd:3.9,n:7},    'Trevor Ross':{avgDiff:51.0,sd:15.3,n:5},
+};
+const MIN_DIFF_SD = 2.0, MAX_DIFF_SD = 8.0;
+const HOLE_SD_BASE = 0.40, HOLE_SD_SLOPE = 0.008, ROUNDING_VAR = 18 / 12;
+function gapReg(index){ return 1.69 + 0.216 * index; }
+function sdReg(index){  return Math.max(MIN_DIFF_SD, -1.13 + 0.305 * index); }
+function playerExpDiff(name, index){
+  const c = PLAYER_CALIB[name];
+  return c ? c.avgDiff : index + gapReg(index);
+}
+function playerDiffSd(name, index){
+  const c = PLAYER_CALIB[name];
+  const v = c ? c.sd : sdReg(index);
+  return Math.min(MAX_DIFF_SD, Math.max(MIN_DIFF_SD, v));
+}
+function expectedRoundGross(index, courseName, name){
+  const c = COURSES[courseName];
+  if (!c) return 90;
+  return c.rating + playerExpDiff(name, index) * (c.slope / 113);
+}
+function holeMeans(index, courseName, name){
+  const c = COURSES[courseName];
+  const overParBudget = expectedRoundGross(index, courseName, name) - c.par;
+  const weights = c.hcps.map(si => 19 - si);
+  const wSum = weights.reduce((s,w)=>s+w, 0);
+  return c.pars.map((par,i) => par + overParBudget * weights[i] / wSum);
+}
+function holeSd(index){ return HOLE_SD_BASE + HOLE_SD_SLOPE * index; }
+function targetRoundSd(index, courseName, name){
+  const c = COURSES[courseName];
+  return playerDiffSd(name, index) * (c.slope / 113);
+}
+function roundShockPerHole(index, courseName, name){
+  const hsd = holeSd(index);
+  const indepVar = 18 * hsd * hsd;
+  const target   = targetRoundSd(index, courseName, name) ** 2;
+  const shockVar = Math.max(0, target - indepVar - ROUNDING_VAR);
+  return Math.sqrt(shockVar) / 18;
+}
+function simHoleScore(rng, mean, sd, par, maxOver){
+  let s = Math.round(mean + sd * randNorm(rng));
+  if (s < par - 2) s = par - 2;
+  if (s < 1) s = 1;
+  if (s > par + maxOver) s = par + maxOver;
+  return s;
+}
+function simRoundGross(rng, index, courseName, name){
+  const means   = holeMeans(index, courseName, name);
+  const sd      = holeSd(index);
+  const c       = COURSES[courseName];
+  const offset  = roundShockPerHole(index, courseName, name) * randNorm(rng);
+  const maxOver = 6 + Math.floor(index / 12);
+  const out = new Array(18);
+  for (let i = 0; i < 18; i++) out[i] = simHoleScore(rng, means[i] + offset, sd, c.pars[i], maxOver);
+  return out;
+}
+function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+// Build sim-ready sub-matches from a pairing (verbatim from odds.html).
+function buildOddsMatches(p, rnd, courseName){
+  const out = [];
+  const idx = getPlayerHcp;
+  const mk = (format, worth, A, B, fmtLabel) => ({
+    format, courseName, round: rnd, worth,
+    formatLabel: fmtLabel || (format === 'singles' ? 'Singles' : 'Best Ball'),
+    sideA: { label: A.map(x=>x.name).join(' & '), players: A },
+    sideB: { label: B.map(x=>x.name).join(' & '), players: B },
+  });
+  const single = (d, b, worth, fmtLabel) =>
+    mk('singles', worth, [{ name:d, index:idx(d) }], [{ name:b, index:idx(b) }], fmtLabel);
+  const isSolo = p.matchType === 'solo' || (!p.donkey2 && p.brain1 && p.brain2);
+
+  if (rnd === 2){
+    const isCross = p.matchType === 'cross';
+    [ { d:p.donkey1, b:isCross?p.brain2:p.brain1 },
+      { d:p.donkey2, b:isCross?p.brain1:p.brain2 } ]
+      .filter(x => x.d && x.b)
+      .forEach(({d,b}) => out.push(single(d, b, isSolo?0.5:1)));
+    return out;
+  }
+  if (rnd === 1){
+    const A = [p.donkey1, p.donkey2].filter(Boolean).map(n => ({ name:n, index:idx(n) }));
+    const B = [p.brain1,  p.brain2 ].filter(Boolean).map(n => ({ name:n, index:idx(n) }));
+    if (A.length && B.length) out.push(mk('scramble', 1, A, B, 'Scramble'));
+    return out;
+  }
+  if (isSolo){
+    [p.brain1, p.brain2].filter(Boolean)
+      .forEach(b => out.push(single(p.donkey1, b, 0.5, 'Best Ball (Solo)')));
+    return out;
+  }
+  const players = [
+    { name:p.donkey1, side:'a' }, { name:p.donkey2, side:'a' },
+    { name:p.brain1,  side:'b' }, { name:p.brain2,  side:'b' },
+  ].filter(x => x.name);
+  const A = [], B = [];
+  players.forEach(pl => (pl.side==='a'?A:B).push({ name:pl.name, index:idx(pl.name) }));
+  out.push(mk('bestball', 1, A, B, 'Best Ball'));
+  return out;
+}
+// Scramble plays lower than plain best-of-pair (every player gets a look at the
+// best-of-the-rest's ball, not just a two-way pick), so the raw best-of-pair
+// projection runs high — knock it down a flat 10 strokes to land on the final number.
+const SCRAMBLE_PROJ_ADJUST = 10;
+
+// Choose a half-integer line whose cover probability is closest to 50% (fair line).
+function pickLine(lo, hi, probAtLine){
+  let best = lo + 0.5, bestGap = Infinity;
+  for (let h = lo + 0.5; h <= hi; h += 1){
+    const gap = Math.abs(probAtLine(h) - 0.5);
+    if (gap < bestGap){ bestGap = gap; best = h; }
+  }
+  return best;
+}
+function fmtSigned(n){ return n > 0 ? `+${n}` : `${n}`; }
+
+// Moneyline + spread + total + projected side score, all from one sim pass.
+// A "side" is one player for Singles but a pair for Scramble/Best Ball — in both
+// cases the projection is the combined score that actually counts for the format:
+// best-of-the-side per hole, summed. For a lone player that's just their own score,
+// so Singles projections stay per-player while Scramble/Best Ball become per-team.
+function simMatchup(m){
+  const rng = makeRng(hashStr(`${m.round}|${m.sideA.label}|${m.sideB.label}`));
+  let winA = 0, winB = 0, sumA = 0, sumB = 0;
+  const signed = new Int16Array(MATCH_SIMS);   // final holes-up from side A's view
+  for (let s = 0; s < MATCH_SIMS; s++){
+    const aG = m.sideA.players.map(pl => simRoundGross(rng, pl.index, m.courseName, pl.name));
+    const bG = m.sideB.players.map(pl => simRoundGross(rng, pl.index, m.courseName, pl.name));
+    let up = 0, teamA = 0, teamB = 0;
+    for (let i = 0; i < 18; i++){
+      let bestA = Infinity, bestB = Infinity;
+      for (const a of aG) if (a[i] < bestA) bestA = a[i];
+      for (const b of bG) if (b[i] < bestB) bestB = b[i];
+      teamA += bestA; teamB += bestB;
+      if (bestA < bestB) up++; else if (bestB < bestA) up--;
+    }
+    sumA += teamA; sumB += teamB;
+    signed[s] = up;
+    if (up > 0) winA++; else if (up < 0) winB++;
+  }
+  const decided = winA + winB;
+  const adjust = m.format === 'scramble' ? SCRAMBLE_PROJ_ADJUST : 0;
+  const ml = decided ? { a: winA/decided, b: winB/decided } : { a: 0.5, b: 0.5 };
+
+  const pGT = h => { let c = 0; for (let i = 0; i < MATCH_SIMS; i++) if (signed[i] > h) c++; return c/MATCH_SIMS; };
+  const hLine = pickLine(-10, 10, pGT);
+  const aCover = pGT(hLine);
+  const spread = { line: hLine, aLabel: fmtSigned(-hLine), bLabel: fmtSigned(hLine), aProb: aCover, bProb: 1 - aCover };
+
+  const pAbsGT = t => { let c = 0; for (let i = 0; i < MATCH_SIMS; i++) if (Math.abs(signed[i]) > t) c++; return c/MATCH_SIMS; };
+  const tLine = pickLine(0, 10, pAbsGT);
+  const over = pAbsGT(tLine);
+  const total = { line: tLine, overProb: over, underProb: 1 - over };
+
+  return {
+    ml, spread, total,
+    projA: sumA / MATCH_SIMS - adjust,
+    projB: sumB / MATCH_SIMS - adjust,
+  };
+}
+
+// ─── TEE TIME FORMAT ────────────────────────────────────────────────────────
+function fmtTeeTime(t){
+  if (!t) return '—';
+  const [h,m] = t.split(':').map(Number);
+  if (isNaN(h)) return t;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${String(m).padStart(2,'0')} ${ap}`;
+}
+
+// ─── DATA LOAD ──────────────────────────────────────────────────────────────
+let pairings = [];
+let activeRound = pickDefaultRound();
+let lastUpdated = null;
+
+function pickDefaultRound(){
+  const now = new Date();
+  for (const r of [1,2,3]){
+    const end = new Date(ROUND_DATES[r].getTime() + 24*3600*1000);
+    if (now < end) return r;
+  }
+  return 3;
+}
+async function fetchSheetData(){
+  if (!APPS_SCRIPT_URL) return null;
+  try { const res = await fetch(APPS_SCRIPT_URL); return await res.json(); }
+  catch(e){ return null; }
+}
+function parseSheetData(data){
+  if (!data || !data.Pairings) return;
+  pairings = data.Pairings.map(r => ({
+    round:     parseInt(r.Round)||0,
+    match:     parseInt(r.Match)||0,
+    donkey1:   r.Donkey1||'', donkey2: r.Donkey2||'',
+    brain1:    r.Brain1||'',  brain2:  r.Brain2||'',
+    teeTime:   r.TeeTime||'',
+    matchType: r.MatchType||'standard',
+  }));
+}
+function buildRoundMatchups(r){
+  const courseName = ROUND_META[r].course;
+  return pairings
+    .filter(p => p.round === r && (p.donkey1 || p.donkey2 || p.brain1 || p.brain2))
+    .flatMap(p => buildOddsMatches(p, r, courseName).map(m => ({ ...m, teeTime:teeTimeFor(r, (p.match||1)-1), matchNum:p.match })))
+    .sort((a,b) => (a.teeTime||'99:99').localeCompare(b.teeTime||'99:99') || a.matchNum-b.matchNum);
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────────────────
+function renderDayTabs(){
+  document.getElementById('dayTabs').innerHTML = [1,2,3].map(r => {
+    const m = ROUND_META[r];
+    return `<button class="day-tab r${r} ${r===activeRound?'active':''}" onclick="setRound(${r})">
+      <span class="dt-label">${m.label} · ${m.formatLabel}</span>
+      <span class="dt-date">${m.date}</span>
+      <span class="dt-fmt">${m.course}</span>
+    </button>`;
+  }).join('');
+}
+function renderCoursePanel(r, matches){
+  const meta = ROUND_META[r];
+  const c = COURSES[meta.course];
+  const yards = COURSE_YARDS[meta.course];
+  const pts = matches.reduce((s,m) => s+m.worth, 0);
+  const teeTimes = matches.map(m=>m.teeTime).filter(Boolean).sort();
+  const span = teeTimes.length ? `${fmtTeeTime(teeTimes[0])} – ${fmtTeeTime(teeTimes[teeTimes.length-1])}` : '—';
+  document.getElementById('coursePanel').innerHTML = `
+    <div class="cp-card">
+      <div class="cp-label">${meta.day} · Course</div>
+      <div class="cp-course-name">${meta.course}</div>
+      <div class="cp-stats">
+        <div class="cp-stat"><span class="v">${c.par}</span><span class="l">Par</span></div>
+        <div class="cp-stat"><span class="v">${yards.toLocaleString()}</span><span class="l">Yards</span></div>
+        <div class="cp-stat"><span class="v">${c.rating.toFixed(1)}</span><span class="l">Rating</span></div>
+        <div class="cp-stat"><span class="v">${c.slope}</span><span class="l">Slope</span></div>
+      </div>
+    </div>
+    <div class="cp-card">
+      <div class="cp-label">Format</div>
+      <div class="cp-format-name" style="color:${meta.color}">${meta.formatLabel}</div>
+      <div class="cp-format-desc">${FORMAT_DESC[meta.format]}</div>
+    </div>
+    <div class="cp-card meta">
+      <div class="cp-mini"><span class="l">Tee Times</span><span class="v">${span}</span></div>
+      <div class="cp-mini"><span class="l">Matches</span><span class="v">${matches.length || '—'}</span></div>
+      <div class="cp-mini"><span class="l">Points Up</span><span class="v">${matches.length ? pts : '—'}</span></div>
+      <div class="cp-legend">Proj = simulated gross score — combined team score for Scramble/Best Ball, individual for Singles · odds are fair (no vig) moneyline from ${MATCH_SIMS.toLocaleString()} simulations per match.</div>
+    </div>
+  `;
+}
+// ─── ODDS STAT CYCLE (Moneyline -> Spread -> Total -> ...) ─────────────────
+// Every tile's odds chip cycles through markets in lockstep every 5s, reusing
+// the already-simulated match data — no re-simulation, just a display swap.
+const STAT_TAGS = ['ML', 'SPREAD', 'O/U'];
+let statIndex = 0;
+function statFor(sim, sideKey){
+  if (statIndex === 0) return { tag:'ML', val: fmtAmerican(sideKey==='a' ? sim.ml.a : sim.ml.b) };
+  if (statIndex === 1) return { tag:'SPREAD', val: sideKey==='a' ? sim.spread.aLabel : sim.spread.bLabel };
+  return { tag:'O/U', val: `${sideKey==='a'?'O':'U'} ${sim.total.line}` };
+}
+function sideBlock(side, teamKey, proj, stat, isFav){
+  const info = TEAM_INFO[teamKey];
+  const rows = side.players.map(pl => `<div class="mu-player"><span class="nm">${pl.name}</span></div>`).join('');
+  return `<div class="mu-side">
+    <span class="team-dot" style="background:${info.dot}"></span>
+    <div class="mu-players">${rows}</div>
+    <div class="mu-side-right">
+      <span class="mu-proj">Proj ${Math.round(proj)}</span>
+      <div class="mu-stat-wrap">
+        <span class="mu-stat-tag">${stat.tag}</span>
+        <span class="mu-odds ${isFav?'fav':''}">${stat.val}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function matchupCard(m){
+  const sim = m.sim;
+  const aFav = sim.ml.a >= sim.ml.b;
+  const ptsTxt = m.worth === 0.5 ? '½ PT' : `${m.worth} PT`;
+  return `<div class="mu-card">
+    <div class="mu-head">
+      <span class="mu-tee">${fmtTeeTime(m.teeTime)}</span>
+      <span class="mu-fmt">${m.formatLabel} · ${ptsTxt}</span>
+    </div>
+    <div class="mu-body">
+      ${sideBlock(m.sideA, 'donkeys', sim.projA, statFor(sim,'a'), aFav)}
+      <div class="mu-vs">vs</div>
+      ${sideBlock(m.sideB, 'brains', sim.projB, statFor(sim,'b'), !aFav)}
+    </div>
+  </div>`;
+}
+function renderMatchups(r, matches){
+  const el = document.getElementById('matchupsGrid');
+  el.classList.toggle('dense', matches.length > 4);
+  if (!matches.length){
+    el.style.gridTemplateColumns = '';
+    el.style.gridTemplateRows = '';
+    el.innerHTML = `<div class="mu-waiting">
+      <h3>Pairings not set yet</h3>
+      <p>Once ${ROUND_META[r].label} pairings are locked in Match Play, tee times, matchups, and odds will appear here.</p>
+    </div>`;
+    return;
+  }
+  const cols = matches.length <= 4 ? 2 : 4;
+  const rows = Math.ceil(matches.length / cols);
+  el.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  el.style.gridTemplateRows = `repeat(${rows},1fr)`;
+  el.innerHTML = matches.map(matchupCard).join('');
+}
+function updateStatus(){
+  const el = document.getElementById('updatedNote');
+  if (!lastUpdated){ el.textContent = 'Loading…'; return; }
+  el.textContent = `Updated ${lastUpdated.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+}
+let currentMatches = [];
+function renderAll(){
+  renderDayTabs();
+  currentMatches = buildRoundMatchups(activeRound);
+  currentMatches.forEach(m => { if (!m.sim) m.sim = simMatchup(m); });
+  renderCoursePanel(activeRound, currentMatches);
+  renderMatchups(activeRound, currentMatches);
+  updateStatus();
+}
+window.setRound = function(r){ activeRound = r; renderAll(); };
+setInterval(() => {
+  statIndex = (statIndex + 1) % STAT_TAGS.length;
+  renderMatchups(activeRound, currentMatches);
+}, 5000);
+
+async function loadAll(){
+  const data = await fetchSheetData();
+  parseSheetData(data);
+  lastUpdated = new Date();
+  renderAll();
+}
+loadAll();
+setInterval(loadAll, POLL_MS);
+</script>
+<script>
+function toggleNav(btn){
+  btn.classList.toggle('open');
+  document.querySelector('.nav-links').classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('nav')){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  }
+});
+document.querySelectorAll('.nav-links a').forEach(function(a){
+  a.addEventListener('click',function(){
+    document.querySelector('.hamburger')?.classList.remove('open');
+    document.querySelector('.nav-links')?.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
