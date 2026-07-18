@@ -17,13 +17,13 @@ const TAB_CONFIG = {
   Scores_R2: {
     headers:     ['Name', ...HOLE_HEADERS],
     idCol:       'Name',
-    description: "R2 · Owl's Nest · Saturday Best Ball",
+    description: "R2 · Owl's Nest · Saturday Singles",
     color:       '#F4A7C3',  // pink
   },
   Scores_R3: {
     headers:     ['Name', ...HOLE_HEADERS],
     idCol:       'Name',
-    description: "R3 · Owl's Nest · Sunday Individual",
+    description: "R3 · Owl's Nest - Vineyard Course · Sunday Best Ball",
     color:       '#B88FE0',  // lavender
   },
   Scramble: {
@@ -59,9 +59,9 @@ const COURSE_DATA = {
     slope: 133, rating: 73.0,
   },
   Scores_R3: {
-    name:  "Owl's Nest",
-    pars:  [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
-    slope: 133, rating: 73.0,
+    name:  "Owl's Nest - Vineyard Course",
+    pars:  [4,4,4,3,5,4,3,5,4, 3,3,4,4,4,4,4,4,4],
+    slope: 115, rating: 66.6,
   },
 };
 

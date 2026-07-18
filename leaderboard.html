@@ -230,10 +230,11 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-8iKgikPO7K26
 const COURSES = {
   'The Jack':   { slope:117, rating:68.6, par:70 },
   'Owl\'s Nest':{ slope:133, rating:73.0, par:72 },
+  'Owl\'s Nest - Vineyard': { slope:115, rating:66.6, par:70 },
 };
 
-// R1 = The Jack scramble (Fri), R2 = Owl's Nest individual (Sat), R3 = Owl's Nest individual (Sun)
-const ROUND_COURSE = { '2':'Owl\'s Nest', '3':'Owl\'s Nest' };
+// R1 = The Jack scramble (Fri), R2 = Owl's Nest singles (Sat), R3 = Owl's Nest - Vineyard best ball (Sun)
+const ROUND_COURSE = { '2':'Owl\'s Nest', '3':'Owl\'s Nest - Vineyard' };
 
 // ─── HISTORY (2023-2025) ───────────────────────────────────────────────────
 const HISTORY = [
@@ -445,7 +446,7 @@ function buildIndividualRows(r2Rows, r3Rows) {
     const r2gross = sumHoles(r2data);
     const r3gross = sumHoles(r3data);
     const r2course = "Owl's Nest";
-    const r3course = "Owl's Nest";
+    const r3course = "Owl's Nest - Vineyard";
     const r2phcp = playingHcp(hcpIdx, r2course);
     const r3phcp = playingHcp(hcpIdx, r3course);
     const r2net = r2gross !== null ? r2gross - r2phcp : null;
@@ -586,7 +587,7 @@ function renderIndividualTable(containerId, rows, type, round) {
     return;
   }
   const r2Label = type==='net' ? 'R2 Net (Owls)' : 'R2 Gross (Owls)';
-  const r3Label = type==='net' ? 'R3 Net (Owls)' : 'R3 Gross (Owls)';
+  const r3Label = type==='net' ? 'R3 Net (Vineyard)' : 'R3 Gross (Vineyard)';
   const totalLabel = round==='all' ? 'Total' : (round==='2' ? r2Label : r3Label);
   const hcpCol = type==='net' ? `<th class="num">HCP</th>` : '';
   container.innerHTML = `<div class="table-scroll"><table class="lb-table"><thead><tr>
@@ -625,11 +626,11 @@ function renderIndividualTable(containerId, rows, type, round) {
 function renderRoundSelector(containerId, type) {
   const el = document.getElementById(containerId);
   const activeClass = type==='net' ? 'net-active' : 'active';
-  // Individual rounds only: R2 (Owls Sat), R3 (Owls Sun), All
+  // Individual rounds only: R2 (Owls Sat), R3 (Vineyard Sun), All
   el.innerHTML = [
     { key:'all', label:'All Rounds' },
     { key:'2',   label:'R2 · Owl\'s Nest (Sat)' },
-    { key:'3',   label:'R3 · Owl\'s Nest (Sun)' },
+    { key:'3',   label:'R3 · Vineyard (Sun)' },
   ].map(r => `<button class="round-btn ${activeRound===r.key?activeClass:''}" onclick="setRound('${r.key}','${type}')">${r.label}</button>`).join('');
 }
 
@@ -688,7 +689,7 @@ function renderTeams(individualRows, scramblePairs) {
         <div class="team-round-box ${r3netTotal!==null?'has-score':''}">
           <div class="trb-score">${fmt(r3netTotal)}</div>
           <div class="trb-label">R3 Net</div>
-          <div class="trb-sub">Owl's Nest (Sun)</div>
+          <div class="trb-sub">Vineyard (Sun)</div>
         </div>
       </div>
       <div class="team-player-list">

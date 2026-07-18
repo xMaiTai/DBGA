@@ -293,16 +293,16 @@
         <div class="round-card r2" onclick="selectRound('R2',this)">
           <span class="rc-badge">R2</span>
           <div class="rc-info">
-            <div class="rc-name">Best Ball</div>
-            <div class="rc-sub">Saturday &middot; Owl's Nest &middot; Individual scores</div>
+            <div class="rc-name">Singles</div>
+            <div class="rc-sub">Saturday &middot; Owl's Nest - Resort &middot; Individual scores</div>
           </div>
           <span class="rc-check">&#x2713;</span>
         </div>
         <div class="round-card r3" onclick="selectRound('R3',this)">
           <span class="rc-badge">R3</span>
           <div class="rc-info">
-            <div class="rc-name">Singles</div>
-            <div class="rc-sub">Sunday &middot; Owl's Nest &middot; Individual scores</div>
+            <div class="rc-name">Best Ball</div>
+            <div class="rc-sub">Sunday &middot; Owl's Nest - Vineyard &middot; Individual scores</div>
           </div>
           <span class="rc-check">&#x2713;</span>
         </div>
@@ -414,9 +414,9 @@ const COURSES = {
     hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14],
   },
   R3: {
-    name: "Owl's Nest",
-    pars: [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
-    hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14],
+    name: "Owl's Nest - Vineyard Course",
+    pars: [4,4,4,3,5,4,3,5,4, 3,3,4,4,4,4,4,4,4],
+    hcps: [15,7,9,11,1,17,13,5,3, 14,18,6,10,12,16,8,2,4],
   },
 };
 
@@ -1137,7 +1137,7 @@ function renderSummary() {
   const el = document.getElementById('summaryContent');
   const course = COURSES[selectedRound];
   const roundColors = { R1:'var(--sky)', R2:'var(--pink)', R3:'var(--lavender)' };
-  const roundNames  = { R1:'R1 · Scramble', R2:'R2 · Best Ball', R3:'R3 · Singles' };
+  const roundNames  = { R1:'R1 · Scramble', R2:'R2 · Singles', R3:'R3 · Best Ball' };
   const color = roundColors[selectedRound];
 
   function cellClass(score, par) {

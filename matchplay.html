@@ -342,6 +342,9 @@ const COURSES = {
   "Owl's Nest": { slope:133, rating:73.0, par:72,
     pars: [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
     hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14] },
+  "Owl's Nest - Vineyard": { slope:115, rating:66.6, par:70,
+    pars: [4,4,4,3,5,4,3,5,4, 3,3,4,4,4,4,4,4,4],
+    hcps: [15,7,9,11,1,17,13,5,3, 14,18,6,10,12,16,8,2,4] },
 };
 
 // ─── ROSTER WITH HCP INDEX ────────────────────────────────────────────────
@@ -601,7 +604,7 @@ function calcAllPoints() {
   const result = { donkeys:0, brains:0, byRound:[] };
 
   [1,2,3].forEach(rnd => {
-    const courseName = rnd === 1 ? 'The Jack' : "Owl's Nest";
+    const courseName = rnd === 1 ? 'The Jack' : rnd === 3 ? "Owl's Nest - Vineyard" : "Owl's Nest";
     const rndPairings = pairings.filter(p => p.round === rnd);
     const rndResult = { r:rnd, donkeys:0, brains:0, matches:[] };
 
@@ -624,11 +627,11 @@ function calcAllPoints() {
 }
 
 function buildMatchesFromPairing(p, rnd, courseName) {
-  const format = rnd===1 ? 'scramble' : rnd===2 ? 'bestball' : 'singles';
+  const format = rnd===1 ? 'scramble' : rnd===2 ? 'singles' : 'bestball';
   const isSolo = p.matchType === 'solo' || (!p.donkey2 && p.brain1 && p.brain2);
   const results = [];
 
-  if (rnd === 3) {
+  if (rnd === 2) {
     // Two separate singles matches within the foursome — cross order swaps opponents
     const isCross = p.matchType === 'cross';
     const pairs = [
@@ -639,8 +642,8 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     pairs.forEach(({ dName, bName, worth }) => {
       const dHcp = getPlayerHcp(dName), bHcp = getPlayerHcp(bName);
       const { p1:dPlay, p2:bPlay } = singlesHcps(dHcp, bHcp, courseName);
-      const dScores = [scores.R3[dName] || Array(18).fill(null)];
-      const bScores = [scores.R3[bName] || Array(18).fill(null)];
+      const dScores = [scores.R2[dName] || Array(18).fill(null)];
+      const bScores = [scores.R2[bName] || Array(18).fill(null)];
       const calc = calcMatch(dScores, bScores, [dPlay], [bPlay], courseName, 'singles');
       const pts = matchResultToPoints(calc.winner, worth);
       results.push({ label:`${dName} vs ${bName}`, format:'Singles', calc, pts, worth,
@@ -664,7 +667,7 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     return results;
   }
 
-  // Round 2 best ball
+  // Round 3 best ball
   if (isSolo) {
     // Solo Donkey plays two individual matches vs each Brain (each worth 0.5)
     const dName = p.donkey1;
@@ -672,8 +675,8 @@ function buildMatchesFromPairing(p, rnd, courseName) {
     [p.brain1, p.brain2].filter(Boolean).forEach(bName => {
       const bHcp = getPlayerHcp(bName);
       const { p1:dPlay, p2:bPlay } = singlesHcps(dHcp, bHcp, courseName);
-      const dScores = [scores.R2[dName] || Array(18).fill(null)];
-      const bScores = [scores.R2[bName] || Array(18).fill(null)];
+      const dScores = [scores.R3[dName] || Array(18).fill(null)];
+      const bScores = [scores.R3[bName] || Array(18).fill(null)];
       const calc = calcMatch(dScores, bScores, [dPlay], [bPlay], courseName, 'singles');
       const pts = matchResultToPoints(calc.winner, 0.5);
       results.push({ label:`${dName} vs ${bName}`, format:'Best Ball (Solo)', calc, pts, worth:0.5,
@@ -692,9 +695,9 @@ function buildMatchesFromPairing(p, rnd, courseName) {
   const dHcps = allHcps.filter((_,i)=>players[i]?.side==='d');
   const bHcps = allHcps.filter((_,i)=>players[i]?.side==='b');
   const dScores = [p.donkey1,p.donkey2].filter(Boolean)
-    .map(n => scores.R2[n] || Array(18).fill(null));
+    .map(n => scores.R3[n] || Array(18).fill(null));
   const bScores = [p.brain1,p.brain2].filter(Boolean)
-    .map(n => scores.R2[n] || Array(18).fill(null));
+    .map(n => scores.R3[n] || Array(18).fill(null));
   const calc = calcMatch(dScores, bScores, dHcps, bHcps, courseName, 'bestball');
   const pts = matchResultToPoints(calc.winner, 1);
   const dLabel = [p.donkey1,p.donkey2].filter(Boolean).join(' & ');
@@ -741,7 +744,7 @@ function renderStandings() {
         <div class="sc-pts-label">Points · Need ${ptsFmts(dNeeds)} more to win</div>
         <div class="sc-rounds">
           ${pts.byRound.map(r => `<div class="sc-round-row">
-            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Best Ball':'Singles'}</span>
+            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Singles':'Best Ball'}</span>
             <span class="sc-round-pts" style="color:var(--donkey)">${ptsFmts(r.donkeys)}</span>
           </div>`).join('')}
         </div>
@@ -752,7 +755,7 @@ function renderStandings() {
         <div class="sc-pts-label">Points · Need ${ptsFmts(bNeeds)} more to win</div>
         <div class="sc-rounds">
           ${pts.byRound.map(r => `<div class="sc-round-row">
-            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Best Ball':'Singles'}</span>
+            <span class="sc-round-label">R${r.r} · ${r.r===1?'Scramble':r.r===2?'Singles':'Best Ball'}</span>
             <span class="sc-round-pts" style="color:var(--lavender)">${ptsFmts(r.brains)}</span>
           </div>`).join('')}
         </div>
@@ -829,7 +832,7 @@ function renderMatchScorecard(donkeys, brains, dRawScores, bRawScores, courseNam
     cards.push(playerCard(donkeys.join(' &amp; '), dRawScores?.[0], 'var(--donkey)'));
     cards.push(playerCard(brains.join(' &amp; '),  bRawScores?.[0], 'var(--lavender)'));
   } else {
-    // R2 best ball / R3 singles: one card per player
+    // R2 singles / R3 best ball: one card per player
     donkeys.forEach((name, i) => cards.push(playerCard(name, dRawScores?.[i], 'var(--donkey)')));
     brains.forEach((name, i)  => cards.push(playerCard(name, bRawScores?.[i], 'var(--lavender)')));
   }
@@ -840,7 +843,7 @@ function renderMatchScorecard(donkeys, brains, dRawScores, bRawScores, courseNam
 function renderRoundMatchTable(rndData) {
   const ptsFmts = v => Number.isInteger(v) ? v : v.toFixed(1);
   const badgeClass = `r${rndData.r}`;
-  const formats = { 1:'Scramble · The Jack',2:'Best Ball · Owl\'s Nest',3:'Singles · Owl\'s Nest' };
+  const formats = { 1:'Scramble · The Jack',2:'Singles · Owl\'s Nest',3:'Best Ball · Owl\'s Nest - Vineyard' };
   if (!rndData.matches.length) {
     return `<div class="round-section">
       <div class="round-header">
@@ -892,7 +895,7 @@ function renderRoundMatchTable(rndData) {
     <div class="round-header">
       <span class="round-badge ${badgeClass}">Round ${rndData.r}</span>
       <span class="round-title">${formats[rndData.r]}</span>
-      <span class="round-pts-avail">${ptsFmts(rndData.donkeys + rndData.brains)} / ${rndData.r===3?8:4} pts played</span>
+      <span class="round-pts-avail">${ptsFmts(rndData.donkeys + rndData.brains)} / ${rndData.r===2?8:4} pts played</span>
     </div>
     <div style="background:var(--card-bg);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.08);overflow:hidden">
       <div class="table-scroll">
@@ -909,7 +912,7 @@ function renderRoundMatchTable(rndData) {
 function renderRoundDetail(rnd) {
   const elId = `r${rnd}Content`;
   const el = document.getElementById(elId);
-  const courseName = rnd===1 ? 'The Jack' : "Owl's Nest";
+  const courseName = rnd===1 ? 'The Jack' : rnd===3 ? "Owl's Nest - Vineyard" : "Owl's Nest";
   const rndPairings = pairings.filter(p=>p.round===rnd);
 
   if (!rndPairings.length) {
@@ -922,7 +925,7 @@ function renderRoundDetail(rnd) {
   if (Object.keys(scores[rndKey]).length === 0) {
     let n = 1;
     const rows = [];
-    if (rnd === 3) {
+    if (rnd === 2) {
       rndPairings.forEach(p => {
         const cross = p.matchType === 'cross';
         if (p.donkey1 && p.brain1) { rows.push([p.donkey1, cross ? p.brain2 : p.brain1]); }
@@ -937,7 +940,7 @@ function renderRoundDetail(rnd) {
         }
       });
     }
-    const formatLabel = rnd===1 ? 'Scramble' : rnd===2 ? 'Best Ball' : 'Singles';
+    const formatLabel = rnd===1 ? 'Scramble' : rnd===2 ? 'Singles' : 'Best Ball';
     el.innerHTML = `<div class="waiting-state">
       <h3>Pairings Set · Awaiting Play</h3>
       <p>${formatLabel} matchups will appear once scores are entered.</p>
@@ -1114,18 +1117,18 @@ function initRoundFoursomes(rnd) {
       donkey1:p.donkey1||'', donkey2:p.donkey2||'',
       brain1:p.brain1||'',   brain2:p.brain2||'',
       teeTime:p.teeTime||'',
-      ...(rnd===3 ? { singlesOrder: p.matchType==='cross' ? 'cross' : 'standard' } : {}),
+      ...(rnd===2 ? { singlesOrder: p.matchType==='cross' ? 'cross' : 'standard' } : {}),
     }));
   } else {
     builderFoursomes[rnd] = [{ donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:'',
-      ...(rnd===3 ? { singlesOrder:'standard' } : {}) }];
+      ...(rnd===2 ? { singlesOrder:'standard' } : {}) }];
   }
 }
 
 const ROUND_LABELS = {
-  1: { label:'R1 \u00b7 Scramble',  course:'The Jack \u00b7 Friday',     color:'var(--sky)'      },
-  2: { label:'R2 \u00b7 Best Ball', course:"Owl's Nest \u00b7 Saturday", color:'var(--pink)'     },
-  3: { label:'R3 \u00b7 Singles',   course:"Owl's Nest \u00b7 Sunday",   color:'var(--lavender)' },
+  1: { label:'R1 \u00b7 Scramble',  course:'The Jack \u00b7 Friday',              color:'var(--sky)'      },
+  2: { label:'R2 \u00b7 Singles',   course:"Owl's Nest \u00b7 Saturday",          color:'var(--pink)'     },
+  3: { label:'R3 \u00b7 Best Ball', course:"Owl's Nest - Vineyard \u00b7 Sunday", color:'var(--lavender)' },
 };
 
 function renderLockedPairings(el) {
@@ -1214,8 +1217,8 @@ function renderPairings() {
       const dNames = [p.donkey1, p.donkey2].filter(Boolean);
       const bNames = [p.brain1,  p.brain2 ].filter(Boolean);
       const tee = p.teeTime ? `<span style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.3);margin-left:auto">${p.teeTime}</span>` : '';
-      // For R3, show the two individual 1v1 matchups
-      const singlesHtml = rnd === 3 ? (() => {
+      // For R2, show the two individual 1v1 matchups
+      const singlesHtml = rnd === 2 ? (() => {
         const cross = p.matchType === 'cross';
         const m1 = [p.donkey1, cross ? p.brain2 : p.brain1].filter(Boolean);
         const m2 = [p.donkey2, cross ? p.brain1 : p.brain2].filter(Boolean);
@@ -1371,7 +1374,7 @@ function renderPairings() {
               </div>
             </div>
           </div>
-          ${activeBuilderRound === 3 ? (() => {
+          ${activeBuilderRound === 2 ? (() => {
             const cross = f.singlesOrder === 'cross';
             const d1 = f.donkey1, d2 = f.donkey2, b1 = f.brain1, b2 = f.brain2;
             const hasPlayers = d1 || d2 || b1 || b2;
@@ -1483,7 +1486,7 @@ window.removeFromSlot = function(fIdx, slotKey) {
 
 window.addFoursome = function() {
   const newF = { donkey1:'', donkey2:'', brain1:'', brain2:'', teeTime:'' };
-  if (activeBuilderRound === 3) newF.singlesOrder = 'standard';
+  if (activeBuilderRound === 2) newF.singlesOrder = 'standard';
   getActiveFoursomes().push(newF);
   renderPairings();
 };
@@ -1539,7 +1542,7 @@ window.saveRoundPairings = async function(rnd) {
   const rows = [];
   (builderFoursomes[rnd]||[]).forEach((f,i) => {
     const isSolo = (!f.donkey2 && (f.brain1||f.brain2)) || (!f.brain2 && (f.donkey1||f.donkey2));
-    const matchType = isSolo ? 'solo' : (rnd===3 ? (f.singlesOrder||'standard') : 'standard');
+    const matchType = isSolo ? 'solo' : (rnd===2 ? (f.singlesOrder||'standard') : 'standard');
     rows.push([rnd, i+1, f.donkey1||'', f.donkey2||'', f.brain1||'', f.brain2||'', f.teeTime||'', matchType]);
   });
 
@@ -1556,7 +1559,7 @@ window.saveRoundPairings = async function(rnd) {
     pairings = pairings.filter(p => p.round !== rnd);
     (builderFoursomes[rnd] || []).forEach((f, i) => {
       const isSolo = (!f.donkey2 && (f.brain1 || f.brain2)) || (!f.brain2 && (f.donkey1 || f.donkey2));
-      const matchType = isSolo ? 'solo' : (rnd === 3 ? (f.singlesOrder || 'standard') : 'standard');
+      const matchType = isSolo ? 'solo' : (rnd === 2 ? (f.singlesOrder || 'standard') : 'standard');
       pairings.push({
         round:     rnd,
         match:     i + 1,

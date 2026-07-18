@@ -45,6 +45,7 @@
     .course-tab{font-family:'Boogaloo',cursive;font-size:1.2rem;letter-spacing:1px;padding:12px 30px;border-radius:50px;border:2px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.25s}
     .course-tab.active-owls{background:rgba(110,220,196,0.12);color:var(--mint);border-color:rgba(110,220,196,0.4)}
     .course-tab.active-jack{background:rgba(184,143,224,0.12);color:var(--lavender);border-color:rgba(184,143,224,0.4)}
+    .course-tab.active-vineyard{background:rgba(255,225,86,0.12);color:var(--yellow);border-color:rgba(255,225,86,0.4)}
     .course-tab:hover{transform:translateY(-2px)}
 
     .course-panel{display:none;position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 24px 80px}
@@ -53,9 +54,11 @@
     .course-hero{background:var(--card-bg);border-radius:var(--radius);padding:28px 32px;margin-bottom:24px;border:1px solid rgba(255,255,255,0.08);display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
     .course-hero.owls{border-top:3px solid var(--mint)}
     .course-hero.jack{border-top:3px solid var(--lavender)}
+    .course-hero.vineyard{border-top:3px solid var(--yellow)}
     .course-title{font-family:'Boogaloo',cursive;font-size:2.4rem;letter-spacing:2px;line-height:1.1;margin-bottom:6px}
     .course-hero.owls .course-title{color:var(--mint)}
     .course-hero.jack .course-title{color:var(--lavender)}
+    .course-hero.vineyard .course-title{color:var(--yellow)}
     .course-location{font-size:0.82rem;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
     .course-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
     .stat-pill{background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.07)}
@@ -146,6 +149,7 @@
 <div class="course-tabs">
   <button class="course-tab active-owls" onclick="showCourse('owls')">Owl's Nest</button>
   <button class="course-tab" onclick="showCourse('jack')">The Jack</button>
+  <button class="course-tab" onclick="showCourse('vineyard')">Vineyard</button>
 </div>
 
 <!-- ═══ OWL'S NEST ═══ -->
@@ -277,6 +281,44 @@
 
 </div>
 
+<!-- ═══ VINEYARD ═══ -->
+<div class="course-panel" id="panel-vineyard">
+
+  <div class="course-hero vineyard">
+    <div>
+      <div class="course-title">Owl's Nest &mdash; Vineyard Course</div>
+      <div class="course-location">Campton / Thornton, NH &nbsp;&middot;&nbsp; White Mountain National Forest</div>
+      <div class="course-stats">
+        <div class="stat-pill"><div class="stat-val">70</div><div class="stat-lbl">Par</div></div>
+        <div class="stat-pill"><div class="stat-val">5,629</div><div class="stat-lbl">Yards (White)</div></div>
+        <div class="stat-pill"><div class="stat-val">66.6</div><div class="stat-lbl">Rating</div></div>
+        <div class="stat-pill"><div class="stat-val">115</div><div class="stat-lbl">Slope</div></div>
+      </div>
+      <p class="course-desc">
+        The <strong>Vineyard Course</strong> is the shorter, scoreable sibling to Owl's Nest's championship layout &mdash; same resort, same White Mountains scenery, a friendlier card. R3 heads here for Best Ball Sunday.
+      </p>
+    </div>
+    <div>
+      <div class="course-map">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1500!2d-71.6546538!3d43.8710175!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cb3e72d4ec8e7a5%3A0x1!2sOwl's%20Nest%20Resort%20%26%20Golf%20Club!5e1!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-label">
+    <h3 style="color:var(--yellow)">Scorecard</h3>
+    <div class="tee-selector" id="vineyard-tee-selector">
+      <button class="tee-btn tee-white active" onclick="setTee('vineyard','white',this)">White</button>
+    </div>
+  </div>
+
+  <div class="scorecard-wrap">
+    <table class="scorecard" id="vineyard-scorecard"></table>
+  </div>
+  <p style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.35);margin:-14px 0 24px">Only White tee yardage available for this card &mdash; other tees TBD.</p>
+
+</div>
+
 <script>
 const OWLS = {
   holes: [
@@ -306,17 +348,28 @@ const JACK = {
   }
 };
 
-const activeTee = {owls:'white', jack:'white'};
+const VINEYARD = {
+  holes: [
+    [1,4,15],[2,4,7],[3,4,9],[4,3,11],[5,5,1],[6,4,17],[7,3,13],[8,5,5],[9,4,3],
+    [10,3,14],[11,3,18],[12,4,6],[13,4,10],[14,4,12],[15,4,16],[16,4,8],[17,4,2],[18,4,4],
+  ],
+  tees: {
+    white: [325,322,344,168,449,316,164,486,320, 145,141,351,339,334,300,356,416,353],
+  }
+};
+
+const activeTee = {owls:'white', jack:'white', vineyard:'white'};
 
 function sum(arr){ return arr.reduce((a,b)=>a+b,0); }
 function parClass(p){ return p===3?'par-3':p===5?'par-5':'par-4'; }
+function courseData(course){ return course==='owls' ? OWLS : course==='jack' ? JACK : VINEYARD; }
 
 function renderScorecard(course) {
-  const data   = course==='owls' ? OWLS : JACK;
+  const data   = courseData(course);
   const tee    = activeTee[course];
   const yds    = data.tees[tee];
   const holes  = data.holes;
-  const color  = course==='owls' ? 'var(--mint)' : 'var(--lavender)';
+  const color  = course==='owls' ? 'var(--mint)' : course==='jack' ? 'var(--lavender)' : 'var(--yellow)';
   const front9 = holes.slice(0,9);
   const back9  = holes.slice(9);
   const outYds = sum(yds.slice(0,9));
@@ -379,11 +432,13 @@ window.showCourse = function(course) {
     t.className = 'course-tab';
     if(course==='owls' && t.textContent.includes("Owl")) t.classList.add('active-owls');
     if(course==='jack' && t.textContent.includes("Jack")) t.classList.add('active-jack');
+    if(course==='vineyard' && t.textContent.includes("Vineyard")) t.classList.add('active-vineyard');
   });
 };
 
 renderScorecard('owls');
 renderScorecard('jack');
+renderScorecard('vineyard');
 </script>
 <script>
 function toggleNav(btn){

@@ -197,13 +197,16 @@ const COURSES = {
   "Owl's Nest": { slope:133, rating:73.0, par:72,
     pars: [4,4,4,5,3,4,3,4,5, 3,4,4,5,3,4,4,5,4],
     hcps: [13,7,1,3,17,11,9,15,5, 18,12,4,2,16,10,6,8,14] },
+  "Owl's Nest - Vineyard": { slope:115, rating:66.6, par:70,
+    pars: [4,4,4,3,5,4,3,5,4, 3,3,4,4,4,4,4,4,4],
+    hcps: [15,7,9,11,1,17,13,5,3, 14,18,6,10,12,16,8,2,4] },
 };
 
 // ─── ROUND / FORMAT META ───────────────────────────────────────────────────
 const ROUND_META = {
-  1: { label:'R1', format:'scramble', formatLabel:'Scramble',  course:'The Jack',   day:'Friday',   color:'var(--sky)'      },
-  2: { label:'R2', format:'bestball', formatLabel:'Best Ball', course:"Owl's Nest", day:'Saturday', color:'var(--pink)'     },
-  3: { label:'R3', format:'singles',  formatLabel:'Singles',   course:"Owl's Nest", day:'Sunday',   color:'var(--lavender)' },
+  1: { label:'R1', format:'scramble', formatLabel:'Scramble',  course:'The Jack',              day:'Friday',   color:'var(--sky)'      },
+  2: { label:'R2', format:'singles',  formatLabel:'Singles',   course:"Owl's Nest",             day:'Saturday', color:'var(--pink)'     },
+  3: { label:'R3', format:'bestball', formatLabel:'Best Ball', course:"Owl's Nest - Vineyard",  day:'Sunday',   color:'var(--lavender)' },
 };
 
 // ─── ROSTER WITH HCP INDEX (mirrors matchplay.html) ────────────────────────
@@ -369,10 +372,10 @@ function simRoundGross(rng, index, courseName, name){
 // ════════════════════════════════════════════════════════════════════════════
 //  PHASE 2 — OUTRIGHT SIM
 //  Mirrors leaderboard.html's individual stroke-play model: the individual
-//  total is R2 (Best Ball @ Owl's Nest) + R3 (Singles @ Owl's Nest). R1 scramble
-//  is a pair event and does NOT count toward individual gross/net.
+//  total is R2 (Singles @ Owl's Nest) + R3 (Best Ball @ Owl's Nest - Vineyard).
+//  R1 scramble is a pair event and does NOT count toward individual gross/net.
 //    gross total = R2 gross + R3 gross
-//    net total   = (R2 gross − courseHcp@Owl's) + (R3 gross − courseHcp@Owl's)
+//    net total   = (R2 gross − courseHcp@Owl's) + (R3 gross − courseHcp@Vineyard)
 //  Simulate many tournaments, count finishing positions → fair American odds.
 // ════════════════════════════════════════════════════════════════════════════
 const OUTRIGHT_SIMS = 20000;
@@ -404,7 +407,7 @@ function simOutright(nSims){
   const ps = ROSTER_BASE.map(p => ({
     name: p.name, hcp: p.hcp,
     r2phcp: courseHcp(p.hcp, "Owl's Nest"),
-    r3phcp: courseHcp(p.hcp, "Owl's Nest"),
+    r3phcp: courseHcp(p.hcp, "Owl's Nest - Vineyard"),
   }));
   const M = ps.length;
   const acc = ps.map(() => ({
@@ -416,7 +419,7 @@ function simOutright(nSims){
   for (let s = 0; s < nSims; s++){
     for (let i = 0; i < M; i++){
       const g2 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest", ps[i].name));
-      const g3 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest", ps[i].name));
+      const g3 = sumArr(simRoundGross(rng, ps[i].hcp, "Owl's Nest - Vineyard", ps[i].name));
       gross[i] = g2 + g3;
       net[i]   = (g2 - ps[i].r2phcp) + (g3 - ps[i].r3phcp);
     }
@@ -444,7 +447,7 @@ function simOutright(nSims){
 //    • Moneyline — 2-way, halved match PUSHES → p = winA / (winA + winB)
 //    • Spread    — holes line, auto-set near the fair (≈50/50) margin
 //    • Total     — O/U on MARGIN OF VICTORY (holes), auto-set near fair
-//  Scramble (R1, best-of-pair), Best Ball (R2), and Singles (R3) all priced here.
+//  Scramble (R1, best-of-pair), Singles (R2), and Best Ball (R3) all priced here.
 // ════════════════════════════════════════════════════════════════════════════
 const MATCH_SIMS = 8000;
 
@@ -465,7 +468,7 @@ function buildOddsMatches(p, rnd, courseName){
     mk('singles', worth, [{ name:d, index:idx(d) }], [{ name:b, index:idx(b) }], fmtLabel);
   const isSolo = p.matchType === 'solo' || (!p.donkey2 && p.brain1 && p.brain2);
 
-  if (rnd === 3){
+  if (rnd === 2){
     const isCross = p.matchType === 'cross';
     [ { d:p.donkey1, b:isCross?p.brain2:p.brain1 },
       { d:p.donkey2, b:isCross?p.brain1:p.brain2 } ]
@@ -483,7 +486,7 @@ function buildOddsMatches(p, rnd, courseName){
     if (A.length && B.length) out.push(mk('scramble', 1, A, B, 'Scramble'));
     return out;
   }
-  // R2 best ball
+  // R3 best ball
   if (isSolo){
     [p.brain1, p.brain2].filter(Boolean)
       .forEach(b => out.push(single(p.donkey1, b, 0.5, 'Best Ball (Solo)')));
@@ -655,8 +658,8 @@ function runOddsSelfTest(){
 
   // 4) match sim — singles, big mismatch should favor the better player heavily
   const m = buildOddsMatches(
-    { round:3, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Corey DaSilva', matchType:'standard' },
-    3, "Owl's Nest")[0];
+    { round:2, donkey1:'Jack Lyons', donkey2:'Matt Holm', brain1:'Trevor Ross', brain2:'Corey DaSilva', matchType:'standard' },
+    2, "Owl's Nest")[0];
   const sim = simMatchOdds(m, 6000);
   const pr  = priceMatch(sim);
   const total = (sim.winA + sim.winB + sim.tie) / sim.nSims;
@@ -670,8 +673,8 @@ function runOddsSelfTest(){
   // 4b) fair lines should sit near 50/50 — test on a CLOSE matchup (a blowout has
   // no fair ~50/50 line, which is correct, so it can't be used for this check).
   const mc = buildOddsMatches(
-    { round:3, donkey1:'Jack Lyons', donkey2:'', brain1:'Matt Holm', brain2:'', matchType:'standard' },
-    3, "Owl's Nest")[0];
+    { round:2, donkey1:'Jack Lyons', donkey2:'', brain1:'Matt Holm', brain2:'', matchType:'standard' },
+    2, "Owl's Nest")[0];
   const prc = priceMatch(simMatchOdds(mc, 8000));
   ok(Math.abs(prc.spread.aProb - 0.5) < 0.12, `  fair spread near 50/50 (got ${(prc.spread.aProb*100).toFixed(0)}% at A ${prc.spread.aLabel})`);
   ok(Math.abs(prc.total.overProb - 0.5) < 0.12, `  fair total near 50/50 (got ${(prc.total.overProb*100).toFixed(0)}% over ${prc.total.line})`);
@@ -821,7 +824,7 @@ function renderOutright(){
     </div>
     <div class="market-grid">${markets.map(m => marketCard(m, r, side)).join('')}</div>
     <div class="market-note">Fair odds (no vig) from ${r.nSims.toLocaleString()} simulated tournaments ·
-      individual total = R2 (Owl's Nest) + R3 (Owl's Nest) · net = each round's gross minus course handicap ·
+      individual total = R2 (Owl's Nest) + R3 (Owl's Nest - Vineyard) · net = each round's gross minus course handicap ·
       R1 scramble is a team event and is excluded from individual standings.</div>`;
 }
 window.setOutrightSide = function(side){
@@ -833,7 +836,7 @@ let matchMarkets = null;   // { hash, byRound:{1:[],2:[],3:[]} }
 function computeMatchMarkets(){
   const byRound = { 1:[], 2:[], 3:[] };
   [1,2,3].forEach(rnd => {
-    const courseName = rnd === 1 ? 'The Jack' : "Owl's Nest";
+    const courseName = rnd === 1 ? 'The Jack' : rnd === 3 ? "Owl's Nest - Vineyard" : "Owl's Nest";
     pairings
       .filter(p => p.round === rnd && (p.donkey1 || p.donkey2 || p.brain1 || p.brain2))
       .forEach(p => buildOddsMatches(p, rnd, courseName).forEach(m => {
