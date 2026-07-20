@@ -1084,7 +1084,9 @@ async function postScoreNow(name, holes, confirmed) {
       const url = new URL(APPS_SCRIPT_URL);
       url.searchParams.set('action', 'saveScore');
       url.searchParams.set('data', JSON.stringify({ round: selectedRound, name, holes }));
-      const res  = await fetch(url.toString());
+      // keepalive lets this request finish even if the page is being
+      // navigated away from right as it fires (see flushPendingSaves).
+      const res  = await fetch(url.toString(), { keepalive: true });
       const json = await res.json();
       if (json.status === 'ok') {
         if (confirmed) holes.forEach((s, i) => { if (s !== null) confirmed[i] = true; });
@@ -1498,6 +1500,29 @@ function renderLiveScorecard() {
   el.innerHTML = html || `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;font-size:0.82rem;font-weight:700">No scores entered yet</div>`;
   renderMatchBanners();
 }
+
+// ─── FLUSH ON NAVIGATE AWAY ───────────────────────────────────────────────
+// autosave()/autosaveFoursome() debounce the actual network save by ~800ms so
+// rapid hole entry doesn't fire a request per keypress. If the user leaves
+// the page (switches to another tab, backgrounds the browser, clicks a nav
+// link) before that timer fires, the pending save is silently dropped —
+// nothing was ever sent, so on return only whatever saved before the burst
+// of fast entries survives. Flush immediately, bypassing the debounce,
+// whenever the page is about to go away or become hidden.
+function flushPendingSaves() {
+  if (saveTimerPending) {
+    clearTimeout(saveTimer);
+    saveTimerPending = false;
+    saveScores();
+  }
+  if (foursomeSaveTimerPending) {
+    clearTimeout(foursomeSaveTimer);
+    foursomeSaveTimerPending = false;
+    runFoursomeSave();
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushPendingSaves(); });
+window.addEventListener('pagehide', flushPendingSaves);
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
 loadSheetData();
