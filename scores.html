@@ -664,21 +664,35 @@ function selectFoursome(foursomeIdx, cardEl) {
   if (!fs) return;
   foursomeMode      = true;
   foursomePlayers   = fs.players;
-  foursomePlayerIdx = 0;
   foursomeScores    = {};
   foursomeConfirmed = {};
   fs.players.forEach(p => {
     foursomeScores[p.name]    = Array(18).fill(null);
     foursomeConfirmed[p.name] = Array(18).fill(false);
   });
-  currentHole = 0;
-  switchToFoursomePlayer(0);
+  // Load any existing saved scores for each player BEFORE deciding where to
+  // resume — otherwise currentHole always snaps back to hole 1 even when
+  // several holes were already scored and saved in a prior session.
+  fs.players.forEach(p => loadExistingScoresForFoursomePlayer(p));
+  const resume = computeFoursomeResumePoint(fs.players);
+  currentHole = resume.hole;
+  switchToFoursomePlayer(resume.playerIdx);
   document.querySelectorAll('.foursome-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.player-btn, .pair-btn').forEach(b => b.classList.remove('selected'));
   if (cardEl) cardEl.classList.add('selected');
   document.getElementById('playerNextBtn').disabled = false;
-  // Load any existing saved scores for each player
-  fs.players.forEach(p => loadExistingScoresForFoursomePlayer(p));
+}
+
+// Find the first hole with any player still unscored, and which player on
+// that hole to resume with. Mirrors loadExistingScores()'s firstEmpty logic
+// for the solo path, but a foursome only counts a hole "done" once every
+// player in the group has a score for it.
+function computeFoursomeResumePoint(players) {
+  for (let h = 0; h < 18; h++) {
+    const idx = players.findIndex(p => foursomeScores[p.name][h] === null);
+    if (idx !== -1) return { hole: h, playerIdx: idx };
+  }
+  return { hole: 17, playerIdx: players.length - 1 };
 }
 
 function switchToFoursomePlayer(idx) {
